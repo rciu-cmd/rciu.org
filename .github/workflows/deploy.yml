@@ -31,13 +31,6 @@ jobs:
         id: pages
         uses: actions/configure-pages@v5
         with:
-<<<<<<< HEAD
-          # First-run fix: if Pages has never been turned on for this
-          # repo yet, this creates the Pages site automatically instead
-          # of failing with "Get Pages site failed". Safe to leave on
-          # permanently — it's a no-op once Pages already exists.
-=======
->>>>>>> 7c41af59e7e4b7686260265249041d54d20b6fe9
           enablement: true
 
       - name: Install dependencies
@@ -46,9 +39,6 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          # Serves correctly both from the github.io subpath now and
-          # from the custom domain (rciu.org) later — configure-pages
-          # emits the right base path for whichever is active.
           NEXT_PUBLIC_BASE_PATH: ${{ steps.pages.outputs.base_path }}
 
       - name: Upload artifact
