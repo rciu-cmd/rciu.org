@@ -31,10 +31,13 @@ jobs:
         id: pages
         uses: actions/configure-pages@v5
         with:
+<<<<<<< HEAD
           # First-run fix: if Pages has never been turned on for this
           # repo yet, this creates the Pages site automatically instead
           # of failing with "Get Pages site failed". Safe to leave on
           # permanently — it's a no-op once Pages already exists.
+=======
+>>>>>>> 7c41af59e7e4b7686260265249041d54d20b6fe9
           enablement: true
 
       - name: Install dependencies
