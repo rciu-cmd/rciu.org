@@ -4,11 +4,15 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 
 export type Lang = "mn" | "en" | "ja" | "zh";
 
-export const LANGUAGES: { code: Lang; label: string }[] = [
-  { code: "mn", label: "MN" },
-  { code: "en", label: "EN" },
-  { code: "ja", label: "日本語" },
-  { code: "zh", label: "中文" },
+// Flags, not text labels — a text label's width varies a lot between
+// languages ("EN" vs "日本語"), which shifted every button next to it
+// in the navbar each time the language changed. A flag glyph is a
+// fixed visual size in every language, so the layout stays put.
+export const LANGUAGES: { code: Lang; label: string; flag: string; name: string }[] = [
+  { code: "mn", label: "MN", flag: "🇲🇳", name: "Монгол" },
+  { code: "en", label: "EN", flag: "🇺🇸", name: "English" },
+  { code: "ja", label: "JA", flag: "🇯🇵", name: "日本語" },
+  { code: "zh", label: "ZH", flag: "🇨🇳", name: "中文" },
 ];
 
 interface LanguageContextValue {

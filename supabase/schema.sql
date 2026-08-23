@@ -341,6 +341,13 @@ create table if not exists public.affiliate_clubs (
   description_mn text,
   description_en text,
   logo_url text,
+  -- Contact info for the sponsored club's own leadership, so a
+  -- visitor can reach them directly (item 8: "president telephone
+  -- and email so everyone can contact with them").
+  president_name text,
+  contact_phone text,
+  contact_email text,
+  member_count int,
   sort_order int not null default 0,
   created_at timestamptz not null default now()
 );
@@ -446,7 +453,11 @@ insert into public.site_settings (key, value_en, value_mn) values
   ('meeting_place_online', 'https://meet.google.com/?pli=1', 'https://meet.google.com/?pli=1'),
   ('contact_email', 'rciu.mng@gmail.com', 'rciu.mng@gmail.com'),
   ('contact_phone', '+976 99031147', '+976 99031147'),
-  ('mailing_address', 'Rotary Club of Ikh Urgoo, 100-5, 15 khoroo, Bayanzurkh District, Ulaanbaatar, 13370, Mongolia', 'Рotary Club of Ikh Urgoo, 100-5, 15-р хороо, Баянзүрх дүүрэг, Улаанбаатар 13370, Монгол улс')
+  ('mailing_address', 'Rotary Club of Ikh Urgoo, 100-5, 15 khoroo, Bayanzurkh District, Ulaanbaatar, 13370, Mongolia', 'Рotary Club of Ikh Urgoo, 100-5, 15-р хороо, Баянзүрх дүүрэг, Улаанбаатар 13370, Монгол улс'),
+  -- The sitewide theme strip below the navbar (repeating banner for
+  -- this Rotary year's motto/theme). Admin can change this from
+  -- /admin/settings each year without touching code.
+  ('rotary_theme_banner_url', '/theme/create-lasting-impact-pink-wide.png', '/theme/create-lasting-impact-pink-wide.png')
 on conflict (key) do update set value_en = excluded.value_en, value_mn = excluded.value_mn;
 
 -- ------------------------------------------------------------

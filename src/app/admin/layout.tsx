@@ -54,7 +54,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     { href: "/admin/news", label: t("Мэдээ", "News", "ニュース", "新闻") },
     { href: "/admin/projects", label: t("Төслүүд", "Projects", "プロジェクト", "项目") },
     { href: "/admin/events", label: t("Хуанли", "Calendar", "カレンダー", "日历") },
+    { href: "/admin/affiliates", label: t("Дэмждэг клуб", "Sponsored Clubs", "スポンサークラブ", "赞助俱乐部") },
     { href: "/admin/members", label: t("Гишүүд", "Members", "会員", "会员") },
+    { href: "/admin/settings", label: t("Тохиргоо", "Settings", "設定", "设置") },
   ];
 
   return (

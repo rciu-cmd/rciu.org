@@ -25,9 +25,10 @@ export default function Navbar() {
     return () => sub.subscription.unsubscribe();
   }, []);
 
+  // No separate "Home" link — the logo + club name (below) already
+  // links to "/", so a dedicated Home button would just be a duplicate.
   // "Members" (roster + honor roll) is for logged-in members only.
   const links = [
-    { href: "/", label: t("Нүүр", "Home", "ホーム", "首页") },
     { href: "/about", label: t("Бидний тухай", "About", "私たちについて", "关于我们") },
     { href: "/news", label: t("Мэдээ", "News", "ニュース", "新闻") },
     { href: "/projects", label: t("Төслүүд", "Projects", "プロジェクト", "项目") },
@@ -56,16 +57,18 @@ export default function Navbar() {
         </nav>
 
         <div className="flex items-center gap-3">
-          <div className="hidden sm:flex items-center gap-1 text-xs font-semibold">
+          <div className="hidden sm:flex items-center gap-1">
             {LANGUAGES.map((l) => (
               <button
                 key={l.code}
                 onClick={() => setLang(l.code)}
-                className={`px-2 py-1 rounded ${
-                  lang === l.code ? "bg-rotary-royal-blue text-white" : "text-slate-500 hover:bg-slate-100"
+                aria-label={l.name}
+                title={l.name}
+                className={`w-8 h-8 flex items-center justify-center rounded text-lg leading-none ${
+                  lang === l.code ? "bg-rotary-royal-blue/10 ring-2 ring-rotary-royal-blue" : "hover:bg-slate-100"
                 }`}
               >
-                {l.label}
+                {l.flag}
               </button>
             ))}
           </div>
@@ -104,11 +107,13 @@ export default function Navbar() {
               <button
                 key={l.code}
                 onClick={() => setLang(l.code)}
-                className={`px-2 py-1 rounded text-xs font-semibold ${
-                  lang === l.code ? "bg-rotary-royal-blue text-white" : "text-slate-500 bg-slate-100"
+                aria-label={l.name}
+                title={l.name}
+                className={`w-9 h-9 flex items-center justify-center rounded text-xl leading-none ${
+                  lang === l.code ? "bg-rotary-royal-blue/10 ring-2 ring-rotary-royal-blue" : "bg-slate-100"
                 }`}
               >
-                {l.label}
+                {l.flag}
               </button>
             ))}
           </div>

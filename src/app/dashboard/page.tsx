@@ -87,9 +87,20 @@ export default function DashboardPage() {
       {/* Header changes color/gradient by PHF tier — sapphire for +1..+5, ruby for +6..+8, gold for base PHF */}
       <section className="text-white" style={{ background: theme.gradient }}>
         <div className="container-page py-14">
-          <p className="text-sm font-semibold uppercase tracking-wide text-white/70 mb-2">
-            {t("Хувийн профайл", "Member Dashboard", "会員ダッシュボード", "会员仪表盘")}
-          </p>
+          <div className="flex items-start justify-between gap-4 mb-2">
+            <p className="text-sm font-semibold uppercase tracking-wide text-white/70">
+              {t("Хувийн профайл", "Member Dashboard", "会員ダッシュボード", "会员仪表盘")}
+            </p>
+            <button
+              onClick={async () => {
+                await supabase.auth.signOut();
+                router.push("/login/");
+              }}
+              className="text-xs font-semibold bg-white/15 hover:bg-white/25 rounded-full px-4 py-1.5 shrink-0"
+            >
+              {t("Гарах", "Log Out", "ログアウト", "退出登录")}
+            </button>
+          </div>
           <h1 className="text-3xl font-bold mb-2">{member.first_name} {member.last_name}</h1>
           {isPhf ? (
             <div className="inline-flex items-center gap-2 bg-white/15 rounded-full px-4 py-1.5 text-sm font-semibold">
