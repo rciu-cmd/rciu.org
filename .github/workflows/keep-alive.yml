@@ -1,0 +1,15 @@
+name: Keep Alive — rciu.org
+
+on:
+  schedule:
+    - cron: '0 3 */3 * *'   # every 3 days at 3:00 AM UTC
+  workflow_dispatch:          # allow manual trigger anytime
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping rciu.org
+        run: |
+          curl -s -o /dev/null -w "Status: %{http_code}" https://rciu.org
+          echo " — site is alive"
