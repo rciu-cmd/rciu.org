@@ -9,15 +9,40 @@ import { useLanguage } from "@/lib/language-context";
 
 type LinkRow = { id: string; name: string; url: string | null; logo_url: string | null };
 type AffiliateRow = { id: string; name: string; club_type: "interact" | "rotaract"; logo_url: string | null; url?: string | null };
+type Stats = { phfPercent: number | null; affiliateCount: number | null; projectCount: number | null };
 
 export default function Home() {
   const { t } = useLanguage();
   const [links, setLinks] = useState<LinkRow[]>([]);
   const [affiliates, setAffiliates] = useState<AffiliateRow[]>([]);
+  const [stats, setStats] = useState<Stats>({ phfPercent: null, affiliateCount: null, projectCount: null });
 
   useEffect(() => {
     supabase.from("links_partners").select("id,name,url,logo_url").order("sort_order").then(({ data }) => setLinks((data as LinkRow[]) ?? []));
     supabase.from("affiliate_clubs").select("id,name,club_type,logo_url").order("sort_order").then(({ data }) => setAffiliates((data as AffiliateRow[]) ?? []));
+
+    // Every number here is read live from the database — the PHF %
+    // and project count especially, so both update on their own as
+    // members earn recognition and admins add new projects, with no
+    // hand-edited number to forget to update.
+    async function loadStats() {
+      const [membersRes, affiliatesRes, projectsRes] = await Promise.all([
+        supabase.from("members_public").select("phf_level"),
+        supabase.from("affiliate_clubs").select("id", { count: "exact", head: true }),
+        supabase.from("projects").select("id", { count: "exact", head: true }),
+      ]);
+      const memberRows = membersRes.data as { phf_level: string }[] | null;
+      const phfPercent =
+        memberRows && memberRows.length > 0
+          ? Math.round((memberRows.filter((m) => m.phf_level !== "none").length / memberRows.length) * 100)
+          : null;
+      setStats({
+        phfPercent,
+        affiliateCount: affiliatesRes.count ?? null,
+        projectCount: projectsRes.count ?? null,
+      });
+    }
+    loadStats();
   }, []);
 
   return (
@@ -52,6 +77,22 @@ export default function Home() {
             />
           </div>
         </div>
+      </section>
+
+      {/* Quick stats — all three pulled live from the database */}
+      <section className="container-page py-14 grid gap-6 sm:grid-cols-3">
+        <StatCard
+          value={stats.phfPercent === null ? "—" : `${stats.phfPercent}%`}
+          label={t("Paul Harris Fellow", "Paul Harris Fellows", "ポール・ハリス・フェロー", "保罗·哈里斯会员")}
+        />
+        <StatCard
+          value={stats.affiliateCount === null ? "—" : String(stats.affiliateCount)}
+          label={t("Дэмждэг клуб (Interact, Rotaract)", "Sponsored clubs (Interact & Rotaract)", "スポンサークラブ", "赞助俱乐部")}
+        />
+        <StatCard
+          value={stats.projectCount === null ? "—" : String(stats.projectCount)}
+          label={t("Хэрэгжүүлсэн төсөл", "Community projects", "コミュニティ・プロジェクト", "社区项目")}
+        />
       </section>
 
       {/* This Rotary year's theme */}
@@ -130,6 +171,15 @@ export default function Home() {
           </div>
         </section>
       )}
+    </div>
+  );
+}
+
+function StatCard({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="rounded-xl border border-slate-200 p-6 text-center shadow-sm">
+      <div className="text-4xl font-extrabold text-rotary-royal-blue mb-1">{value}</div>
+      <div className="text-slate-500 text-sm">{label}</div>
     </div>
   );
 }

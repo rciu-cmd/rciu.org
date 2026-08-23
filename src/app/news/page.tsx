@@ -6,15 +6,22 @@ import { useLanguage } from "@/lib/language-context";
 
 type NewsRow = {
   id: string;
-  title_mn: string;
-  title_en: string;
+  title_mn: string | null;
+  title_en: string | null;
   title_ja: string | null;
   title_zh: string | null;
-  body_mn: string;
-  body_en: string;
+  body_mn: string | null;
+  body_en: string | null;
   cover_image_url: string | null;
+  facebook_url: string | null;
   published_at: string | null;
 };
+
+declare global {
+  interface Window {
+    FB?: { XFBML: { parse: () => void } };
+  }
+}
 
 export default function NewsPage() {
   const { t } = useLanguage();
@@ -28,6 +35,27 @@ export default function NewsPage() {
       .order("published_at", { ascending: false })
       .then(({ data }) => setItems((data as NewsRow[]) ?? []));
   }, []);
+
+  // Facebook embeds (task item 1: "put only link, must show whole
+  // post with photo/video") render via Facebook's public Post Plugin,
+  // which needs its JS SDK loaded once. Items load after the SDK's
+  // own initial auto-parse would have run, so re-parse whenever the
+  // list changes.
+  useEffect(() => {
+    if (!items?.some((n) => n.facebook_url)) return;
+    if (window.FB) {
+      window.FB.XFBML.parse();
+      return;
+    }
+    if (document.getElementById("facebook-jssdk")) return;
+    const script = document.createElement("script");
+    script.id = "facebook-jssdk";
+    script.src = "https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v19.0";
+    script.async = true;
+    script.defer = true;
+    script.crossOrigin = "anonymous";
+    document.body.appendChild(script);
+  }, [items]);
 
   return (
     <div className="container-page py-14">
@@ -53,14 +81,21 @@ export default function NewsPage() {
 
       {items && items.length > 0 && (
         <div className="grid gap-6 sm:grid-cols-2">
-          {items.map((n) => (
-            <article key={n.id} className="rounded-xl border border-slate-200 p-6 shadow-sm">
-              <h2 className="font-bold text-slate-900 mb-2">{t(n.title_mn, n.title_en)}</h2>
-              <p className="text-slate-600 text-sm line-clamp-4">{t(n.body_mn, n.body_en)}</p>
-            </article>
-          ))}
+          {items.map((n) =>
+            n.facebook_url ? (
+              <article key={n.id} className="rounded-xl border border-slate-200 p-3 shadow-sm overflow-hidden flex justify-center">
+                <div className="fb-post" data-href={n.facebook_url} data-width="500" data-show-text="true" />
+              </article>
+            ) : (
+              <article key={n.id} className="rounded-xl border border-slate-200 p-6 shadow-sm">
+                <h2 className="font-bold text-slate-900 mb-2">{t(n.title_mn ?? "", n.title_en ?? "")}</h2>
+                <p className="text-slate-600 text-sm line-clamp-4">{t(n.body_mn ?? "", n.body_en ?? "")}</p>
+              </article>
+            )
+          )}
         </div>
       )}
+      <div id="fb-root" />
     </div>
   );
 }

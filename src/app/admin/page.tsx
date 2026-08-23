@@ -73,12 +73,15 @@ export default function AdminOverviewPage() {
         ))}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3 mt-10">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mt-10">
         <Link href="/admin/news" className="rounded-xl bg-rotary-royal-blue text-white p-6 font-semibold hover:opacity-90">
           {t("+ Мэдээ нэмэх", "+ New News Post", "+ ニュースを追加", "+ 添加新闻")}
         </Link>
         <Link href="/admin/projects" className="rounded-xl bg-rotary-azure text-white p-6 font-semibold hover:opacity-90">
           {t("+ Төсөл нэмэх", "+ New Project", "+ プロジェクトを追加", "+ 添加项目")}
+        </Link>
+        <Link href="/admin/events" className="rounded-xl bg-rotary-gold text-[#5a3d0a] p-6 font-semibold hover:opacity-90">
+          {t("+ Үйл явдал нэмэх", "+ New Event", "+ イベントを追加", "+ 添加活动")}
         </Link>
         <Link href="/admin/members" className="rounded-xl bg-slate-800 text-white p-6 font-semibold hover:opacity-90">
           {t("Гишүүд зөвшөөрөх", "Review Members", "会員を確認", "审核会员")}

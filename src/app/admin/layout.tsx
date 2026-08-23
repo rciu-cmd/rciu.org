@@ -53,6 +53,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     { href: "/admin", label: t("Хураангуй", "Overview", "概要", "概览") },
     { href: "/admin/news", label: t("Мэдээ", "News", "ニュース", "新闻") },
     { href: "/admin/projects", label: t("Төслүүд", "Projects", "プロジェクト", "项目") },
+    { href: "/admin/events", label: t("Хуанли", "Calendar", "カレンダー", "日历") },
     { href: "/admin/members", label: t("Гишүүд", "Members", "会員", "会员") },
   ];
 
