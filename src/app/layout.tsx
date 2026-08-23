@@ -15,14 +15,34 @@ import Navbar from "@/components/Navbar";
 import ThemeStrip from "@/components/ThemeStrip";
 import Footer from "@/components/Footer";
 
+const SITE_DESCRIPTION =
+  "Rotary Club of Ikh Urgoo (RCIU) — Ulaanbaatar, Mongolia. News, community service projects, membership, and how to join or donate.";
+
 export const metadata: Metadata = {
-  title: "Rotary Club of Ikh Urgoo",
-  description:
-    "Rotary Club of Ikh Urgoo (RCIU) — Ulaanbaatar, Mongolia. News, projects, membership, and community service.",
+  metadataBase: new URL("https://rciu.org"),
+  title: {
+    default: "Rotary Club of Ikh Urgoo",
+    template: "%s · Rotary Club of Ikh Urgoo",
+  },
+  description: SITE_DESCRIPTION,
   icons: {
     icon: [
       { url: `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/logos/rciu-emblem.jpg`, type: "image/jpeg" },
     ],
+  },
+  openGraph: {
+    title: "Rotary Club of Ikh Urgoo",
+    description: SITE_DESCRIPTION,
+    url: "https://rciu.org",
+    siteName: "Rotary Club of Ikh Urgoo",
+    images: [{ url: `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/logos/rciu-emblem.jpg`, width: 512, height: 512 }],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "Rotary Club of Ikh Urgoo",
+    description: SITE_DESCRIPTION,
   },
 };
 

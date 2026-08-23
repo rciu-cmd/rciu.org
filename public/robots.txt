@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /dashboard/
+Disallow: /members/
+Disallow: /login/
+
+Sitemap: https://rciu.org/sitemap.xml

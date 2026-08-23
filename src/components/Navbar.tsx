@@ -34,6 +34,7 @@ export default function Navbar() {
     { href: "/projects", label: t("Төслүүд", "Projects", "プロジェクト", "项目") },
     { href: "/board", label: t("Удирдлага", "Board", "役員", "理事会") },
     ...(authed ? [{ href: "/members", label: t("Гишүүд", "Members", "会員", "会员") }] : []),
+    { href: "/join", label: t("Нэгдэх", "Join Us", "入会案内", "加入我们") },
     { href: "/contact", label: t("Холбоо барих", "Contact", "お問い合わせ", "联系我们") },
     ...(isAdmin ? [{ href: "/admin", label: t("Админ", "Admin", "管理者", "管理员") }] : []),
   ];
@@ -72,6 +73,14 @@ export default function Navbar() {
               </button>
             ))}
           </div>
+          <a
+            href="https://www.rotary.org/en/get-involved/ways-to-give"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden sm:inline-block text-xs font-semibold px-3 py-1.5 rounded-full bg-rotary-gold text-[#5a3d0a] hover:brightness-105 transition"
+          >
+            {t("Хандив өргөх", "Donate", "寄付する", "捐赠")}
+          </a>
           <Link
             href={authed ? "/dashboard" : "/login"}
             className="hidden sm:inline-block text-xs font-semibold px-3 py-1.5 rounded-full border border-rotary-royal-blue text-rotary-royal-blue hover:bg-rotary-royal-blue hover:text-white transition-colors"
@@ -102,6 +111,15 @@ export default function Navbar() {
           <Link href={authed ? "/dashboard" : "/login"} onClick={() => setOpen(false)} className="font-semibold text-rotary-royal-blue">
             {authed ? t("Хувийн профайл", "My Dashboard", "マイページ", "我的主页") : t("Гишүүн нэвтрэх", "Member Login", "会員ログイン", "会员登录")}
           </Link>
+          <a
+            href="https://www.rotary.org/en/get-involved/ways-to-give"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => setOpen(false)}
+            className="font-semibold text-[#8a6d1f]"
+          >
+            {t("Хандив өргөх", "Donate", "寄付する", "捐赠")}
+          </a>
           <div className="flex gap-2 pt-2 border-t border-slate-100">
             {LANGUAGES.map((l) => (
               <button

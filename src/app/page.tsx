@@ -38,6 +38,7 @@ type NewsRow = {
   facebook_url: string | null;
 };
 type Stats = { phfPercent: number | null; affiliateCount: number | null; projectCount: number | null };
+type PhotoItem = { id: string; storage_path: string; caption: string | null; created_at: string };
 
 const CAUSE_ICONS: Record<string, string> = {
   basic_education_literacy: "/causes/basic-education-literacy.png",
@@ -58,6 +59,7 @@ export default function Home() {
   const [projects, setProjects] = useState<ProjectRow[]>([]);
   const [news, setNews] = useState<NewsRow[]>([]);
   const [stats, setStats] = useState<Stats>({ phfPercent: null, affiliateCount: null, projectCount: null });
+  const [photos, setPhotos] = useState<PhotoItem[]>([]);
 
   useEffect(() => {
     supabase.from("links_partners").select("id,name,url,logo_url").order("sort_order").then(({ data }) => setLinks((data as LinkRow[]) ?? []));
@@ -79,6 +81,19 @@ export default function Home() {
       .order("published_at", { ascending: false })
       .limit(3)
       .then(({ data }) => setNews((data as NewsRow[]) ?? []));
+
+    // Photo gallery — merges the general club_photos library with
+    // project photos (project_media), newest first, for one combined
+    // strip on the home page.
+    Promise.all([
+      supabase.from("club_photos").select("id,storage_path,caption,created_at").order("created_at", { ascending: false }).limit(10),
+      supabase.from("project_media").select("id,storage_path,caption,created_at").order("created_at", { ascending: false }).limit(10),
+    ]).then(([clubRes, projectRes]) => {
+      const merged = [...((clubRes.data as PhotoItem[]) ?? []), ...((projectRes.data as PhotoItem[]) ?? [])]
+        .sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
+        .slice(0, 12);
+      setPhotos(merged);
+    });
 
     // Every number here is read live from the database — the PHF %
     // and project count especially, so both update on their own as
@@ -152,17 +167,6 @@ export default function Home() {
         />
       </section>
 
-      {/* This Rotary year's theme */}
-      <section>
-        <Image
-          src={asset("/theme/create-lasting-impact-blue-wide.png")}
-          alt="Create Lasting Impact — Rotary International theme"
-          width={1600}
-          height={400}
-          className="w-full h-auto"
-        />
-      </section>
-
       {/* Projects — the club's main work, so this gets the biggest,
           most prominent treatment on the page. */}
       <section className="container-page py-16">
@@ -221,6 +225,34 @@ export default function Home() {
           {t("Бүх төсөл →", "View All Projects →", "すべて見る →", "查看全部 →")}
         </Link>
       </section>
+
+      {/* Photo gallery — a horizontal scroll strip of the most recent
+          club + project photos. Fills in on its own as members upload
+          via their dashboard; nothing to show until they do. */}
+      {photos.length > 0 && (
+        <section className="bg-slate-50 py-16">
+          <div className="container-page">
+            <h2 className="text-2xl font-bold text-rotary-royal-blue mb-8">
+              {t("Зургийн цомог", "Photo Gallery", "フォトギャラリー", "照片集")}
+            </h2>
+            <div className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory">
+              {photos.map((p) => {
+                const url = supabase.storage.from("rciu-photos").getPublicUrl(p.storage_path).data.publicUrl;
+                return (
+                  <div key={p.id} className="relative shrink-0 w-64 h-44 rounded-xl overflow-hidden snap-start bg-slate-200">
+                    <Image src={url} alt={p.caption ?? ""} fill className="object-cover" />
+                    {p.caption && (
+                      <span className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs px-3 py-1.5 line-clamp-1">
+                        {p.caption}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Affiliate clubs — Interact & Rotaract, with real contact info
           so a visitor can reach their leadership directly. */}
