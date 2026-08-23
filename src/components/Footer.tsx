@@ -2,10 +2,10 @@
 
 import Image from "next/image";
 import { asset } from "@/lib/asset";
-import { useLanguage } from "@/lib/language-context";
+import { useLanguage, LANGUAGES } from "@/lib/language-context";
 
 export default function Footer() {
-  const { t } = useLanguage();
+  const { lang, setLang, t } = useLanguage();
 
   return (
     <footer className="bg-rotary-royal-blue text-white mt-16">
@@ -35,6 +35,26 @@ export default function Footer() {
           <p className="font-semibold text-white mb-2">{t("Холбоо барих", "Contact", "お問い合わせ", "联系方式")}</p>
           <p>rciu.mng@gmail.com</p>
           <p>+976 99031147</p>
+
+          {/* Language switcher lives here now — moved off the navbar
+              (item request: free up top-bar space) and placed next to
+              Contact, the one place every visitor eventually scrolls to. */}
+          <p className="font-semibold text-white mt-4 mb-2">{t("Хэл сонгох", "Language", "言語", "语言")}</p>
+          <div className="flex gap-1.5">
+            {LANGUAGES.map((l) => (
+              <button
+                key={l.code}
+                onClick={() => setLang(l.code)}
+                aria-label={l.name}
+                title={l.name}
+                className={`w-8 h-8 flex items-center justify-center rounded text-lg leading-none ${
+                  lang === l.code ? "bg-white/25 ring-2 ring-white" : "bg-white/10 hover:bg-white/20"
+                }`}
+              >
+                {l.flag}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
       <div className="border-t border-white/15 py-4 text-center text-xs text-blue-100">

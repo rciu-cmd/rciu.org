@@ -5,10 +5,10 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { asset } from "@/lib/asset";
 import { supabase } from "@/lib/supabase";
-import { useLanguage, LANGUAGES } from "@/lib/language-context";
+import { useLanguage } from "@/lib/language-context";
 
 export default function Navbar() {
-  const { lang, setLang, t } = useLanguage();
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [authed, setAuthed] = useState<boolean | null>(null); // null = not checked yet
   const [isAdmin, setIsAdmin] = useState(false);
@@ -58,21 +58,6 @@ export default function Navbar() {
         </nav>
 
         <div className="flex items-center gap-3">
-          <div className="hidden sm:flex items-center gap-1">
-            {LANGUAGES.map((l) => (
-              <button
-                key={l.code}
-                onClick={() => setLang(l.code)}
-                aria-label={l.name}
-                title={l.name}
-                className={`w-8 h-8 flex items-center justify-center rounded text-lg leading-none ${
-                  lang === l.code ? "bg-rotary-royal-blue/10 ring-2 ring-rotary-royal-blue" : "hover:bg-slate-100"
-                }`}
-              >
-                {l.flag}
-              </button>
-            ))}
-          </div>
           <a
             href="https://www.rotary.org/en/get-involved/ways-to-give"
             target="_blank"
@@ -120,21 +105,6 @@ export default function Navbar() {
           >
             {t("Хандив өргөх", "Donate", "寄付する", "捐赠")}
           </a>
-          <div className="flex gap-2 pt-2 border-t border-slate-100">
-            {LANGUAGES.map((l) => (
-              <button
-                key={l.code}
-                onClick={() => setLang(l.code)}
-                aria-label={l.name}
-                title={l.name}
-                className={`w-9 h-9 flex items-center justify-center rounded text-xl leading-none ${
-                  lang === l.code ? "bg-rotary-royal-blue/10 ring-2 ring-rotary-royal-blue" : "bg-slate-100"
-                }`}
-              >
-                {l.flag}
-              </button>
-            ))}
-          </div>
         </nav>
       )}
     </header>
