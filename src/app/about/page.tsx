@@ -50,10 +50,19 @@ export default function AboutPage() {
             <a href={asset("/certificates/rciu-charter-certificate.pdf")} target="_blank" rel="noopener noreferrer" className="text-rotary-azure font-semibold hover:underline">
               {t("Дүрэмт клубын гэрчилгээ (PDF)", "Charter Certificate (PDF)", "認可証明書 (PDF)", "特许证书 (PDF)")}
             </a>
-            <a href={asset("/certificates/urgoo-certificate-of-organization.pdf")} target="_blank" rel="noopener noreferrer" className="text-rotary-azure font-semibold hover:underline">
-              {t("Байгууллагын гэрчилгээ (PDF)", "Certificate of Organization (PDF)", "組織証明書 (PDF)", "组织证书 (PDF)")}
-            </a>
           </div>
+          <p className="text-xs text-slate-400 mt-3">
+            {t(
+              "Байгууллагын гэрчилгээ нь Interact Club of Urgoo-д хамаарах тул",
+              "The Certificate of Organization belongs to the Interact Club of Urgoo, so it's shown",
+              "組織証明書はアーゴー・インターアクトクラブのものであるため、",
+              "组织证书属于乌尔古扶青团,因此"
+            )}{" "}
+            <a href={asset("/certificates/urgoo-certificate-of-organization.pdf")} target="_blank" rel="noopener noreferrer" className="text-rotary-azure font-semibold hover:underline">
+              {t("тэнд", "there", "そちら", "在那里")}
+            </a>{" "}
+            {t("харагдана.", "instead, alongside the Interact club's info.", "に表示されます。", "显示。")}
+          </p>
         </div>
       </div>
     </div>

@@ -57,6 +57,7 @@ create table if not exists public.members (
   major_donor boolean not null default false,
   major_donor_level int,                 -- 1-4, per Rotary Foundation levels, admin-set
   honor_roll_visible boolean not null default true,  -- member can opt out of public honor roll
+  password_set boolean not null default false, -- true once the member has set a password (skips needing a fresh email link every time)
 
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -105,6 +106,25 @@ create trigger on_auth_user_created_rciu
 
 alter table public.members enable row level security;
 
+-- "Is the current user an admin?" — used by every admin-gated policy
+-- below. This MUST be its own SECURITY DEFINER function rather than an
+-- inline `exists (select 1 from public.members ...)` subquery repeated
+-- in each policy: a policy on public.members that queries public.members
+-- itself triggers "infinite recursion detected in policy" in Postgres,
+-- which fails the ENTIRE query — including unrelated, otherwise-valid
+-- rows a plain member should be able to read. SECURITY DEFINER runs
+-- this lookup with the function owner's privileges, so it bypasses
+-- members' own RLS instead of re-triggering it, breaking the loop.
+create or replace function public.is_admin()
+returns boolean
+language sql
+security definer
+stable
+set search_path = public
+as $$
+  select coalesce((select is_admin from public.members where id = auth.uid()), false);
+$$;
+
 -- Public: only a safe subset of fields, via a view (see below) — the
 -- base table itself is never selectable by anon.
 drop policy if exists members_select_self on public.members;
@@ -114,18 +134,23 @@ create policy members_select_self on public.members
 drop policy if exists members_select_admin on public.members;
 create policy members_select_admin on public.members
   for select using (
-    exists (select 1 from public.members m where m.id = auth.uid() and m.is_admin)
+    public.is_admin()
   );
 
+-- Note: this intentionally does NOT compare is_admin against its old
+-- value (that would be the same self-referencing-subquery recursion
+-- risk described above). Granting/revoking admin is done from the SQL
+-- Editor directly, which bypasses RLS — never through a self-service
+-- form — so this doesn't need to guard against self-promotion here.
 drop policy if exists members_update_self on public.members;
 create policy members_update_self on public.members
   for update using (auth.uid() = id)
-  with check (auth.uid() = id and is_admin = (select is_admin from public.members where id = auth.uid()));
+  with check (auth.uid() = id);
 
 drop policy if exists members_update_admin on public.members;
 create policy members_update_admin on public.members
   for update using (
-    exists (select 1 from public.members m where m.id = auth.uid() and m.is_admin)
+    public.is_admin()
   );
 
 -- Public-safe view: name, role, photo, PHF tier, major-donor flag —
@@ -164,8 +189,8 @@ create policy board_select_public on public.board_positions for select using (tr
 
 drop policy if exists board_write_admin on public.board_positions;
 create policy board_write_admin on public.board_positions
-  for all using (exists (select 1 from public.members m where m.id = auth.uid() and m.is_admin))
-  with check (exists (select 1 from public.members m where m.id = auth.uid() and m.is_admin));
+  for all using (public.is_admin())
+  with check (public.is_admin());
 
 -- ------------------------------------------------------------
 -- news
@@ -201,12 +226,12 @@ create policy news_select_public on public.news
 
 drop policy if exists news_select_admin on public.news;
 create policy news_select_admin on public.news
-  for select using (exists (select 1 from public.members m where m.id = auth.uid() and m.is_admin));
+  for select using (public.is_admin());
 
 drop policy if exists news_write_admin on public.news;
 create policy news_write_admin on public.news
-  for all using (exists (select 1 from public.members m where m.id = auth.uid() and m.is_admin))
-  with check (exists (select 1 from public.members m where m.id = auth.uid() and m.is_admin));
+  for all using (public.is_admin())
+  with check (public.is_admin());
 
 -- ------------------------------------------------------------
 -- projects (+ media uploaded into project folders)
@@ -222,6 +247,7 @@ create table if not exists public.projects (
   description_ja text,
   description_zh text,
   cover_image_url text,
+  cause_icon text check (cause_icon in ('basic_education_literacy','maternal_child_health','disease_prevention','other')),
   status text not null default 'ongoing' check (status in ('ongoing','completed','planned')),
   start_date date,
   end_date date,
@@ -241,8 +267,8 @@ create policy projects_select_public on public.projects for select using (true);
 
 drop policy if exists projects_write_admin on public.projects;
 create policy projects_write_admin on public.projects
-  for all using (exists (select 1 from public.members m where m.id = auth.uid() and m.is_admin))
-  with check (exists (select 1 from public.members m where m.id = auth.uid() and m.is_admin));
+  for all using (public.is_admin())
+  with check (public.is_admin());
 
 -- Photos members upload into a project's folder (report/collage source).
 -- Photos only — no video, per club decision.
@@ -270,7 +296,7 @@ drop policy if exists project_media_delete_own_or_admin on public.project_media;
 create policy project_media_delete_own_or_admin on public.project_media
   for delete using (
     uploaded_by = auth.uid()
-    or exists (select 1 from public.members m where m.id = auth.uid() and m.is_admin)
+    or public.is_admin()
   );
 
 -- ------------------------------------------------------------
@@ -295,8 +321,8 @@ create policy links_select_public on public.links_partners for select using (tru
 
 drop policy if exists links_write_admin on public.links_partners;
 create policy links_write_admin on public.links_partners
-  for all using (exists (select 1 from public.members m where m.id = auth.uid() and m.is_admin))
-  with check (exists (select 1 from public.members m where m.id = auth.uid() and m.is_admin));
+  for all using (public.is_admin())
+  with check (public.is_admin());
 
 -- Sponsored youth clubs (Interact + Rotaract) shown in one shared section.
 create table if not exists public.affiliate_clubs (
@@ -318,8 +344,8 @@ create policy affiliate_select_public on public.affiliate_clubs for select using
 
 drop policy if exists affiliate_write_admin on public.affiliate_clubs;
 create policy affiliate_write_admin on public.affiliate_clubs
-  for all using (exists (select 1 from public.members m where m.id = auth.uid() and m.is_admin))
-  with check (exists (select 1 from public.members m where m.id = auth.uid() and m.is_admin));
+  for all using (public.is_admin())
+  with check (public.is_admin());
 
 -- ------------------------------------------------------------
 -- stock / inventory — HIDDEN, admin-only page (pins, banners, gifts)
@@ -376,12 +402,12 @@ alter table public.stock_item_history enable row level security;
 -- regular members, not just unlinked from navigation.
 drop policy if exists stock_items_admin_only on public.stock_items;
 create policy stock_items_admin_only on public.stock_items
-  for all using (exists (select 1 from public.members m where m.id = auth.uid() and m.is_admin))
-  with check (exists (select 1 from public.members m where m.id = auth.uid() and m.is_admin));
+  for all using (public.is_admin())
+  with check (public.is_admin());
 
 drop policy if exists stock_history_admin_only on public.stock_item_history;
 create policy stock_history_admin_only on public.stock_item_history
-  for select using (exists (select 1 from public.members m where m.id = auth.uid() and m.is_admin));
+  for select using (public.is_admin());
 
 -- ------------------------------------------------------------
 -- site settings (meeting info, contact details — editable by admin)
@@ -401,8 +427,8 @@ create policy settings_select_public on public.site_settings for select using (t
 
 drop policy if exists settings_write_admin on public.site_settings;
 create policy settings_write_admin on public.site_settings
-  for all using (exists (select 1 from public.members m where m.id = auth.uid() and m.is_admin))
-  with check (exists (select 1 from public.members m where m.id = auth.uid() and m.is_admin));
+  for all using (public.is_admin())
+  with check (public.is_admin());
 
 -- Seed the meeting/contact details already confirmed by the club.
 -- Safe to re-run (upsert).

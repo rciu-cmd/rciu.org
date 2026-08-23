@@ -1,12 +1,24 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { asset } from "@/lib/asset";
+import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
+
+type LinkRow = { id: string; name: string; url: string | null; logo_url: string | null };
+type AffiliateRow = { id: string; name: string; club_type: "interact" | "rotaract"; logo_url: string | null; url?: string | null };
 
 export default function Home() {
   const { t } = useLanguage();
+  const [links, setLinks] = useState<LinkRow[]>([]);
+  const [affiliates, setAffiliates] = useState<AffiliateRow[]>([]);
+
+  useEffect(() => {
+    supabase.from("links_partners").select("id,name,url,logo_url").order("sort_order").then(({ data }) => setLinks((data as LinkRow[]) ?? []));
+    supabase.from("affiliate_clubs").select("id,name,club_type,logo_url").order("sort_order").then(({ data }) => setAffiliates((data as AffiliateRow[]) ?? []));
+  }, []);
 
   return (
     <div>
@@ -18,16 +30,8 @@ export default function Home() {
               {t("Rotary олон улсын гишүүн клуб", "A member club of Rotary International", "ロータリー・インターナショナル会員クラブ", "国际扶轮会员俱乐部")}
             </p>
             <h1 className="text-3xl sm:text-5xl font-extrabold leading-tight mb-5">
-              Rotary Club of Ikh Urgoo
+              {t("Их Өргөө Ротари Клуб", "Rotary Club of Ikh Urgoo", "イク・ウルグー・ロータリークラブ", "扶轮伊赫乌尔古俱乐部")}
             </h1>
-            <p className="text-blue-100 text-lg mb-8 max-w-md">
-              {t(
-                "Улаанбаатар хотод үйлчилдэг, дэлхийн Rotary олон улсын гэр бүлийн нэг хэсэг болсон клуб.",
-                "Serving Ulaanbaatar as part of the worldwide Rotary family — connecting people to take action and create lasting change.",
-                "ウランバートルで奉仕する、世界的なロータリーファミリーの一員です。",
-                "服务于乌兰巴托,是全球扶轮大家庭的一员。"
-              )}
-            </p>
             <div className="flex flex-wrap gap-3">
               <Link href="/about" className="bg-rotary-gold text-[#5a3d0a] font-bold px-6 py-3 rounded-full hover:brightness-105 transition">
                 {t("Бидний тухай", "Learn About Us", "詳細はこちら", "了解我们")}
@@ -39,57 +43,26 @@ export default function Home() {
           </div>
           <div className="flex justify-center">
             <Image
-              src={asset("/logos/rciu-emblem.jpg")}
-              alt="Rotary Club of Ikh Urgoo emblem"
-              width={280}
-              height={280}
-              className="rounded-full shadow-2xl bg-white p-3"
+              src={asset("/logos/rciu-logo-transparent.png")}
+              alt="Rotary Club of Ikh Urgoo"
+              width={340}
+              height={155}
+              className="drop-shadow-2xl"
               priority
             />
           </div>
         </div>
       </section>
 
-      {/* Quick stats */}
-      <section className="container-page py-14 grid gap-6 sm:grid-cols-3">
-        <StatCard
-          value="16"
-          label={t("Идэвхтэй гишүүн", "Active members", "アクティブ会員", "活跃会员")}
+      {/* This Rotary year's theme */}
+      <section>
+        <Image
+          src={asset("/theme/create-lasting-impact-blue-wide.png")}
+          alt="Create Lasting Impact — Rotary International theme"
+          width={1600}
+          height={400}
+          className="w-full h-auto"
         />
-        <StatCard
-          value="100%"
-          label={t("Paul Harris Fellow", "Paul Harris Fellows", "ポール・ハリス・フェロー", "保罗·哈里斯会员")}
-        />
-        <StatCard
-          value="2"
-          label={t("Дэмждэг клуб (Interact, Rotaract)", "Sponsored clubs (Interact & Rotaract)", "スポンサークラブ", "赞助俱乐部")}
-        />
-      </section>
-
-      {/* About teaser */}
-      <section className="bg-slate-50 py-14">
-        <div className="container-page grid gap-10 sm:grid-cols-2 items-center">
-          <div>
-            <h2 className="text-2xl font-bold text-rotary-royal-blue mb-4">
-              {t("Бид хэн бэ", "Who We Are", "私たちについて", "我们是谁")}
-            </h2>
-            <p className="text-slate-600 mb-4">
-              {t(
-                "Rotary Club of Ikh Urgoo нь албан ёсоор дүрэмт клубын гэрчилгээ авсан, Rotary International-ийн 3450-р дүүрэгт харьяалагдах клуб юм.",
-                "Rotary Club of Ikh Urgoo is an officially chartered member club of Rotary International, part of District 3450.",
-                "イクー・ウルグー・ロータリークラブは、ロータリー・インターナショナルの正式に認可されたクラブで、地区3450に所属しています。",
-                "扶轮伊赫乌尔古俱乐部是国际扶轮正式注册的会员俱乐部,隶属于3450区。"
-              )}
-            </p>
-            <Link href="/about" className="text-rotary-royal-blue font-semibold hover:underline">
-              {t("Дэлгэрэнгүй →", "Read more →", "詳細を見る →", "查看更多 →")}
-            </Link>
-          </div>
-          <div className="flex gap-6 items-center justify-center flex-wrap">
-            <Image src={asset("/logos/ri-gear-logo.png")} alt="Rotary International" width={110} height={110} />
-            <Image src={asset("/logos/district-3450-logo.png")} alt="Rotary District 3450" width={160} height={80} />
-          </div>
-        </div>
       </section>
 
       {/* Meeting info */}
@@ -113,15 +86,50 @@ export default function Home() {
           )}
         />
       </section>
-    </div>
-  );
-}
 
-function StatCard({ value, label }: { value: string; label: string }) {
-  return (
-    <div className="rounded-xl border border-slate-200 p-6 text-center shadow-sm">
-      <div className="text-4xl font-extrabold text-rotary-royal-blue mb-1">{value}</div>
-      <div className="text-slate-500 text-sm">{label}</div>
+      {/* Affiliate clubs + Links & Partners — compact, on the home page */}
+      {(affiliates.length > 0 || links.length > 0) && (
+        <section className="bg-slate-50 py-14">
+          <div className="container-page">
+            {affiliates.length > 0 && (
+              <div className="mb-10">
+                <h2 className="font-bold text-rotary-royal-blue mb-4">
+                  {t("Дэмждэг клубууд", "Affiliate Clubs", "スポンサークラブ", "赞助俱乐部")}
+                </h2>
+                <div className="flex flex-wrap gap-4">
+                  {affiliates.map((a) => (
+                    <div key={a.id} className="flex items-center gap-3 bg-white rounded-full pl-2 pr-5 py-2 border border-slate-200">
+                      {a.logo_url && <Image src={a.logo_url} alt={a.name} width={36} height={36} className="rounded-full" />}
+                      <span className="text-sm font-semibold text-slate-800">{a.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {links.length > 0 && (
+              <div>
+                <h2 className="font-bold text-rotary-royal-blue mb-4">
+                  {t("Холбоос ба түншүүд", "Links & Partners", "リンクとパートナー", "链接与伙伴")}
+                </h2>
+                <div className="flex flex-wrap gap-4">
+                  {links.map((l) => (
+                    <a
+                      key={l.id}
+                      href={l.url ?? undefined}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 bg-white rounded-full pl-2 pr-5 py-2 border border-slate-200 hover:shadow-md transition"
+                    >
+                      {l.logo_url && <Image src={l.logo_url} alt={l.name} width={36} height={36} className="rounded-full" />}
+                      <span className="text-sm font-semibold text-slate-800">{l.name}</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

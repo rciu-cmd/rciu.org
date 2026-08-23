@@ -13,7 +13,7 @@ export default function Footer() {
         <div>
           <div className="flex items-center gap-2 mb-3">
             <Image src={asset("/logos/ri-gear-logo.png")} alt="Rotary International" width={36} height={36} />
-            <span className="font-bold">Rotary Club of Ikh Urgoo</span>
+            <span className="font-bold">{t("Их Өргөө Ротари Клуб", "Rotary Club of Ikh Urgoo", "イク・ウルグー・ロータリークラブ", "扶轮伊赫乌尔古俱乐部")}</span>
           </div>
           <p className="text-sm text-blue-100">
             {t(

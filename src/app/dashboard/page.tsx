@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
 import { phfTheme } from "@/lib/phf";
+import PhfPinBadge from "@/components/PhfPinBadge";
 
 type Member = {
   id: string;
@@ -21,6 +23,8 @@ type Member = {
   phf_date: string | null;
   major_donor: boolean;
   status: string;
+  password_set: boolean;
+  is_admin: boolean;
 };
 
 export default function DashboardPage() {
@@ -40,6 +44,10 @@ export default function DashboardPage() {
       setLoading(false);
     });
   }, [router]);
+
+  function handlePasswordSet() {
+    setMember((m) => (m ? { ...m, password_set: true } : m));
+  }
 
   if (loading) {
     return <div className="container-page py-20 text-center text-slate-400">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加载中…")}</div>;
@@ -63,9 +71,7 @@ export default function DashboardPage() {
           <h1 className="text-3xl font-bold mb-2">{member.first_name} {member.last_name}</h1>
           {isPhf ? (
             <div className="inline-flex items-center gap-2 bg-white/15 rounded-full px-4 py-1.5 text-sm font-semibold">
-              {theme.gem !== "none" && (
-                <span>{"💎".repeat(theme.gemCount)}</span>
-              )}
+              <PhfPinBadge level={member.phf_level} size={24} />
               {theme.label}
               {member.major_donor && <span className="text-rotary-gold">★ {t("Их хандивлагч", "Major Donor", "メジャードナー", "重要捐赠人")}</span>}
             </div>
@@ -78,6 +84,14 @@ export default function DashboardPage() {
                 "您尚未成为保罗·哈里斯会员"
               )}
             </div>
+          )}
+          {member.is_admin && (
+            <Link
+              href="/admin"
+              className="mt-4 inline-flex items-center gap-2 bg-white text-rotary-royal-blue font-semibold rounded-full px-4 py-1.5 text-sm hover:bg-white/90"
+            >
+              {t("Админ самбар руу очих", "Go to Admin Dashboard", "管理者ダッシュボードへ", "前往管理后台")} →
+            </Link>
           )}
         </div>
       </section>
@@ -92,6 +106,12 @@ export default function DashboardPage() {
               "向扶轮基金会捐款 $1,000 即可成为保罗·哈里斯会员。详情请咨询俱乐部基金会主席。"
             )}
           </div>
+        </div>
+      )}
+
+      {!member.password_set && (
+        <div className="container-page pt-10">
+          <SetPasswordCard t={t} onDone={handlePasswordSet} />
         </div>
       )}
 
@@ -135,6 +155,107 @@ function Row({ label, value }: { label: string; value: string }) {
     <div className="flex justify-between border-b border-slate-100 pb-2">
       <dt className="text-slate-400">{label}</dt>
       <dd className="font-medium text-slate-700">{value}</dd>
+    </div>
+  );
+}
+
+// One-time nudge: the member signed in via the emailed link, so this
+// account has no password yet — Supabase's magic-link flow never asks
+// for one. Setting a password here flips members.password_set so the
+// login page's password tab works next time, without needing a fresh
+// email (which is also capped at 2/hour on the default email plan).
+function SetPasswordCard({
+  t,
+  onDone,
+}: {
+  t: (mn: string, en: string, ja?: string, zh?: string) => string;
+  onDone: () => void;
+}) {
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    if (password.length < 8) {
+      setError(t("Нууц үг дор хаяж 8 тэмдэгт байх ёстой.", "Password must be at least 8 characters.", "パスワードは8文字以上にしてください。", "密码至少需要8个字符。"));
+      return;
+    }
+    if (password !== confirm) {
+      setError(t("Нууц үг таарахгүй байна.", "Passwords don't match.", "パスワードが一致しません。", "两次输入的密码不一致。"));
+      return;
+    }
+    setBusy(true);
+    const { error: authError } = await supabase.auth.updateUser({ password });
+    if (authError) {
+      setBusy(false);
+      setError(authError.message);
+      return;
+    }
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      await supabase.from("members").update({ password_set: true }).eq("id", session.user.id);
+    }
+    setBusy(false);
+    setDone(true);
+    onDone();
+  }
+
+  if (done) {
+    return (
+      <div className="rounded-xl bg-green-50 border border-green-200 p-6 text-green-800 text-sm">
+        {t(
+          "Нууц үг тохирогдлоо! Дараагийн удаа шууд нууц үгээрээ нэвтэрч болно.",
+          "Password set! Next time you can log in directly with your password.",
+          "パスワードを設定しました!次回からパスワードで直接ログインできます。",
+          "密码已设置!下次可直接使用密码登录。"
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl border-2 border-rotary-gold bg-amber-50 p-6">
+      <h2 className="font-bold text-slate-900 mb-1">
+        {t("Нууц үгээ тохируулаарай", "Set a password", "パスワードを設定してください", "设置密码")}
+      </h2>
+      <p className="text-sm text-slate-600 mb-4">
+        {t(
+          "Та и-мэйл холбоосоор нэвтэрлээ. Нууц үг тохируулбал дараа бүр холбоос хүлээхгүйгээр шууд нэвтэрч болно.",
+          "You signed in with an email link. Set a password now so future logins don't need a new emailed link.",
+          "メールリンクでログインしました。パスワードを設定すると、次回から新しいリンクを待たずにログインできます。",
+          "您通过邮件链接登录。现在设置密码,以后登录无需再等待新链接。"
+        )}
+      </p>
+      <form onSubmit={submit} className="grid gap-3 sm:grid-cols-3 sm:items-start">
+        <input
+          type="password"
+          required
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder={t("Шинэ нууц үг", "New password", "新しいパスワード", "新密码")}
+          className="rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-rotary-royal-blue"
+        />
+        <input
+          type="password"
+          required
+          value={confirm}
+          onChange={(e) => setConfirm(e.target.value)}
+          placeholder={t("Дахин оруулах", "Confirm password", "確認用パスワード", "确认密码")}
+          className="rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-rotary-royal-blue"
+        />
+        <button
+          type="submit"
+          disabled={busy}
+          className="bg-rotary-royal-blue text-white font-semibold rounded-md py-2 text-sm disabled:opacity-60"
+        >
+          {busy ? t("Хадгалж байна…", "Saving…", "保存中…", "保存中…") : t("Хадгалах", "Save Password", "保存", "保存")}
+        </button>
+      </form>
+      {error && <p className="text-sm text-rotary-cardinal mt-3">{error}</p>}
     </div>
   );
 }

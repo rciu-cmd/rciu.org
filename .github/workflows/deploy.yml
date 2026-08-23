@@ -30,6 +30,12 @@ jobs:
       - name: Configure Pages
         id: pages
         uses: actions/configure-pages@v5
+        with:
+          # First-run fix: if Pages has never been turned on for this
+          # repo yet, this creates the Pages site automatically instead
+          # of failing with "Get Pages site failed". Safe to leave on
+          # permanently — it's a no-op once Pages already exists.
+          enablement: true
 
       - name: Install dependencies
         run: npm ci

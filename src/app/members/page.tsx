@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { asset } from "@/lib/asset";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
 import { phfTheme } from "@/lib/phf";
+import PhfPinBadge from "@/components/PhfPinBadge";
 
 type PublicMember = {
   member_id: string;
@@ -22,10 +24,25 @@ type PublicMember = {
 
 export default function MembersPage() {
   const { t } = useLanguage();
+  const router = useRouter();
   const [members, setMembers] = useState<PublicMember[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [checkedAuth, setCheckedAuth] = useState(false);
+
+  // Members-only page — guests get redirected to login instead of
+  // seeing the roster/honor roll.
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        router.replace("/login/");
+        return;
+      }
+      setCheckedAuth(true);
+    });
+  }, [router]);
 
   useEffect(() => {
+    if (!checkedAuth) return;
     supabase
       .from("members_public")
       .select("*")
@@ -34,7 +51,11 @@ export default function MembersPage() {
         if (error) setError(error.message);
         else setMembers(data as PublicMember[]);
       });
-  }, []);
+  }, [checkedAuth]);
+
+  if (!checkedAuth) {
+    return <div className="container-page py-20 text-center text-slate-400">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加载中…")}</div>;
+  }
 
   const honorRoll = (members ?? []).filter((m) => m.phf_level !== "none");
 
@@ -96,9 +117,10 @@ export default function MembersPage() {
                   {m.classification && <p className="text-xs text-slate-400">{m.classification}</p>}
                   {m.phf_level !== "none" && (
                     <span
-                      className="inline-block mt-2 text-xs font-semibold px-2 py-0.5 rounded-full text-white"
+                      className="inline-flex items-center gap-1 mt-2 text-xs font-semibold px-2 py-0.5 rounded-full text-white"
                       style={{ background: theme.accent }}
                     >
+                      <PhfPinBadge level={m.phf_level} size={16} />
                       {theme.label}
                     </span>
                   )}
@@ -141,7 +163,8 @@ export default function MembersPage() {
                         <span className="ml-2 text-rotary-gold text-xs font-bold">★ {t("Их хандивлагч", "Major Donor", "メジャードナー", "重要捐赠人")}</span>
                       )}
                     </span>
-                    <span className="text-xs font-bold px-2 py-1 rounded-full" style={{ background: theme.accent }}>
+                    <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full" style={{ background: theme.accent }}>
+                      <PhfPinBadge level={m.phf_level} size={16} />
                       {m.phf_level}
                     </span>
                   </li>
