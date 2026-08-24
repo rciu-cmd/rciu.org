@@ -150,10 +150,10 @@ export default function Home() {
           </div>
           <div className="flex justify-center relative">
             <Image
-              src={asset("/logos/rciu-logo-transparent.png")}
+              src={asset("/logos/rotary-wordmark-white.png")}
               alt="Rotary Club of Ikh Urgoo"
-              width={340}
-              height={155}
+              width={420}
+              height={191}
               className="drop-shadow-xl relative z-10"
               priority
             />
@@ -320,17 +320,13 @@ export default function Home() {
                 <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3">
                   {t("Дэмждэг клубууд", "Sponsored Clubs", "スポンサークラブ", "赞助俱乐部")}
                 </h2>
-                <div className="flex flex-wrap gap-2.5">
+                <div className="flex flex-wrap gap-3">
                   {affiliates.map((a) => {
                     const logo = a.logo_url ?? KNOWN_LOGOS[a.name];
                     return (
-                      <div key={a.id} className="flex items-center gap-2 bg-white rounded-full pl-1.5 pr-4 py-1.5 border border-slate-200 text-sm">
-                        <span className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center shrink-0 overflow-hidden">
-                          {logo ? <Image src={logo.startsWith("http") ? logo : asset(logo)} alt={a.name} width={28} height={28} className="object-contain" /> : <span className="text-[9px] font-bold text-slate-400 uppercase">{a.club_type}</span>}
-                        </span>
-                        <span className="font-semibold text-slate-700">{a.name}</span>
-                        {a.member_count != null && <span className="text-xs text-slate-400">· {a.member_count}</span>}
-                      </div>
+                      <span key={a.id} title={a.name} className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center shrink-0 overflow-hidden">
+                        {logo ? <Image src={logo.startsWith("http") ? logo : asset(logo)} alt={a.name} width={40} height={40} className="object-contain" /> : <span className="text-[9px] font-bold text-slate-400 uppercase">{a.club_type}</span>}
+                      </span>
                     );
                   })}
                 </div>
@@ -342,7 +338,7 @@ export default function Home() {
                 <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3">
                   {t("Холбоос ба түншүүд", "Links & Partners", "リンクとパートナー", "链接与伙伴")}
                 </h2>
-                <div className="flex flex-wrap gap-2.5">
+                <div className="flex flex-wrap gap-3">
                   {links.map((l) => {
                     const logo = l.logo_url ?? KNOWN_LOGOS[l.name];
                     return (
@@ -351,10 +347,10 @@ export default function Home() {
                         href={l.url ?? undefined}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 bg-white rounded-full pl-1.5 pr-4 py-1.5 border border-slate-200 text-sm hover:shadow-sm transition"
+                        title={l.name}
+                        className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center shrink-0 overflow-hidden hover:shadow-sm transition"
                       >
-                        {logo && <Image src={logo.startsWith("http") ? logo : asset(logo)} alt={l.name} width={28} height={28} className="rounded-full object-contain" />}
-                        <span className="font-semibold text-slate-700">{l.name}</span>
+                        {logo ? <Image src={logo.startsWith("http") ? logo : asset(logo)} alt={l.name} width={40} height={40} className="object-contain" /> : <span className="text-[9px] font-bold text-slate-400 uppercase">{l.name[0]}</span>}
                       </a>
                     );
                   })}
