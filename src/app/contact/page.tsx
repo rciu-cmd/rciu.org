@@ -34,21 +34,6 @@ export default function ContactPage() {
 
         <div className="rounded-xl border border-slate-200 p-6 shadow-sm">
           <h2 className="font-bold text-rotary-royal-blue mb-4">
-            {t("Онлайн хурал", "Meeting — Online", "例会(オンライン)", "例会(线上)")}
-          </h2>
-          <p className="text-slate-700 mb-2">Google Meet</p>
-          <a
-            href="https://meet.google.com/?pli=1"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-rotary-azure font-semibold hover:underline text-sm break-all"
-          >
-            meet.google.com/?pli=1
-          </a>
-        </div>
-
-        <div className="rounded-xl border border-slate-200 p-6 shadow-sm">
-          <h2 className="font-bold text-rotary-royal-blue mb-4">
             {t("Имэйл, утас", "Email & Phone", "メール・電話", "邮箱与电话")}
           </h2>
           <p className="text-slate-700">rciu.mng@gmail.com</p>

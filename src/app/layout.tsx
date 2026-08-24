@@ -12,6 +12,7 @@ import "@fontsource/noto-sans/cyrillic-800.css";
 import "./globals.css";
 import { LanguageProvider } from "@/lib/language-context";
 import Navbar from "@/components/Navbar";
+import DistrictBanner from "@/components/DistrictBanner";
 import ThemeStrip from "@/components/ThemeStrip";
 import Footer from "@/components/Footer";
 
@@ -56,6 +57,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <LanguageProvider>
           <Navbar />
+          <DistrictBanner />
           <ThemeStrip />
           <main className="flex-1">{children}</main>
           <Footer />

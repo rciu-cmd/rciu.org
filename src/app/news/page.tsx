@@ -83,11 +83,11 @@ export default function NewsPage() {
         <div className="grid gap-6 sm:grid-cols-2">
           {items.map((n) =>
             n.facebook_url ? (
-              <article key={n.id} className="rounded-xl border border-slate-200 p-3 shadow-sm overflow-hidden flex justify-center">
+              <article key={n.id} className="rounded-2xl border border-slate-200 p-3 shadow-sm hover:shadow-lg transition overflow-hidden flex justify-center">
                 <div className="fb-post" data-href={n.facebook_url} data-width="500" data-show-text="true" />
               </article>
             ) : (
-              <article key={n.id} className="rounded-xl border border-slate-200 p-6 shadow-sm">
+              <article key={n.id} className="rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-lg hover:-translate-y-1 transition">
                 <h2 className="font-bold text-slate-900 mb-2">{t(n.title_mn ?? "", n.title_en ?? "")}</h2>
                 <p className="text-slate-600 text-sm line-clamp-4">{t(n.body_mn ?? "", n.body_en ?? "")}</p>
               </article>

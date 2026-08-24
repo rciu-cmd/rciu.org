@@ -70,11 +70,9 @@ export default function AboutPage() {
               "由国际扶轮正式注册,证书存档在案。"
             )}
           </p>
-          <div className="flex flex-col gap-1 text-sm">
-            <a href={asset("/certificates/rciu-charter-certificate.pdf")} target="_blank" rel="noopener noreferrer" className="text-rotary-azure font-semibold hover:underline">
-              {t("Дүрэмт клубын гэрчилгээ (PDF)", "Charter Certificate (PDF)", "認可証明書 (PDF)", "特许证书 (PDF)")}
-            </a>
-          </div>
+          <a href={asset("/certificates/rciu-charter-certificate.pdf")} target="_blank" rel="noopener noreferrer" className="text-rotary-azure font-semibold hover:underline text-sm">
+            {t("Дүрэмт клубын гэрчилгээ (PDF) — шинэ цонхонд нээх", "Charter Certificate (PDF) — open in new tab", "認可証明書 (PDF) — 新しいタブで開く", "特许证书 (PDF) — 在新标签页打开")}
+          </a>
           <p className="text-xs text-slate-400 mt-3">
             {t(
               "Байгууллагын гэрчилгээ нь Interact Club of Urgoo-д хамаарах тул",
@@ -88,6 +86,24 @@ export default function AboutPage() {
             {t("харагдана.", "instead, alongside the Interact club's info.", "に表示されます。", "显示。")}
           </p>
         </div>
+      </div>
+
+      {/* Charter certificate — shown right on the page, not just as a
+          download link, so anyone can see it without opening a new tab. */}
+      <div className="mb-14">
+        <h2 className="text-2xl font-bold text-rotary-royal-blue mb-4">
+          {t("Дүрэмт клубын гэрчилгээ", "Charter Certificate", "認可証明書", "特许证书")}
+        </h2>
+        <div className="rounded-xl border border-slate-200 overflow-hidden bg-slate-50">
+          <iframe
+            src={asset("/certificates/rciu-charter-certificate.pdf")}
+            title={t("Дүрэмт клубын гэрчилгээ", "Charter Certificate", "認可証明書", "特许证书")}
+            className="w-full h-[600px]"
+          />
+        </div>
+        <a href={asset("/certificates/rciu-charter-certificate.pdf")} target="_blank" rel="noopener noreferrer" className="text-rotary-azure font-semibold hover:underline text-sm mt-2 inline-block">
+          {t("Шинэ цонхонд нээх / татах", "Open in new tab / download", "新しいタブで開く / ダウンロード", "在新标签页打开 / 下载")}
+        </a>
       </div>
 
       {historyEn && (
@@ -104,9 +120,12 @@ export default function AboutPage() {
           <h2 className="text-2xl font-bold text-rotary-royal-blue mb-4">
             {t("Урьд өмнөх тэргүүнүүд", "Past Presidents", "歴代会長", "历任社长")}
           </h2>
-          <ol className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 max-w-3xl">
-            {presidents.map((p) => (
-              <li key={p.id} className="rounded-lg border border-slate-200 px-4 py-2.5 flex items-center justify-between">
+          <ol className="max-w-2xl rounded-xl overflow-hidden">
+            {presidents.map((p, i) => (
+              <li
+                key={p.id}
+                className={`flex items-center justify-between px-5 py-3 ${i % 2 === 0 ? "bg-slate-50" : "bg-white"}`}
+              >
                 <span className="font-semibold text-slate-900">{p.name}</span>
                 <span className="text-sm text-slate-500">{p.year_range}</span>
               </li>

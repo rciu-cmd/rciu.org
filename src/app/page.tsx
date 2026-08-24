@@ -121,30 +121,40 @@ export default function Home() {
 
   return (
     <div>
-      {/* Hero — light background so the (blue) logo actually shows up,
-          instead of the old blue-on-blue gradient that hid it. */}
-      <section className="bg-gradient-to-br from-slate-50 via-white to-blue-50">
-        <div className="container-page py-16 sm:py-24 grid gap-10 sm:grid-cols-2 items-center">
+      {/* Hero — bold gradient using the official Rotary palette, with a
+          large slow-spinning gear watermark for visual energy (purely
+          decorative, never behind readable text). Single CTA: Donate —
+          this is the only Donate button on the whole site. */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-rotary-royal-blue via-[#123a75] to-rotary-azure text-white">
+        <Image
+          src={asset("/logos/ri-gear-gold.png")}
+          alt=""
+          width={620}
+          height={620}
+          aria-hidden="true"
+          className="pointer-events-none select-none absolute -right-32 -top-32 opacity-10 animate-spin-slow"
+        />
+        <div className="container-page py-20 sm:py-28 relative grid gap-10 sm:grid-cols-2 items-center">
           <div>
-            <h1 className="text-3xl sm:text-5xl font-extrabold leading-tight mb-5 text-slate-900">
+            <h1 className="text-3xl sm:text-5xl font-extrabold leading-tight mb-6">
               {t("Их Өргөө Ротари Клуб", "Rotary Club of Ikh Urgoo", "イク・ウルグー・ロータリークラブ", "扶轮伊赫乌尔古俱乐部")}
             </h1>
-            <div className="flex flex-wrap gap-3">
-              <Link href="/about" className="bg-rotary-gold text-[#5a3d0a] font-bold px-6 py-3 rounded-full hover:brightness-105 transition">
-                {t("Бидний тухай", "Learn About Us", "詳細はこちら", "了解我们")}
-              </Link>
-              <Link href="/contact" className="border border-rotary-royal-blue text-rotary-royal-blue font-semibold px-6 py-3 rounded-full hover:bg-rotary-royal-blue hover:text-white transition">
-                {t("Хуралд оролцох", "Join a Meeting", "例会に参加する", "参加例会")}
-              </Link>
-            </div>
+            <a
+              href="https://www.rotary.org/en/get-involved/ways-to-give"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block bg-rotary-gold text-[#5a3d0a] font-bold px-8 py-3.5 rounded-full shadow-lg shadow-black/10 hover:brightness-105 hover:-translate-y-0.5 transition"
+            >
+              {t("Хандив өргөх", "Donate", "寄付する", "捐赠")}
+            </a>
           </div>
-          <div className="flex justify-center">
+          <div className="flex justify-center relative">
             <Image
               src={asset("/logos/rciu-logo-transparent.png")}
               alt="Rotary Club of Ikh Urgoo"
               width={340}
               height={155}
-              className="drop-shadow-sm"
+              className="drop-shadow-xl relative z-10"
               priority
             />
           </div>
@@ -165,6 +175,51 @@ export default function Home() {
           value={stats.projectCount === null ? "—" : String(stats.projectCount)}
           label={t("Хэрэгжүүлсэн төсөл", "Community projects", "コミュニティ・プロジェクト", "社区项目")}
         />
+      </section>
+
+      {/* News — moved above Projects per the club's request, and given
+          a bigger, more prominent treatment (was a small 3-up preview
+          at the very bottom of the page). */}
+      <section className="bg-gradient-to-br from-blue-50 via-white to-amber-50 py-16">
+        <div className="container-page">
+          <div className="flex items-end justify-between mb-8">
+            <h2 className="text-3xl font-bold text-rotary-royal-blue">
+              {t("Мэдээ", "Latest News", "最新ニュース", "最新新闻")}
+            </h2>
+            <Link href="/news" className="text-rotary-royal-blue font-semibold hover:underline shrink-0">
+              {t("Бүх мэдээ →", "View All News →", "すべて見る →", "查看全部 →")}
+            </Link>
+          </div>
+
+          {news.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-16 text-center text-slate-400">
+              {t("Мэдээ удахгүй нэмэгдэнэ.", "News posts will appear here once published.", "ニュースは公開され次第表示されます。", "新闻发布后将显示在此处。")}
+            </div>
+          ) : (
+            <div className="grid gap-6 sm:grid-cols-2">
+              {news.map((n) =>
+                n.facebook_url ? (
+                  <a
+                    key={n.id}
+                    href={n.facebook_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-2xl bg-white border border-slate-200 p-8 min-h-[220px] shadow-sm hover:shadow-xl hover:-translate-y-1 transition flex flex-col"
+                  >
+                    <span className="inline-block text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 mb-3 w-fit">Facebook</span>
+                    <p className="text-slate-600 flex-1">{t("Facebook хуудсан дээрх постыг үзэх", "View the full post on our Facebook Page", "Facebookページの投稿を見る", "查看 Facebook 页面完整帖子")}</p>
+                    <span className="text-rotary-royal-blue font-semibold mt-4">{t("Үзэх →", "View post →", "見る →", "查看 →")}</span>
+                  </a>
+                ) : (
+                  <article key={n.id} className="rounded-2xl bg-white border border-slate-200 p-8 min-h-[220px] shadow-sm hover:shadow-xl hover:-translate-y-1 transition flex flex-col">
+                    <h3 className="text-xl font-bold text-slate-900 mb-3 line-clamp-2">{t(n.title_mn ?? "", n.title_en ?? "")}</h3>
+                    <p className="text-slate-600 line-clamp-4 flex-1">{t(n.body_mn ?? "", n.body_en ?? "")}</p>
+                  </article>
+                )
+              )}
+            </div>
+          )}
+        </div>
       </section>
 
       {/* Projects — the club's main work, so this gets the biggest,
@@ -196,7 +251,7 @@ export default function Home() {
         ) : (
           <div className="grid gap-8 lg:grid-cols-2">
             {projects.map((p) => (
-              <article key={p.id} className="rounded-2xl border border-slate-200 shadow-sm overflow-hidden bg-white flex flex-col">
+              <article key={p.id} className="rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition overflow-hidden bg-white flex flex-col">
                 <div className="relative aspect-video bg-slate-100">
                   {p.cover_image_url ? (
                     <Image src={p.cover_image_url} alt="" fill className="object-cover" />
@@ -254,102 +309,73 @@ export default function Home() {
         </section>
       )}
 
-      {/* Affiliate clubs — Interact & Rotaract, with real contact info
-          so a visitor can reach their leadership directly. */}
-      {affiliates.length > 0 && (
-        <section className="bg-slate-50 py-16">
+      {/* Sponsored clubs + Links & Partners — deliberately small and
+          at the very bottom of the page now (was a full-width section
+          higher up); this is reference info, not the main event. */}
+      {(affiliates.length > 0 || links.length > 0) && (
+        <section className="bg-slate-50 py-10 border-t border-slate-200">
           <div className="container-page">
-            <h2 className="text-2xl font-bold text-rotary-royal-blue mb-8">
-              {t("Дэмждэг клубууд", "Sponsored Clubs", "スポンサークラブ", "赞助俱乐部")}
-            </h2>
-            <div className="grid gap-6 sm:grid-cols-2">
-              {affiliates.map((a) => (
-                <div key={a.id} className="rounded-2xl bg-white border border-slate-200 p-6 shadow-sm flex gap-4">
-                  <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center shrink-0 overflow-hidden">
-                    {a.logo_url ? <Image src={a.logo_url} alt={a.name} width={56} height={56} className="object-cover" /> : <span className="text-xs font-bold text-slate-400 uppercase">{a.club_type}</span>}
-                  </div>
-                  <div>
-                    <p className="font-bold text-slate-900">{a.name}</p>
-                    {a.member_count != null && (
-                      <p className="text-sm text-rotary-azure font-semibold">{a.member_count} {t("гишүүн", "members", "名の会員", "名会员")}</p>
-                    )}
-                    {a.president_name && <p className="text-sm text-slate-600 mt-1">{a.president_name}</p>}
-                    <p className="text-xs text-slate-500">
-                      {[a.contact_phone, a.contact_email].filter(Boolean).join(" · ")}
-                    </p>
-                  </div>
+            {affiliates.length > 0 && (
+              <div className="mb-6">
+                <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3">
+                  {t("Дэмждэг клубууд", "Sponsored Clubs", "スポンサークラブ", "赞助俱乐部")}
+                </h2>
+                <div className="flex flex-wrap gap-2.5">
+                  {affiliates.map((a) => {
+                    const logo = a.logo_url ?? KNOWN_LOGOS[a.name];
+                    return (
+                      <div key={a.id} className="flex items-center gap-2 bg-white rounded-full pl-1.5 pr-4 py-1.5 border border-slate-200 text-sm">
+                        <span className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center shrink-0 overflow-hidden">
+                          {logo ? <Image src={logo.startsWith("http") ? logo : asset(logo)} alt={a.name} width={28} height={28} className="object-contain" /> : <span className="text-[9px] font-bold text-slate-400 uppercase">{a.club_type}</span>}
+                        </span>
+                        <span className="font-semibold text-slate-700">{a.name}</span>
+                        {a.member_count != null && <span className="text-xs text-slate-400">· {a.member_count}</span>}
+                      </div>
+                    );
+                  })}
                 </div>
-              ))}
-            </div>
+              </div>
+            )}
 
             {links.length > 0 && (
-              <div className="mt-12">
-                <h2 className="font-bold text-rotary-royal-blue mb-4">
+              <div>
+                <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3">
                   {t("Холбоос ба түншүүд", "Links & Partners", "リンクとパートナー", "链接与伙伴")}
                 </h2>
-                <div className="flex flex-wrap gap-4">
-                  {links.map((l) => (
-                    <a
-                      key={l.id}
-                      href={l.url ?? undefined}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-3 bg-white rounded-full pl-2 pr-5 py-2 border border-slate-200 hover:shadow-md transition"
-                    >
-                      {l.logo_url && <Image src={l.logo_url} alt={l.name} width={36} height={36} className="rounded-full" />}
-                      <span className="text-sm font-semibold text-slate-800">{l.name}</span>
-                    </a>
-                  ))}
+                <div className="flex flex-wrap gap-2.5">
+                  {links.map((l) => {
+                    const logo = l.logo_url ?? KNOWN_LOGOS[l.name];
+                    return (
+                      <a
+                        key={l.id}
+                        href={l.url ?? undefined}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 bg-white rounded-full pl-1.5 pr-4 py-1.5 border border-slate-200 text-sm hover:shadow-sm transition"
+                      >
+                        {logo && <Image src={logo.startsWith("http") ? logo : asset(logo)} alt={l.name} width={28} height={28} className="rounded-full object-contain" />}
+                        <span className="font-semibold text-slate-700">{l.name}</span>
+                      </a>
+                    );
+                  })}
                 </div>
               </div>
             )}
           </div>
         </section>
       )}
-
-      {/* News — small preview at the bottom, full list on /news */}
-      <section className="container-page py-16">
-        <div className="flex items-end justify-between mb-8">
-          <h2 className="text-2xl font-bold text-rotary-royal-blue">
-            {t("Мэдээ", "Latest News", "最新ニュース", "最新新闻")}
-          </h2>
-          <Link href="/news" className="text-rotary-royal-blue font-semibold hover:underline shrink-0">
-            {t("Бүх мэдээ →", "View All News →", "すべて見る →", "查看全部 →")}
-          </Link>
-        </div>
-
-        {news.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-300 p-10 text-center text-slate-400">
-            {t("Мэдээ удахгүй нэмэгдэнэ.", "News posts will appear here once published.", "ニュースは公開され次第表示されます。", "新闻发布后将显示在此处。")}
-          </div>
-        ) : (
-          <div className="grid gap-6 sm:grid-cols-3">
-            {news.map((n) =>
-              n.facebook_url ? (
-                <a
-                  key={n.id}
-                  href={n.facebook_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition flex flex-col"
-                >
-                  <span className="inline-block text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 mb-2 w-fit">Facebook</span>
-                  <p className="text-slate-600 text-sm flex-1">{t("Facebook хуудсан дээрх постыг үзэх", "View the full post on our Facebook Page", "Facebookページの投稿を見る", "查看 Facebook 页面完整帖子")}</p>
-                  <span className="text-rotary-royal-blue text-sm font-semibold mt-3">{t("Үзэх →", "View post →", "見る →", "查看 →")}</span>
-                </a>
-              ) : (
-                <article key={n.id} className="rounded-xl border border-slate-200 p-5 shadow-sm">
-                  <h3 className="font-bold text-slate-900 mb-2 line-clamp-2">{t(n.title_mn ?? "", n.title_en ?? "")}</h3>
-                  <p className="text-slate-600 text-sm line-clamp-3">{t(n.body_mn ?? "", n.body_en ?? "")}</p>
-                </article>
-              )
-            )}
-          </div>
-        )}
-      </section>
     </div>
   );
 }
+
+// Fallback logos for known sponsored/partner clubs that don't have a
+// logo_url set in the database yet — keeps the small bottom strip
+// from showing blank circles for clubs we already have real logos for.
+const KNOWN_LOGOS: Record<string, string> = {
+  "Urgoo Rotaract Club": "/logos/urgoo-rotaract.png",
+  "Urgoo Interact Club": "/logos/urgoo-interact.png",
+  "Makati Legazpi Rotary Club": "/logos/makati-legazpi.png",
+};
 
 function StatCard({ value, label }: { value: string; label: string }) {
   return (

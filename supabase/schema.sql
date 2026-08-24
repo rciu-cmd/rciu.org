@@ -198,7 +198,8 @@ create table if not exists public.board_positions (
   role_ja text,
   role_zh text,
   rotary_year text not null,             -- e.g. '2026-2027'
-  sort_order int not null default 0,
+  sort_order int not null default 0,     -- also doubles as Rotary-protocol display order (President, VP, Secretary, ...) — admin-set
+  photo_url text,                        -- optional; falls back to the member's own photo_url if unset
   created_at timestamptz not null default now()
 );
 

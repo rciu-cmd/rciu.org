@@ -138,6 +138,13 @@ export default function MembersPage() {
                   <p className="font-bold text-slate-900">{m.first_name} {m.last_name}</p>
                   {m.position && <p className="text-sm text-slate-500">{m.position}</p>}
                   {m.classification && <p className="text-xs text-slate-400">{m.classification}</p>}
+                  {/* Contact info moved up here from the honor roll —
+                      still members-only (this whole page is login-gated). */}
+                  <div className="text-xs text-slate-500 mt-1 flex flex-col gap-0.5">
+                    {m.email && <span>{m.email}</span>}
+                    {m.phone && <span>{m.phone}</span>}
+                    {m.rotary_id && <span>Rotary ID: {m.rotary_id}</span>}
+                  </div>
                   {m.phf_level !== "none" && (
                     <span
                       className="inline-flex items-center gap-1 mt-2 text-xs font-semibold px-2 py-0.5 rounded-full text-white"
@@ -158,14 +165,14 @@ export default function MembersPage() {
           contact info. Visible to logged-in members only (this page
           and the members_directory view are both login-gated), so
           this is a members' contact directory, not a public listing. */}
-      <section className="rounded-2xl bg-gradient-to-br from-[#0d2c5c] to-rotary-royal-blue text-white p-8">
+      <section className="rounded-2xl bg-white border border-slate-200 text-rotary-royal-blue p-8">
         <div className="flex items-center gap-3 mb-2">
-          <Image src={asset("/logos/ri-gear-logo.png")} alt="" width={32} height={32} />
+          <Image src={asset("/logos/ri-gear-gold.png")} alt="" width={32} height={32} />
           <h2 className="text-2xl font-bold">
             {t("Paul Harris Fellow алдрын самбар", "Paul Harris Fellow Honor Roll", "ポール・ハリス・フェロー 名誉殿堂", "保罗·哈里斯会员荣誉榜")}
           </h2>
         </div>
-        <p className="text-blue-100 text-sm mb-6 max-w-xl">
+        <p className="text-slate-500 text-sm mb-6 max-w-xl">
           {t(
             "The Rotary Foundation-д хувь нэмэр оруулсныг нь хүлээн зөвшөөрсөн клубын гишүүд, өндөр зэрэглэлээс бага руу эрэмбэлэгдсэн. Мөнгөн дүн энд харагдахгүй.",
             "Club members recognized for their contributions to The Rotary Foundation, ranked highest to lowest. Dollar amounts are kept private — only recognition tier is shown.",
@@ -174,29 +181,24 @@ export default function MembersPage() {
           )}
         </p>
         {honorRoll.length === 0 ? (
-          <p className="text-blue-100 text-sm">{t("Удахгүй…", "Coming soon…", "近日公開…", "即将上线…")}</p>
+          <p className="text-slate-400 text-sm">{t("Удахгүй…", "Coming soon…", "近日公開…", "即将上线…")}</p>
         ) : (
-          <ol className="flex flex-col divide-y divide-white/10">
+          <ol className="flex flex-col divide-y divide-slate-100">
             {honorRoll.map((m, i) => (
               <li key={m.member_id} className="flex flex-wrap items-center gap-4 py-4">
-                <span className="text-blue-200 font-bold w-6 text-right shrink-0">{i + 1}</span>
+                <span className="text-rotary-azure font-bold w-6 text-right shrink-0">{i + 1}</span>
                 <PhfPinBadge level={m.phf_level} size={40} majorDonor={m.major_donor} />
                 <div className="min-w-[10rem] flex-1">
-                  <p className="font-semibold">
+                  <p className="font-semibold text-slate-900">
                     {m.first_name} {m.last_name}
                     {m.major_donor && (
                       <span className="ml-2 text-rotary-gold text-xs font-bold align-middle">★ {t("Их хандивлагч", "Major Donor", "メジャードナー", "重要捐赠人")}</span>
                     )}
                   </p>
-                  {m.highest_position && <p className="text-xs text-blue-200">{m.highest_position}</p>}
-                </div>
-                <div className="text-xs text-blue-100 flex flex-col gap-0.5 min-w-[11rem]">
-                  {m.email && <span>{m.email}</span>}
-                  {m.phone && <span>{m.phone}</span>}
-                  {m.rotary_id && <span className="text-blue-300">Rotary ID: {m.rotary_id}</span>}
+                  {m.highest_position && <p className="text-xs text-rotary-azure">{m.highest_position}</p>}
                 </div>
                 <span
-                  className="inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full shrink-0"
+                  className="inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full text-white shrink-0"
                   style={{ background: phfTheme(m.phf_level).accent }}
                 >
                   {m.phf_level}

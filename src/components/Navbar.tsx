@@ -58,14 +58,8 @@ export default function Navbar() {
         </nav>
 
         <div className="flex items-center gap-3">
-          <a
-            href="https://www.rotary.org/en/get-involved/ways-to-give"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hidden sm:inline-block text-xs font-semibold px-3 py-1.5 rounded-full bg-rotary-gold text-[#5a3d0a] hover:brightness-105 transition"
-          >
-            {t("Хандив өргөх", "Donate", "寄付する", "捐赠")}
-          </a>
+          {/* Donate lives once, prominently, in the home page hero —
+              not duplicated here in the nav. */}
           <Link
             href={authed ? "/dashboard" : "/login"}
             className="hidden sm:inline-block text-xs font-semibold px-3 py-1.5 rounded-full border border-rotary-royal-blue text-rotary-royal-blue hover:bg-rotary-royal-blue hover:text-white transition-colors"
@@ -96,15 +90,6 @@ export default function Navbar() {
           <Link href={authed ? "/dashboard" : "/login"} onClick={() => setOpen(false)} className="font-semibold text-rotary-royal-blue">
             {authed ? t("Хувийн профайл", "My Dashboard", "マイページ", "我的主页") : t("Гишүүн нэвтрэх", "Member Login", "会員ログイン", "会员登录")}
           </Link>
-          <a
-            href="https://www.rotary.org/en/get-involved/ways-to-give"
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => setOpen(false)}
-            className="font-semibold text-[#8a6d1f]"
-          >
-            {t("Хандив өргөх", "Donate", "寄付する", "捐赠")}
-          </a>
         </nav>
       )}
     </header>

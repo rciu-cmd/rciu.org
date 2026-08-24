@@ -54,7 +54,7 @@ export default function ProjectsPage() {
       {items && items.length > 0 && (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((p) => (
-            <article key={p.id} className="rounded-xl border border-slate-200 p-6 shadow-sm">
+            <article key={p.id} className="rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-lg hover:-translate-y-1 transition">
               <span className="inline-block text-xs font-semibold uppercase tracking-wide text-rotary-azure mb-2">
                 {p.status}
               </span>

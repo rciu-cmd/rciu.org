@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
 
@@ -11,6 +12,7 @@ type BoardRow = {
   role_ja: string | null;
   role_zh: string | null;
   rotary_year: string;
+  photo_url: string | null;
   members: { first_name: string; last_name: string; photo_url: string | null } | null;
 };
 
@@ -21,7 +23,7 @@ export default function BoardPage() {
   useEffect(() => {
     supabase
       .from("board_positions")
-      .select("id, role_mn, role_en, role_ja, role_zh, rotary_year, members(first_name, last_name, photo_url)")
+      .select("id, role_mn, role_en, role_ja, role_zh, rotary_year, photo_url, members(first_name, last_name, photo_url)")
       .order("sort_order")
       .then(({ data }) => setRows((data as unknown as BoardRow[]) ?? []));
   }, []);
@@ -60,17 +62,31 @@ export default function BoardPage() {
 
       {rows && rows.length > 0 && (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {rows.map((r) => (
-            <div key={r.id} className="rounded-xl border border-slate-200 p-6 shadow-sm">
-              <p className="font-bold text-slate-900">
-                {r.members?.first_name} {r.members?.last_name}
-              </p>
-              <p className="text-rotary-royal-blue text-sm font-semibold">
-                {t(r.role_mn, r.role_en, r.role_ja ?? undefined, r.role_zh ?? undefined)}
-              </p>
-              <p className="text-xs text-slate-400 mt-1">{r.rotary_year}</p>
-            </div>
-          ))}
+          {rows.map((r) => {
+            const photo = r.photo_url ?? r.members?.photo_url ?? null;
+            return (
+              <div key={r.id} className="rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition flex gap-4 items-center">
+                <div className="w-16 h-16 rounded-full bg-blue-50 shrink-0 overflow-hidden flex items-center justify-center">
+                  {photo ? (
+                    <Image src={photo} alt="" width={64} height={64} className="object-cover w-full h-full" />
+                  ) : (
+                    <span className="text-lg font-bold text-rotary-royal-blue">
+                      {r.members?.first_name?.[0]}{r.members?.last_name?.[0]}
+                    </span>
+                  )}
+                </div>
+                <div>
+                  <p className="font-bold text-slate-900">
+                    {r.members?.first_name} {r.members?.last_name}
+                  </p>
+                  <p className="text-rotary-royal-blue text-sm font-semibold">
+                    {t(r.role_mn, r.role_en, r.role_ja ?? undefined, r.role_zh ?? undefined)}
+                  </p>
+                  <p className="text-xs text-slate-400 mt-1">{r.rotary_year}</p>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
