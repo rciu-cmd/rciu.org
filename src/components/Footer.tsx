@@ -12,7 +12,7 @@ export default function Footer() {
       <div className="container-page py-10 grid gap-8 sm:grid-cols-3">
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <Image src={asset("/logos/rciu-logo-transparent.png")} alt="Rotary Club of Ikh Urgoo" width={36} height={36} />
+            <Image src={asset("/logos/rciu-emblem.jpg")} alt="Rotary Club of Ikh Urgoo" width={36} height={36} className="rounded-full" />
             <span className="font-bold">{t("Их Өргөө Ротари Клуб", "Rotary Club of Ikh Urgoo", "イク・ウルグー・ロータリークラブ", "扶轮伊赫乌尔古俱乐部")}</span>
           </div>
           <p className="text-sm text-blue-100">

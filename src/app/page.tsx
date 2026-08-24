@@ -320,13 +320,13 @@ export default function Home() {
                 <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3">
                   {t("Дэмждэг клубууд", "Sponsored Clubs", "スポンサークラブ", "赞助俱乐部")}
                 </h2>
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap items-center gap-8">
                   {affiliates.map((a) => {
                     const logo = a.logo_url ?? KNOWN_LOGOS[a.name];
-                    return (
-                      <span key={a.id} title={a.name} className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center shrink-0 overflow-hidden">
-                        {logo ? <Image src={logo.startsWith("http") ? logo : asset(logo)} alt={a.name} width={40} height={40} className="object-contain" /> : <span className="text-[9px] font-bold text-slate-400 uppercase">{a.club_type}</span>}
-                      </span>
+                    return logo ? (
+                      <Image key={a.id} src={logo.startsWith("http") ? logo : asset(logo)} alt={a.name} title={a.name} width={160} height={80} className="object-contain h-14 w-auto shrink-0" />
+                    ) : (
+                      <span key={a.id} title={a.name} className="text-xs font-bold text-slate-400 uppercase">{a.club_type}</span>
                     );
                   })}
                 </div>
@@ -338,19 +338,23 @@ export default function Home() {
                 <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3">
                   {t("Холбоос ба түншүүд", "Links & Partners", "リンクとパートナー", "链接与伙伴")}
                 </h2>
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap items-center gap-8">
                   {links.map((l) => {
                     const logo = l.logo_url ?? KNOWN_LOGOS[l.name];
-                    return (
+                    return logo ? (
                       <a
                         key={l.id}
                         href={l.url ?? undefined}
                         target="_blank"
                         rel="noopener noreferrer"
                         title={l.name}
-                        className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center shrink-0 overflow-hidden hover:shadow-sm transition"
+                        className="shrink-0 hover:opacity-80 transition"
                       >
-                        {logo ? <Image src={logo.startsWith("http") ? logo : asset(logo)} alt={l.name} width={40} height={40} className="object-contain" /> : <span className="text-[9px] font-bold text-slate-400 uppercase">{l.name[0]}</span>}
+                        <Image src={logo.startsWith("http") ? logo : asset(logo)} alt={l.name} width={160} height={80} className="object-contain h-14 w-auto" />
+                      </a>
+                    ) : (
+                      <a key={l.id} href={l.url ?? undefined} target="_blank" rel="noopener noreferrer" title={l.name} className="text-xs font-bold text-slate-400 uppercase">
+                        {l.name}
                       </a>
                     );
                   })}
