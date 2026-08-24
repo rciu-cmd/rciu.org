@@ -104,7 +104,7 @@ export default function DashboardPage() {
           <h1 className="text-3xl font-bold mb-2">{member.first_name} {member.last_name}</h1>
           {isPhf ? (
             <div className="inline-flex items-center gap-2 bg-white/15 rounded-full px-4 py-1.5 text-sm font-semibold">
-              <PhfPinBadge level={member.phf_level} size={24} />
+              <PhfPinBadge level={member.phf_level} size={24} majorDonor={member.major_donor} />
               {theme.label}
               {member.major_donor && <span className="text-rotary-gold">★ {t("Их хандивлагч", "Major Donor", "メジャードナー", "重要捐赠人")}</span>}
             </div>

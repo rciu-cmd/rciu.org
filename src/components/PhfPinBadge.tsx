@@ -17,9 +17,34 @@ const PIN_IMAGES: Record<string, string> = {
   "PHF+8": "/badges/phf/phf-plus8.png",
 };
 
-export default function PhfPinBadge({ level, size = 28 }: { level: string; size?: number }) {
+export default function PhfPinBadge({
+  level,
+  size = 28,
+  majorDonor = false,
+}: {
+  level: string;
+  size?: number;
+  majorDonor?: boolean;
+}) {
   const theme = phfTheme(level);
   if (level === "none") return null;
+
+  // Major Donor pin (diamond-shaped) takes priority over the regular
+  // gem pin — Rotary Foundation Major Donor recognition sits alongside
+  // the PHF gem scale rather than on it.
+  if (majorDonor) {
+    return (
+      <span className="inline-flex items-center" title={`${theme.label} · Major Donor`}>
+        <Image
+          src={asset("/badges/phf/phf-major-donor.png")}
+          alt="Major Donor"
+          width={size}
+          height={size}
+          style={{ width: size, height: size }}
+        />
+      </span>
+    );
+  }
 
   const image = PIN_IMAGES[level];
   if (image) {

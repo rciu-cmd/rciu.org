@@ -129,7 +129,7 @@ export default function MembersPage() {
                       className="inline-flex items-center gap-1 mt-2 text-xs font-semibold px-2 py-0.5 rounded-full text-white"
                       style={{ background: theme.accent }}
                     >
-                      <PhfPinBadge level={m.phf_level} size={16} />
+                      <PhfPinBadge level={m.phf_level} size={16} majorDonor={m.major_donor} />
                       {theme.label}
                     </span>
                   )}
@@ -166,7 +166,7 @@ export default function MembersPage() {
             {honorRoll.map((m, i) => (
               <li key={m.member_id} className="flex flex-wrap items-center gap-4 py-4">
                 <span className="text-blue-200 font-bold w-6 text-right shrink-0">{i + 1}</span>
-                <PhfPinBadge level={m.phf_level} size={40} />
+                <PhfPinBadge level={m.phf_level} size={40} majorDonor={m.major_donor} />
                 <div className="min-w-[10rem] flex-1">
                   <p className="font-semibold">
                     {m.first_name} {m.last_name}
