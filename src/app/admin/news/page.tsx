@@ -135,6 +135,14 @@ export default function AdminNewsPage() {
                   "只需粘贴俱乐部 Facebook 帖子的链接,照片、视频和文字都会完整显示在新闻页面上。"
                 )}
               </p>
+              <p className="text-xs text-slate-400 -mt-1">
+                {t(
+                  "Facebook-ын \"Хуваалцах\" товчнаас гарсан холбоос биш, пост дээрх огноог дарж гарч ирэх жинхэнэ холбоосыг ашиглана уу (мөн пост нь \"Нийтэд\" харагдах ёстой).",
+                  "Use the post's own permalink — click the timestamp on the post to open it, then copy that URL. Don't use the link from Facebook's \"Share\" button, and make sure the post's audience is set to Public.",
+                  "Facebookの「シェア」ボタンのリンクではなく、投稿の日付をクリックして開いたページの本来のURLを使ってください(投稿は「公開」設定である必要があります)。",
+                  "请使用帖子本身的永久链接(点击帖子上的时间戳打开后复制该网址),不要使用 Facebook「分享」按钮生成的链接,并确保帖子可见范围为「公开」。"
+                )}
+              </p>
               <input
                 required
                 type="url"
@@ -143,6 +151,16 @@ export default function AdminNewsPage() {
                 onChange={(e) => setFacebookUrl(e.target.value)}
                 className="rounded-md border border-slate-300 px-3 py-2 text-sm"
               />
+              {/facebook\.com\/share\//i.test(facebookUrl) && (
+                <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-3 py-2">
+                  {t(
+                    "⚠️ Энэ бол \"Хуваалцах\" холбоос бөгөөд ихэвчлэн ажилладаггүй. Пост дээрх огноог дарж гарах жинхэнэ холбоосыг ашиглана уу.",
+                    "⚠️ This looks like a Facebook \"Share\" link, which usually fails to embed. Open the post and copy the link from its timestamp instead.",
+                    "⚠️ これはFacebookの「シェア」リンクのようです。通常埋め込みに失敗します。投稿の日付リンクからURLを取得してください。",
+                    "⚠️ 这看起来是 Facebook 的「分享」链接,通常无法正常嵌入。请改用点击帖子时间戳获得的链接。"
+                  )}
+                </p>
+              )}
               {error && <p className="text-sm text-rotary-cardinal">{error}</p>}
               <button type="submit" disabled={busy} className="justify-self-start bg-rotary-royal-blue text-white font-semibold rounded-md px-5 py-2 text-sm disabled:opacity-60">
                 {busy ? t("Хадгалж байна…", "Saving…", "保存中…", "保存中…") : t("Ноорог хадгалах", "Save as Draft", "下書き保存", "保存为草稿")}

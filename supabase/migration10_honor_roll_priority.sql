@@ -14,12 +14,17 @@
 alter table public.members
   add column if not exists honor_roll_priority int;
 
+-- honor_roll_priority is appended at the END of the select list, not
+-- inserted alongside the other columns — CREATE OR REPLACE VIEW only
+-- allows adding new output columns after the existing ones; it errors
+-- if any existing column's position shifts.
 create or replace view public.members_directory as
 select
   member_id, first_name, last_name, name_local, classification, position,
-  photo_url, city, email, phone, rotary_id, highest_position, honor_roll_priority,
+  photo_url, city, email, phone, rotary_id, highest_position,
   case when honor_roll_visible then phf_level else 'none' end as phf_level,
-  case when honor_roll_visible then major_donor else false end as major_donor
+  case when honor_roll_visible then major_donor else false end as major_donor,
+  honor_roll_priority
 from public.members
 where status = 'active';
 

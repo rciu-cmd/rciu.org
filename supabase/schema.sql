@@ -177,9 +177,10 @@ grant select on public.members_public to anon, authenticated;
 create or replace view public.members_directory as
 select
   member_id, first_name, last_name, name_local, classification, position,
-  photo_url, city, email, phone, rotary_id, highest_position, honor_roll_priority,
+  photo_url, city, email, phone, rotary_id, highest_position,
   case when honor_roll_visible then phf_level else 'none' end as phf_level,
-  case when honor_roll_visible then major_donor else false end as major_donor
+  case when honor_roll_visible then major_donor else false end as major_donor,
+  honor_roll_priority
 from public.members
 where status = 'active';
 
