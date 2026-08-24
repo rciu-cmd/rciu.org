@@ -212,6 +212,46 @@ create policy board_write_admin on public.board_positions
   for all using (public.is_admin())
   with check (public.is_admin());
 
+-- Past presidents (historical list, not tied to member accounts —
+-- some past presidents may no longer have a login/member record).
+-- Sourced from the club's own profile page on rotarymongolia.org.
+create table if not exists public.club_past_presidents (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  year_range text not null,   -- free text, e.g. "2020-2021" or "2016-2017, 2018-2019"
+  sort_order int not null default 0,
+  created_at timestamptz not null default now()
+);
+
+alter table public.club_past_presidents enable row level security;
+
+drop policy if exists past_presidents_select_public on public.club_past_presidents;
+create policy past_presidents_select_public on public.club_past_presidents for select using (true);
+
+drop policy if exists past_presidents_write_admin on public.club_past_presidents;
+create policy past_presidents_write_admin on public.club_past_presidents
+  for all using (public.is_admin())
+  with check (public.is_admin());
+
+insert into public.club_past_presidents (name, year_range, sort_order)
+select v.name, v.year_range, v.sort_order
+from (values
+  ('Batbold.B',        '2024-2025', 10),
+  ('Uyanga.G',         '2023-2024', 20),
+  ('Ochirbat.B',       '2022-2023', 30),
+  ('Myagmarsuren.B',   '2021-2022', 40),
+  ('Enkhtaiwan.T',     '2020-2021', 50),
+  ('Boldmaa.S',        '2019-2020', 60),
+  ('Ganzorig.B',       '2017-2018, 2018-2019', 70),
+  ('Battogtokh.M',     '2016-2017', 80),
+  ('Baldandorj.Z',     '2014-2015', 90),
+  ('Erdenebayar.B',    '2013-2014', 100),
+  ('Nasanbat.Ts',      '2011-2012, 2012-2013', 110)
+) as v(name, year_range, sort_order)
+where not exists (
+  select 1 from public.club_past_presidents p where p.name = v.name
+);
+
 -- ------------------------------------------------------------
 -- news
 -- ------------------------------------------------------------
@@ -229,7 +269,7 @@ create table if not exists public.news (
   body_ja text,
   body_zh text,
   cover_image_url text,
-  facebook_url text,
+  facebook_url text unique,   -- lets the Facebook auto-sync workflow upsert without duplicating a post it's already synced (NULL is fine — a plain UNIQUE constraint allows any number of NULL rows, i.e. written posts)
   status text not null default 'draft' check (status in ('draft','published')),
   author_id uuid references public.members(id),
   published_at timestamptz,
@@ -279,6 +319,12 @@ create table if not exists public.projects (
   status text not null default 'ongoing' check (status in ('ongoing','completed','planned')),
   start_date date,
   end_date date,
+  -- Funding figures — optional, admin-entered per project (e.g. for a
+  -- Rotary Foundation global grant). No dollar amounts are assumed;
+  -- these stay null until an admin fills them in and confirms them.
+  funding_amount numeric,
+  funding_currency text not null default 'USD',
+  grant_number text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -352,6 +398,28 @@ create policy links_write_admin on public.links_partners
   for all using (public.is_admin())
   with check (public.is_admin());
 
+-- Sister clubs, sourced from rotarymongolia.org's RCIU profile page.
+-- No logos on file yet — add via /admin/partners once available.
+insert into public.links_partners (name, category, description_mn, description_en, sort_order)
+select v.name, 'sister_club', v.description_mn, v.description_en, v.sort_order
+from (values
+  (
+    'Melawati Rotary Club',
+    'Хамтын Rotary клуб — 2023 оноос хойш (District 3300).',
+    'Sister club since 2023 (District 3300).',
+    10
+  ),
+  (
+    'Makati Legazpi Rotary Club',
+    'Хамтын Rotary клуб — 2024 оноос хойш (District 3830/3840).',
+    'Sister club since 2024 (District 3830/3840).',
+    20
+  )
+) as v(name, description_mn, description_en, sort_order)
+where not exists (
+  select 1 from public.links_partners l where l.name = v.name
+);
+
 -- Sponsored youth clubs (Interact + Rotaract) shown in one shared section.
 create table if not exists public.affiliate_clubs (
   id uuid primary key default gen_random_uuid(),
@@ -381,6 +449,21 @@ drop policy if exists affiliate_write_admin on public.affiliate_clubs;
 create policy affiliate_write_admin on public.affiliate_clubs
   for all using (public.is_admin())
   with check (public.is_admin());
+
+-- Sourced from rotarymongolia.org's RCIU profile page. Chartered
+-- dates use Jan 1 of the founding year since only the year is
+-- confirmed on the source page. A third club ("Urgoo Club", planned
+-- 2025 per the source page) is deliberately not seeded — unconfirmed
+-- and its Interact/Rotaract type is unclear; add via /admin once known.
+insert into public.affiliate_clubs (name, club_type, chartered_date, sort_order)
+select v.name, v.club_type, v.chartered_date, v.sort_order
+from (values
+  ('Urgoo Rotaract Club', 'rotaract', date '2013-01-01', 10),
+  ('Urgoo Interact Club',  'interact',  date '2022-01-01', 20)
+) as v(name, club_type, chartered_date, sort_order)
+where not exists (
+  select 1 from public.affiliate_clubs a where a.name = v.name
+);
 
 -- ------------------------------------------------------------
 -- stock / inventory — HIDDEN, admin-only page (pins, banners, gifts)
@@ -479,6 +562,16 @@ insert into public.site_settings (key, value_en, value_mn) values
   -- /admin/settings each year without touching code.
   ('rotary_theme_banner_url', '/theme/create-lasting-impact-pink-wide.png', '/theme/create-lasting-impact-pink-wide.png')
 on conflict (key) do update set value_en = excluded.value_en, value_mn = excluded.value_mn;
+
+-- Club history (founding story), sourced from rotarymongolia.org's
+-- RCIU profile page. Editable from /admin/history.
+insert into public.site_settings (key, value_mn, value_en) values
+  (
+    'club_history_mn',
+    'Rotary Club of Ikh Urgoo 2009 онд "Lexus Rotary Club" нэртэй ТББ хэлбэрээр хүмүүнлэгийн үйл ажиллагаагаар анх үүсч, 2012 оны 6-р сард Улаанбаатар Rotary клубын дэмжлэгтэйгээр Rotary International-д албан ёсоор элссэн.',
+    'Rotary Club of Ikh Urgoo began in 2009 as a humanitarian NGO called "Lexus Rotary Club," and was officially chartered into Rotary International in June 2012, sponsored by the Rotary Club of Ulaanbaatar.'
+  )
+on conflict (key) do update set value_mn = excluded.value_mn, value_en = excluded.value_en;
 
 -- ------------------------------------------------------------
 -- events (club calendar) — admins manage it, members read it on

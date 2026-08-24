@@ -17,6 +17,9 @@ type ProjectRow = {
   cover_image_url: string | null;
   cause_icon: CauseIcon | null;
   status: "ongoing" | "completed" | "planned";
+  funding_amount: number | null;
+  funding_currency: string;
+  grant_number: string | null;
 };
 
 const CAUSES: { value: CauseIcon; icon: string | null; label_mn: string; label_en: string }[] = [
@@ -34,6 +37,9 @@ const EMPTY = {
   cover_image_url: "",
   cause_icon: "other" as CauseIcon,
   status: "ongoing" as ProjectRow["status"],
+  funding_amount: "",
+  funding_currency: "USD",
+  grant_number: "",
 };
 
 export default function AdminProjectsPage() {
@@ -66,6 +72,9 @@ export default function AdminProjectsPage() {
       cover_image_url: form.cover_image_url || null,
       cause_icon: form.cause_icon,
       status: form.status,
+      funding_amount: form.funding_amount ? Number(form.funding_amount) : null,
+      funding_currency: form.funding_currency || "USD",
+      grant_number: form.grant_number || null,
     });
     setBusy(false);
     if (error) {
@@ -134,6 +143,15 @@ export default function AdminProjectsPage() {
             <option value="completed">{t("Дууссан", "Completed", "完了", "已完成")}</option>
           </select>
 
+          <div>
+            <p className="text-sm font-semibold text-slate-700 mb-2">{t("Санхүүжилт (заавал биш)", "Funding (optional)", "資金(任意)", "资助(可选)")}</p>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <input type="number" min="0" step="0.01" placeholder={t("Дүн", "Amount", "金額", "金额")} value={form.funding_amount} onChange={(e) => setForm({ ...form, funding_amount: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
+              <input placeholder={t("Валют (жишээ: USD)", "Currency (e.g. USD)", "通貨(例:USD)", "货币(例:USD)")} value={form.funding_currency} onChange={(e) => setForm({ ...form, funding_currency: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
+              <input placeholder={t("Global Grant дугаар (заавал биш)", "Grant number (optional)", "グラント番号(任意)", "资助编号(可选)")} value={form.grant_number} onChange={(e) => setForm({ ...form, grant_number: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
+            </div>
+          </div>
+
           {error && <p className="text-sm text-rotary-cardinal">{error}</p>}
           <button type="submit" disabled={busy} className="justify-self-start bg-rotary-azure text-white font-semibold rounded-md px-5 py-2 text-sm disabled:opacity-60">
             {busy ? t("Хадгалж байна…", "Saving…", "保存中…", "保存中…") : t("Хадгалах", "Save Project", "保存", "保存")}
@@ -154,6 +172,12 @@ export default function AdminProjectsPage() {
                 <div>
                   <p className="font-bold text-slate-900">{item.title_en}</p>
                   <p className="text-sm text-slate-500 line-clamp-2">{item.description_en}</p>
+                  {item.funding_amount != null && (
+                    <p className="text-xs text-rotary-azure font-semibold mt-1">
+                      {item.funding_currency} {item.funding_amount.toLocaleString()}
+                      {item.grant_number && ` · ${item.grant_number}`}
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="flex flex-col gap-2 items-end shrink-0">

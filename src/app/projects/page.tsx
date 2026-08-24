@@ -12,6 +12,9 @@ type ProjectRow = {
   description_en: string | null;
   status: string;
   cover_image_url: string | null;
+  funding_amount: number | null;
+  funding_currency: string;
+  grant_number: string | null;
 };
 
 export default function ProjectsPage() {
@@ -57,6 +60,12 @@ export default function ProjectsPage() {
               </span>
               <h2 className="font-bold text-slate-900 mb-2">{t(p.title_mn, p.title_en)}</h2>
               {p.description_en && <p className="text-slate-600 text-sm line-clamp-3">{t(p.description_mn ?? "", p.description_en)}</p>}
+              {p.funding_amount != null && (
+                <p className="text-sm text-rotary-azure font-semibold mt-3">
+                  {p.funding_currency} {p.funding_amount.toLocaleString()}
+                  {p.grant_number && ` · ${p.grant_number}`}
+                </p>
+              )}
             </article>
           ))}
         </div>
