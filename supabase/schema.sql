@@ -58,6 +58,7 @@ create table if not exists public.members (
   major_donor_level int,                 -- 1-4, per Rotary Foundation levels, admin-set
   honor_roll_visible boolean not null default true,  -- member can opt out of public honor roll
   password_set boolean not null default false, -- true once the member has set a password (skips needing a fresh email link every time)
+  highest_position text,                 -- highest Rotary leadership role held (e.g. "Club President 2020-21", "District Governor") — free text, admin-set
 
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -166,6 +167,23 @@ from public.members
 where status = 'active';
 
 grant select on public.members_public to anon, authenticated;
+
+-- Members-only directory view — same rows as members_public, PLUS
+-- email, phone, rotary_id, and highest_position. This is real contact
+-- info, so unlike members_public it is granted to "authenticated"
+-- ONLY, never "anon" — a guest hitting the REST API directly (not
+-- just the page-level login gate on /members) still can't read it.
+create or replace view public.members_directory as
+select
+  member_id, first_name, last_name, name_local, classification, position,
+  photo_url, city, email, phone, rotary_id, highest_position,
+  case when honor_roll_visible then phf_level else 'none' end as phf_level,
+  case when honor_roll_visible then major_donor else false end as major_donor
+from public.members
+where status = 'active';
+
+revoke all on public.members_directory from anon, public;
+grant select on public.members_directory to authenticated;
 
 -- ------------------------------------------------------------
 -- board positions (a member can hold a board role for a given year)

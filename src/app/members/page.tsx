@@ -9,7 +9,7 @@ import { useLanguage } from "@/lib/language-context";
 import { phfTheme } from "@/lib/phf";
 import PhfPinBadge from "@/components/PhfPinBadge";
 
-type PublicMember = {
+type DirectoryMember = {
   member_id: string;
   first_name: string;
   last_name: string;
@@ -18,6 +18,10 @@ type PublicMember = {
   position: string | null;
   photo_url: string | null;
   city: string | null;
+  email: string | null;
+  phone: string | null;
+  rotary_id: string | null;
+  highest_position: string | null;
   phf_level: string;
   major_donor: boolean;
 };
@@ -25,7 +29,7 @@ type PublicMember = {
 export default function MembersPage() {
   const { t } = useLanguage();
   const router = useRouter();
-  const [members, setMembers] = useState<PublicMember[] | null>(null);
+  const [members, setMembers] = useState<DirectoryMember[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [checkedAuth, setCheckedAuth] = useState(false);
 
@@ -43,13 +47,16 @@ export default function MembersPage() {
 
   useEffect(() => {
     if (!checkedAuth) return;
+    // members_directory (unlike members_public) includes email/phone —
+    // it's granted to "authenticated" only, so this only works because
+    // the visitor is already logged in, not because of the page gate above.
     supabase
-      .from("members_public")
+      .from("members_directory")
       .select("*")
       .order("last_name")
       .then(({ data, error }) => {
         if (error) setError(error.message);
-        else setMembers(data as PublicMember[]);
+        else setMembers(data as DirectoryMember[]);
       });
   }, [checkedAuth]);
 
@@ -57,7 +64,9 @@ export default function MembersPage() {
     return <div className="container-page py-20 text-center text-slate-400">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加载中…")}</div>;
   }
 
-  const honorRoll = (members ?? []).filter((m) => m.phf_level !== "none");
+  const honorRoll = (members ?? [])
+    .filter((m) => m.phf_level !== "none")
+    .sort((a, b) => phfRank(b.phf_level) - phfRank(a.phf_level));
 
   return (
     <div className="container-page py-14">
@@ -131,7 +140,10 @@ export default function MembersPage() {
         </div>
       )}
 
-      {/* Public honor roll — names + PHF tier only, never dollar amounts */}
+      {/* Honor roll — ranked top to bottom by recognition level, with
+          contact info. Visible to logged-in members only (this page
+          and the members_directory view are both login-gated), so
+          this is a members' contact directory, not a public listing. */}
       <section className="rounded-2xl bg-gradient-to-br from-[#0d2c5c] to-rotary-royal-blue text-white p-8">
         <div className="flex items-center gap-3 mb-2">
           <Image src={asset("/logos/ri-gear-logo.png")} alt="" width={32} height={32} />
@@ -141,36 +153,43 @@ export default function MembersPage() {
         </div>
         <p className="text-blue-100 text-sm mb-6 max-w-xl">
           {t(
-            "The Rotary Foundation-д хувь нэмэр оруулсныг нь хүлээн зөвшөөрсөн клубын гишүүд. Мөнгөн дүн энд харагдахгүй.",
-            "Recognizing club members for their contributions to The Rotary Foundation. Dollar amounts are kept private — only recognition tier is shown.",
-            "ロータリー財団への貢献が認められた会員を称えます。金額は非公開です。",
-            "表彰对扶轮基金会做出贡献的会员。捐款金额不公开显示。"
+            "The Rotary Foundation-д хувь нэмэр оруулсныг нь хүлээн зөвшөөрсөн клубын гишүүд, өндөр зэрэглэлээс бага руу эрэмбэлэгдсэн. Мөнгөн дүн энд харагдахгүй.",
+            "Club members recognized for their contributions to The Rotary Foundation, ranked highest to lowest. Dollar amounts are kept private — only recognition tier is shown.",
+            "ロータリー財団への貢献が認められた会員を、階級の高い順に表示しています。金額は非公開です。",
+            "表彰对扶轮基金会做出贡献的会员,按级别从高到低排列。捐款金额不公开显示。"
           )}
         </p>
         {honorRoll.length === 0 ? (
           <p className="text-blue-100 text-sm">{t("Удахгүй…", "Coming soon…", "近日公開…", "即将上线…")}</p>
         ) : (
-          <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {honorRoll
-              .sort((a, b) => phfRank(b.phf_level) - phfRank(a.phf_level))
-              .map((m) => {
-                const theme = phfTheme(m.phf_level);
-                return (
-                  <li key={m.member_id} className="bg-white/10 rounded-lg px-4 py-3 flex items-center justify-between">
-                    <span className="font-medium">
-                      {m.first_name} {m.last_name}
-                      {m.major_donor && (
-                        <span className="ml-2 text-rotary-gold text-xs font-bold">★ {t("Их хандивлагч", "Major Donor", "メジャードナー", "重要捐赠人")}</span>
-                      )}
-                    </span>
-                    <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full" style={{ background: theme.accent }}>
-                      <PhfPinBadge level={m.phf_level} size={16} />
-                      {m.phf_level}
-                    </span>
-                  </li>
-                );
-              })}
-          </ul>
+          <ol className="flex flex-col divide-y divide-white/10">
+            {honorRoll.map((m, i) => (
+              <li key={m.member_id} className="flex flex-wrap items-center gap-4 py-4">
+                <span className="text-blue-200 font-bold w-6 text-right shrink-0">{i + 1}</span>
+                <PhfPinBadge level={m.phf_level} size={40} />
+                <div className="min-w-[10rem] flex-1">
+                  <p className="font-semibold">
+                    {m.first_name} {m.last_name}
+                    {m.major_donor && (
+                      <span className="ml-2 text-rotary-gold text-xs font-bold align-middle">★ {t("Их хандивлагч", "Major Donor", "メジャードナー", "重要捐赠人")}</span>
+                    )}
+                  </p>
+                  {m.highest_position && <p className="text-xs text-blue-200">{m.highest_position}</p>}
+                </div>
+                <div className="text-xs text-blue-100 flex flex-col gap-0.5 min-w-[11rem]">
+                  {m.email && <span>{m.email}</span>}
+                  {m.phone && <span>{m.phone}</span>}
+                  {m.rotary_id && <span className="text-blue-300">Rotary ID: {m.rotary_id}</span>}
+                </div>
+                <span
+                  className="inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full shrink-0"
+                  style={{ background: phfTheme(m.phf_level).accent }}
+                >
+                  {m.phf_level}
+                </span>
+              </li>
+            ))}
+          </ol>
         )}
       </section>
     </div>
@@ -178,6 +197,6 @@ export default function MembersPage() {
 }
 
 function phfRank(level: string): number {
-  const order = ["none","PHF","PHF+1","PHF+2","PHF+3","PHF+4","PHF+5","PHF+6","PHF+7","PHF+8"];
+  const order = ["none", "PHF", "PHF+1", "PHF+2", "PHF+3", "PHF+4", "PHF+5", "PHF+6", "PHF+7", "PHF+8"];
   return order.indexOf(level);
 }

@@ -1,20 +1,38 @@
 "use client";
 
+import Image from "next/image";
+import { asset } from "@/lib/asset";
 import { phfTheme } from "@/lib/phf";
 
-/**
- * A Rotary-style recognition pin, drawn as SVG rather than borrowed from
- * a third-party photo — Rotary's own official pin photography lives
- * behind the (login-gated) Brand Center, which this app has no way to
- * authenticate into. This is a faithful stand-in using the same
- * material logic Rotary's own guide uses (gold PHF pin; 1-5 sapphires
- * for PHF+1..+5; 1-3 rubies for PHF+6..+8) — swap in real pin photos
- * later if you download them from Brand Center yourself.
- */
+// Real Rotary-style pin photos (uploaded by the club), one per level.
+const PIN_IMAGES: Record<string, string> = {
+  PHF: "/badges/phf/phf-base.png",
+  "PHF+1": "/badges/phf/phf-plus1.png",
+  "PHF+2": "/badges/phf/phf-plus2.png",
+  "PHF+3": "/badges/phf/phf-plus3.png",
+  "PHF+4": "/badges/phf/phf-plus4.png",
+  "PHF+5": "/badges/phf/phf-plus5.png",
+  "PHF+6": "/badges/phf/phf-plus6.png",
+  "PHF+7": "/badges/phf/phf-plus7.png",
+  "PHF+8": "/badges/phf/phf-plus8.png",
+};
+
 export default function PhfPinBadge({ level, size = 28 }: { level: string; size?: number }) {
   const theme = phfTheme(level);
   if (level === "none") return null;
 
+  const image = PIN_IMAGES[level];
+  if (image) {
+    return (
+      <span className="inline-flex items-center" title={theme.label}>
+        <Image src={asset(image)} alt={theme.label} width={size} height={size} style={{ width: size, height: size }} />
+      </span>
+    );
+  }
+
+  // Fallback SVG pin — every current level (PHF..PHF+8) now has a real
+  // photo above, so this only renders if a future level is added
+  // without a matching image yet.
   const gemColor = theme.gem === "ruby" ? "#9B111E" : theme.gem === "sapphire" ? "#1D4E89" : "#C9A227";
   const gems = Math.max(theme.gemCount, 1);
 
