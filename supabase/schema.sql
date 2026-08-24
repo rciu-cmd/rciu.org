@@ -59,6 +59,7 @@ create table if not exists public.members (
   honor_roll_visible boolean not null default true,  -- member can opt out of public honor roll
   password_set boolean not null default false, -- true once the member has set a password (skips needing a fresh email link every time)
   highest_position text,                 -- highest Rotary leadership role held (e.g. "Club President 2020-21", "District Governor") — free text, admin-set
+  honor_roll_priority int,               -- optional manual pin: lower number shows first on /members honor roll, above the normal PHF-tier sort; null = normal sort order
 
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -176,7 +177,7 @@ grant select on public.members_public to anon, authenticated;
 create or replace view public.members_directory as
 select
   member_id, first_name, last_name, name_local, classification, position,
-  photo_url, city, email, phone, rotary_id, highest_position,
+  photo_url, city, email, phone, rotary_id, highest_position, honor_roll_priority,
   case when honor_roll_visible then phf_level else 'none' end as phf_level,
   case when honor_roll_visible then major_donor else false end as major_donor
 from public.members

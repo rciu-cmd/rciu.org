@@ -13,24 +13,25 @@ type MemberRow = {
   phone: string | null;
   rotary_id: string | null;
   highest_position: string | null;
+  honor_roll_priority: number | null;
   status: "pending" | "active" | "inactive";
   is_admin: boolean;
 };
 
-type EditForm = { email: string; phone: string; rotary_id: string; highest_position: string };
+type EditForm = { email: string; phone: string; rotary_id: string; highest_position: string; honor_roll_priority: string };
 
 export default function AdminMembersPage() {
   const { t } = useLanguage();
   const [items, setItems] = useState<MemberRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState<EditForm>({ email: "", phone: "", rotary_id: "", highest_position: "" });
+  const [form, setForm] = useState<EditForm>({ email: "", phone: "", rotary_id: "", highest_position: "", honor_roll_priority: "" });
   const [busy, setBusy] = useState(false);
 
   async function refresh() {
     const { data, error } = await supabase
       .from("members")
-      .select("id, member_id, first_name, last_name, email, phone, rotary_id, highest_position, status, is_admin")
+      .select("id, member_id, first_name, last_name, email, phone, rotary_id, highest_position, honor_roll_priority, status, is_admin")
       .order("status", { ascending: true })
       .order("last_name", { ascending: true });
     if (error) setError(error.message);
@@ -63,6 +64,7 @@ export default function AdminMembersPage() {
       phone: m.phone ?? "",
       rotary_id: m.rotary_id ?? "",
       highest_position: m.highest_position ?? "",
+      honor_roll_priority: m.honor_roll_priority != null ? String(m.honor_roll_priority) : "",
     });
   }
 
@@ -75,6 +77,7 @@ export default function AdminMembersPage() {
         phone: form.phone || null,
         rotary_id: form.rotary_id || null,
         highest_position: form.highest_position || null,
+        honor_roll_priority: form.honor_roll_priority.trim() === "" ? null : Number(form.honor_roll_priority),
       })
       .eq("id", id);
     setBusy(false);
@@ -196,6 +199,13 @@ export default function AdminMembersPage() {
                       placeholder={t("Хамгийн өндөр албан тушаал (жишээ: Клубын Ерөнхийлөгч 2020-21)", "Highest position (e.g. Club President 2020-21)", "最高役職(例:クラブ会長 2020-21)", "最高职位(例:俱乐部社长 2020-21)")}
                       value={form.highest_position}
                       onChange={(e) => setForm({ ...form, highest_position: e.target.value })}
+                      className="rounded-md border border-slate-300 px-3 py-2 text-sm sm:col-span-2"
+                    />
+                    <input
+                      type="number"
+                      placeholder={t("Алдрын самбарын байрлал (заавал биш — 1 = хамгийн эхэнд)", "Honor roll pin order (optional — 1 = shows first)", "名誉殿堂の順位(任意 — 1 = 最初に表示)", "荣誉榜排序(可选 — 1 = 最先显示)")}
+                      value={form.honor_roll_priority}
+                      onChange={(e) => setForm({ ...form, honor_roll_priority: e.target.value })}
                       className="rounded-md border border-slate-300 px-3 py-2 text-sm sm:col-span-2"
                     />
                     <button

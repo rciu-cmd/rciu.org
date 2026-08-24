@@ -22,6 +22,7 @@ type DirectoryMember = {
   phone: string | null;
   rotary_id: string | null;
   highest_position: string | null;
+  honor_roll_priority: number | null;
   phf_level: string;
   major_donor: boolean;
 };
@@ -66,7 +67,20 @@ export default function MembersPage() {
 
   const honorRoll = (members ?? [])
     .filter((m) => m.phf_level !== "none")
-    .sort((a, b) => phfRank(b.phf_level) - phfRank(a.phf_level));
+    .sort((a, b) => {
+      // A set honor_roll_priority pins a member to the top, in
+      // ascending priority order, ahead of the normal PHF-tier sort.
+      const pa = a.honor_roll_priority;
+      const pb = b.honor_roll_priority;
+      if (pa != null || pb != null) {
+        if (pa == null) return 1;
+        if (pb == null) return -1;
+        if (pa !== pb) return pa - pb;
+      }
+      const rankDiff = phfRank(b.phf_level) - phfRank(a.phf_level);
+      if (rankDiff !== 0) return rankDiff;
+      return a.last_name.localeCompare(b.last_name);
+    });
 
   return (
     <div className="container-page py-14">
