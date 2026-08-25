@@ -30,7 +30,7 @@ export default function ThemeStrip() {
 
   return (
     <div
-      className="h-9 w-full border-b border-slate-200"
+      className="h-9 w-full"
       style={{ backgroundImage: `url(${src})`, backgroundRepeat: "repeat-x", backgroundSize: "auto 100%" }}
       role="presentation"
       aria-hidden="true"

@@ -57,6 +57,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     { href: "/admin/board", label: t("Удирдлага", "Board", "役員", "理事会") },
     { href: "/admin/affiliates", label: t("Дэмждэг клуб", "Sponsored Clubs", "スポンサークラブ", "赞助俱乐部") },
     { href: "/admin/partners", label: t("Түншүүд", "Partners", "パートナー", "伙伴") },
+    { href: "/admin/gallery", label: t("Зургийн цомог", "Gallery", "ギャラリー", "相册") },
     { href: "/admin/history", label: t("Түүх", "History", "歴史", "历史") },
     { href: "/admin/join-inquiries", label: t("Элсэх хүсэлт", "Join Inquiries", "入会問合せ", "入会申请") },
     { href: "/admin/members", label: t("Гишүүд", "Members", "会員", "会员") },

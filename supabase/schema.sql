@@ -353,6 +353,7 @@ create table if not exists public.project_media (
   uploaded_by uuid references public.members(id),
   storage_path text not null,            -- path within the storage bucket (Supabase or R2)
   caption text,
+  featured_home boolean not null default false, -- admin-selected: show in the home page gallery
   created_at timestamptz not null default now()
 );
 
@@ -628,6 +629,7 @@ create table if not exists public.club_photos (
   category text not null check (category in ('installation_ceremony','district_events','other')),
   storage_path text not null,     -- path within the Storage bucket
   caption text,
+  featured_home boolean not null default false, -- admin-selected: show in the home page gallery
   uploaded_by uuid references public.members(id),
   created_at timestamptz not null default now()
 );

@@ -82,12 +82,12 @@ export default function Home() {
       .limit(3)
       .then(({ data }) => setNews((data as NewsRow[]) ?? []));
 
-    // Photo gallery — merges the general club_photos library with
-    // project photos (project_media), newest first, for one combined
-    // strip on the home page.
+    // Photo gallery — admin-curated (see /admin/gallery), merging
+    // whichever club_photos + project_media rows an admin switched on
+    // (featured_home = true), newest-first, for one combined strip.
     Promise.all([
-      supabase.from("club_photos").select("id,storage_path,caption,created_at").order("created_at", { ascending: false }).limit(10),
-      supabase.from("project_media").select("id,storage_path,caption,created_at").order("created_at", { ascending: false }).limit(10),
+      supabase.from("club_photos").select("id,storage_path,caption,created_at").eq("featured_home", true).order("created_at", { ascending: false }).limit(12),
+      supabase.from("project_media").select("id,storage_path,caption,created_at").eq("featured_home", true).order("created_at", { ascending: false }).limit(12),
     ]).then(([clubRes, projectRes]) => {
       const merged = [...((clubRes.data as PhotoItem[]) ?? []), ...((projectRes.data as PhotoItem[]) ?? [])]
         .sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
@@ -123,8 +123,10 @@ export default function Home() {
     <div>
       {/* Hero — bold gradient using the official Rotary palette, with a
           large slow-spinning gear watermark for visual energy (purely
-          decorative, never behind readable text). Single CTA: Donate —
-          this is the only Donate button on the whole site. */}
+          decorative, never behind readable text). The 3 quick-stat tiles
+          now live here too, under the heading — Donate was pulled out
+          for now (per the club's request, it'll get its own home on
+          another page later) so the stats take that spot instead. */}
       <section className="relative overflow-hidden bg-gradient-to-br from-rotary-royal-blue via-[#123a75] to-rotary-azure text-white">
         <Image
           src={asset("/logos/ri-gear-gold.png")}
@@ -136,17 +138,26 @@ export default function Home() {
         />
         <div className="container-page py-20 sm:py-28 relative grid gap-10 sm:grid-cols-2 items-center">
           <div>
-            <h1 className="text-3xl sm:text-5xl font-extrabold leading-tight mb-6">
+            {/* max-w-md caps both the heading and the stats row at the
+                same width, so the 3 tiles below line up with the text
+                above instead of stretching the full column. */}
+            <h1 className="text-3xl sm:text-5xl font-extrabold leading-tight mb-6 max-w-md">
               {t("Их Өргөө Ротари Клуб", "Rotary Club of Ikh Urgoo", "イク・ウルグー・ロータリークラブ", "扶轮伊赫乌尔古俱乐部")}
             </h1>
-            <a
-              href="https://www.rotary.org/en/get-involved/ways-to-give"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-block bg-rotary-gold text-[#5a3d0a] font-bold px-8 py-3.5 rounded-full shadow-lg shadow-black/10 hover:brightness-105 hover:-translate-y-0.5 transition"
-            >
-              {t("Хандив өргөх", "Donate", "寄付する", "捐赠")}
-            </a>
+            <div className="grid grid-cols-3 gap-3 max-w-md">
+              <HeroStat
+                value={stats.phfPercent === null ? "—" : `${stats.phfPercent}%`}
+                label={t("Paul Harris Fellow", "Paul Harris Fellows", "ポール・ハリス・フェロー", "保罗·哈里斯会员")}
+              />
+              <HeroStat
+                value={stats.affiliateCount === null ? "—" : String(stats.affiliateCount)}
+                label={t("Дэмждэг клуб", "Sponsored Clubs", "スポンサークラブ", "赞助俱乐部")}
+              />
+              <HeroStat
+                value={stats.projectCount === null ? "—" : String(stats.projectCount)}
+                label={t("Хэрэгжүүлсэн төсөл", "Community Projects", "コミュニティ・プロジェクト", "社区项目")}
+              />
+            </div>
           </div>
           <div className="flex justify-center relative">
             <Image
@@ -161,26 +172,20 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Quick stats — all three pulled live from the database */}
-      <section className="container-page py-14 grid gap-6 sm:grid-cols-3">
-        <StatCard
-          value={stats.phfPercent === null ? "—" : `${stats.phfPercent}%`}
-          label={t("Paul Harris Fellow", "Paul Harris Fellows", "ポール・ハリス・フェロー", "保罗·哈里斯会员")}
-        />
-        <StatCard
-          value={stats.affiliateCount === null ? "—" : String(stats.affiliateCount)}
-          label={t("Дэмждэг клуб (Interact, Rotaract)", "Sponsored clubs (Interact & Rotaract)", "スポンサークラブ", "赞助俱乐部")}
-        />
-        <StatCard
-          value={stats.projectCount === null ? "—" : String(stats.projectCount)}
-          label={t("Хэрэгжүүлсэн төсөл", "Community projects", "コミュニティ・プロジェクト", "社区项目")}
-        />
-      </section>
+      {/* Content zone — News, Projects, and the Photo Gallery now share
+          one continuous gradient background (light Rotary-blue at the
+          top, fading through white, into a soft gold tint at the
+          bottom) instead of each having its own flat white/gray block.
+          This is "zone 2" of the page's 3-gradient flow: zone 1 is the
+          Hero above, zone 3 is Sponsored/Links + Footer below. */}
+      <div className="bg-gradient-to-b from-[#eaf1fb] via-white to-[#fdf3e2]">
 
       {/* News — moved above Projects per the club's request, and given
           a bigger, more prominent treatment (was a small 3-up preview
-          at the very bottom of the page). */}
-      <section className="bg-gradient-to-br from-blue-50 via-white to-amber-50 py-16">
+          at the very bottom of the page). Cards now use the exact same
+          structure as the Project cards below (image on top, same
+          padding) so the two rows line up at the same height. */}
+      <section className="py-16">
         <div className="container-page">
           <div className="flex items-end justify-between mb-8">
             <h2 className="text-3xl font-bold text-rotary-royal-blue">
@@ -196,27 +201,47 @@ export default function Home() {
               {t("Мэдээ удахгүй нэмэгдэнэ.", "News posts will appear here once published.", "ニュースは公開され次第表示されます。", "新闻发布后将显示在此处。")}
             </div>
           ) : (
-            <div className="grid gap-6 sm:grid-cols-2">
-              {news.map((n) =>
-                n.facebook_url ? (
-                  <a
-                    key={n.id}
-                    href={n.facebook_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded-2xl bg-white border border-slate-200 p-8 min-h-[220px] shadow-sm hover:shadow-xl hover:-translate-y-1 transition flex flex-col"
-                  >
-                    <span className="inline-block text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-100 text-blue-700 mb-3 w-fit">Facebook</span>
-                    <p className="text-slate-600 flex-1">{t("Facebook хуудсан дээрх постыг үзэх", "View the full post on our Facebook Page", "Facebookページの投稿を見る", "查看 Facebook 页面完整帖子")}</p>
-                    <span className="text-rotary-royal-blue font-semibold mt-4">{t("Үзэх →", "View post →", "見る →", "查看 →")}</span>
+            <div className="grid gap-6 lg:grid-cols-2">
+              {news.map((n) => {
+                const cardBody = (
+                  <>
+                    <div className="relative aspect-video bg-slate-100">
+                      {n.cover_image_url ? (
+                        <Image src={n.cover_image_url} alt="" fill className="object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-blue-50">
+                          <Image src={asset("/logos/ri-gear-blue.png")} alt="" width={56} height={56} />
+                        </div>
+                      )}
+                      {n.facebook_url && (
+                        <span className="absolute top-3 left-3 text-xs font-semibold uppercase tracking-wide bg-white/90 text-blue-700 px-3 py-1 rounded-full">
+                          Facebook
+                        </span>
+                      )}
+                    </div>
+                    <div className="p-6 flex-1 flex flex-col">
+                      <h3 className="text-xl font-bold text-slate-900 mb-2 line-clamp-2">
+                        {t(n.title_mn ?? "", n.title_en ?? "") || t("Facebook дээрх пост", "Facebook post", "Facebookの投稿", "Facebook 帖子")}
+                      </h3>
+                      <p className="text-slate-600 text-sm line-clamp-3 flex-1">{t(n.body_mn ?? "", n.body_en ?? "")}</p>
+                      {n.facebook_url && (
+                        <span className="text-rotary-royal-blue font-semibold mt-3 text-sm">{t("Үзэх →", "View post →", "見る →", "查看 →")}</span>
+                      )}
+                    </div>
+                  </>
+                );
+                const cardClass =
+                  "rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition overflow-hidden bg-white flex flex-col";
+                return n.facebook_url ? (
+                  <a key={n.id} href={n.facebook_url} target="_blank" rel="noopener noreferrer" className={cardClass}>
+                    {cardBody}
                   </a>
                 ) : (
-                  <article key={n.id} className="rounded-2xl bg-white border border-slate-200 p-8 min-h-[220px] shadow-sm hover:shadow-xl hover:-translate-y-1 transition flex flex-col">
-                    <h3 className="text-xl font-bold text-slate-900 mb-3 line-clamp-2">{t(n.title_mn ?? "", n.title_en ?? "")}</h3>
-                    <p className="text-slate-600 line-clamp-4 flex-1">{t(n.body_mn ?? "", n.body_en ?? "")}</p>
+                  <article key={n.id} className={cardClass}>
+                    {cardBody}
                   </article>
-                )
-              )}
+                );
+              })}
             </div>
           )}
         </div>
@@ -224,7 +249,8 @@ export default function Home() {
 
       {/* Projects — the club's main work, so this gets the biggest,
           most prominent treatment on the page. */}
-      <section className="container-page py-16">
+      <section className="py-16">
+        <div className="container-page">
         <div className="flex items-end justify-between mb-8">
           <div>
             <h2 className="text-3xl font-bold text-rotary-royal-blue mb-2">
@@ -279,13 +305,14 @@ export default function Home() {
         <Link href="/projects" className="sm:hidden mt-6 inline-block text-rotary-royal-blue font-semibold hover:underline">
           {t("Бүх төсөл →", "View All Projects →", "すべて見る →", "查看全部 →")}
         </Link>
+        </div>
       </section>
 
-      {/* Photo gallery — a horizontal scroll strip of the most recent
-          club + project photos. Fills in on its own as members upload
-          via their dashboard; nothing to show until they do. */}
+      {/* Photo gallery — admin-curated (see /admin/gallery), not just
+          "whatever was uploaded most recently". Only shows once an
+          admin has switched at least one photo on. */}
       {photos.length > 0 && (
-        <section className="bg-slate-50 py-16">
+        <section className="py-16">
           <div className="container-page">
             <h2 className="text-2xl font-bold text-rotary-royal-blue mb-8">
               {t("Зургийн цомог", "Photo Gallery", "フォトギャラリー", "照片集")}
@@ -309,11 +336,16 @@ export default function Home() {
         </section>
       )}
 
+      </div>
+
       {/* Sponsored clubs + Links & Partners — deliberately small and
           at the very bottom of the page now (was a full-width section
-          higher up); this is reference info, not the main event. */}
+          higher up); this is reference info, not the main event.
+          "Zone 3" of the gradient flow: fades from the gold tint above
+          into a soft blue that leads into the Footer's own blue
+          gradient right below, instead of a flat gray box. */}
       {(affiliates.length > 0 || links.length > 0) && (
-        <section className="bg-slate-50 py-10 border-t border-slate-200">
+        <section className="bg-gradient-to-b from-[#fdf3e2] to-[#eaf1fb] py-10">
           <div className="container-page">
             {affiliates.length > 0 && (
               <div className="mb-6">
@@ -377,11 +409,14 @@ const KNOWN_LOGOS: Record<string, string> = {
   "Makati Legazpi Rotary Club": "/logos/makati-legazpi.png",
 };
 
-function StatCard({ value, label }: { value: string; label: string }) {
+// Compact stat tile for the Hero (dark background) — a smaller, glassy
+// variant of the old full-size white StatCard, sized to sit 3-up under
+// the heading rather than as its own full-width section.
+function HeroStat({ value, label }: { value: string; label: string }) {
   return (
-    <div className="rounded-xl border border-slate-200 p-6 text-center shadow-sm">
-      <div className="text-4xl font-extrabold text-rotary-royal-blue mb-1">{value}</div>
-      <div className="text-slate-500 text-sm">{label}</div>
+    <div className="rounded-xl bg-white/10 border border-white/20 backdrop-blur-sm p-3 text-center">
+      <div className="text-xl sm:text-2xl font-extrabold text-rotary-gold">{value}</div>
+      <div className="text-white/70 text-[10px] sm:text-[11px] leading-tight mt-1">{label}</div>
     </div>
   );
 }
