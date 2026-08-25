@@ -335,7 +335,12 @@ function PhotoUploadCard({ t }: { t: (mn: string, en: string, ja?: string, zh?: 
 
   return (
     <div className="rounded-xl border border-slate-200 p-6">
-      <h2 className="font-bold text-slate-900 mb-4">{t("Зураг байршуулах", "Photo Uploads", "写真アップロード", "照片上传")}</h2>
+      <div className="flex items-center justify-between mb-4 gap-3">
+        <h2 className="font-bold text-slate-900">{t("Зураг байршуулах", "Photo Uploads", "写真アップロード", "照片上传")}</h2>
+        <Link href="/gallery" className="text-xs font-semibold text-rotary-royal-blue hover:underline whitespace-nowrap">
+          {t("Зургийн сан үзэх", "View Photo Library", "写真ライブラリを見る", "查看照片库")} →
+        </Link>
+      </div>
       <form onSubmit={upload} className="grid gap-3">
         <div className="grid grid-cols-2 gap-3">
           <select value={year} onChange={(e) => setYear(Number(e.target.value))} className="rounded-md border border-slate-300 px-3 py-2 text-sm">
