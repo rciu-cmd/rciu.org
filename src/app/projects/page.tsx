@@ -19,12 +19,11 @@ type ProjectRow = {
   grant_number: string | null;
 };
 
-const DONATE_URL = "https://www.rotary.org/en/give-help/ways-give";
-
 export default function ProjectsPage() {
   const { t } = useLanguage();
   const [items, setItems] = useState<ProjectRow[] | null>(null);
   const [showJoinForm, setShowJoinForm] = useState(false);
+  const [showDonate, setShowDonate] = useState(false);
 
   useEffect(() => {
     supabase
@@ -41,14 +40,12 @@ export default function ProjectsPage() {
           {t("Төслүүд", "Projects", "プロジェクト", "项目")}
         </h1>
         <div className="flex gap-3">
-          <a
-            href={DONATE_URL}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            onClick={() => setShowDonate(true)}
             className="text-sm font-semibold bg-rotary-gold text-[#5a3d0a] rounded-full px-5 py-2 hover:brightness-95 transition"
           >
             {t("Хандив өргөх", "Donate", "寄付する", "捐款")}
-          </a>
+          </button>
           <button
             onClick={() => setShowJoinForm(true)}
             className="text-sm font-semibold border-2 border-rotary-royal-blue text-rotary-royal-blue rounded-full px-5 py-2 hover:bg-rotary-royal-blue hover:text-white transition"
@@ -62,6 +59,7 @@ export default function ProjectsPage() {
       </p>
 
       {showJoinForm && <JoinProjectModal t={t} projects={items ?? []} onClose={() => setShowJoinForm(false)} />}
+      {showDonate && <DonateModal t={t} onClose={() => setShowDonate(false)} />}
 
       {items === null && <p className="text-slate-400 text-sm">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加载中…")}</p>}
 
@@ -95,6 +93,61 @@ export default function ProjectsPage() {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+// Bank transfer details for direct donations — the club's own account,
+// not a third-party payment processor, so this is just informational
+// (name/copy the details, then wire transfer from the donor's bank).
+const DONATE_ACCOUNT = {
+  accountName: "ИХ ӨРГӨӨ РОТАРИ КЛУБ",
+  accountNumber: "106201860897",
+  iban: "MN150034106201860897",
+  productName: "БАЙГУУЛЛАГА ЭНГИЙН ХАРИЛЦАХ ДАНС",
+  currency: "MNT",
+};
+
+function DonateModal({ t, onClose }: { t: (mn: string, en: string, ja?: string, zh?: string) => string; onClose: () => void }) {
+  const rows: [string, string][] = [
+    [t("Дансны нэр", "Account Name", "口座名義", "账户名称"), DONATE_ACCOUNT.accountName],
+    [t("Дансны дугаар", "Account Number", "口座番号", "账号"), DONATE_ACCOUNT.accountNumber],
+    [t("IBAN дугаар", "IBAN", "IBAN", "IBAN"), DONATE_ACCOUNT.iban],
+    [t("Бүтээгдэхүүний нэр", "Account Type", "口座種別", "账户类型"), DONATE_ACCOUNT.productName],
+    [t("Валют", "Currency", "通貨", "币种"), DONATE_ACCOUNT.currency],
+  ];
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-xl max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center gap-3 p-6 border-b border-slate-100">
+          <Image src={asset("/logos/rciu-emblem.jpg")} alt="RCIU" width={40} height={40} className="rounded-full shrink-0" />
+          <div>
+            <p className="font-bold text-rotary-royal-blue leading-tight">Rotary Club of Ikh Urgoo</p>
+            <p className="text-xs text-slate-400">{t("Дансны мэдээлэл", "Bank Account Information", "口座情報", "银行账户信息")}</p>
+          </div>
+        </div>
+        <div className="p-6">
+          <p className="text-sm text-slate-500 mb-4">
+            {t(
+              "Клубын дансаар шууд шилжүүлэг хийж хандив өргөх боломжтой.",
+              "You can donate directly by bank transfer to the club's account below.",
+              "以下のクラブ口座へ直接お振込みいただけます。",
+              "您可以直接向以下俱乐部账户转账捐款。"
+            )}
+          </p>
+          <dl className="rounded-xl border border-slate-200 divide-y divide-slate-100 overflow-hidden">
+            {rows.map(([label, value]) => (
+              <div key={label} className="flex items-center justify-between gap-4 px-4 py-3">
+                <dt className="text-xs text-slate-400 shrink-0">{label}</dt>
+                <dd className="font-semibold text-slate-900 text-right break-all">{value}</dd>
+              </div>
+            ))}
+          </dl>
+          <button onClick={onClose} className="mt-6 w-full text-sm font-semibold bg-rotary-royal-blue text-white rounded-md py-2.5">
+            {t("Хаах", "Close", "閉じる", "关闭")}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

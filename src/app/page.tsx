@@ -49,14 +49,18 @@ type EventRow = {
   cover_image_url: string | null;
 };
 
-const CLUB_FACEBOOK_URL = "https://www.facebook.com/profile.php?id=100086308363177";
-
 // Stored Facebook post links should always be absolute (the admin form
 // requires it), but normalize defensively — a link missing "https://"
 // silently resolves as a path on rciu.org itself instead of opening
 // Facebook, which looks like "the link doesn't do anything".
 function fbHref(url: string): string {
   return /^https?:\/\//i.test(url) ? url : `https://${url}`;
+}
+
+declare global {
+  interface Window {
+    FB?: { XFBML: { parse: () => void } };
+  }
 }
 
 const MONTH_LABEL: Record<string, [string, string, string, string]> = {
@@ -88,7 +92,7 @@ export default function Home() {
   const [news, setNews] = useState<NewsRow[]>([]);
   const [stats, setStats] = useState<Stats>({ phfPercent: null, affiliateCount: null, projectCount: null });
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
-  const [nextEvent, setNextEvent] = useState<EventRow | null>(null);
+  const [upcomingEvents, setUpcomingEvents] = useState<EventRow[]>([]);
 
   useEffect(() => {
     supabase.from("links_partners").select("id,name,url,logo_url").order("sort_order").then(({ data }) => setLinks((data as LinkRow[]) ?? []));
@@ -124,17 +128,17 @@ export default function Home() {
       setPhotos(merged);
     });
 
-    // Next upcoming event — a small preview card next to Links &
-    // Partners, so visitors see there's something coming up without
-    // needing to log in (events became publicly readable in migration16).
+    // Upcoming events — a small calendar card next to Links & Partners,
+    // so visitors see what's coming up without needing to log in
+    // (events became publicly readable in migration16). Shows every
+    // event still ahead, not just the next one, in a scrollable list.
     const today = new Date().toISOString().slice(0, 10);
     supabase
       .from("events")
       .select("id, title_mn, title_en, location, event_date, event_time, cover_image_url")
       .gte("event_date", today)
       .order("event_date", { ascending: true })
-      .limit(1)
-      .then(({ data }) => setNextEvent((data as EventRow[])?.[0] ?? null));
+      .then(({ data }) => setUpcomingEvents((data as EventRow[]) ?? []));
 
     // Every number here is read live from the database — the PHF %
     // and project count especially, so both update on their own as
@@ -159,6 +163,27 @@ export default function Home() {
     }
     loadStats();
   }, []);
+
+  // Facebook-linked news cards render the real embedded post (photo,
+  // video, full text) via Facebook's Post Plugin, same as the /news
+  // page — a plain link-styled card here was showing a generic
+  // "Facebook post" placeholder instead of the actual content, which
+  // read as "the post doesn't show up" on the home page.
+  useEffect(() => {
+    if (!news.some((n) => n.facebook_url)) return;
+    if (window.FB) {
+      window.FB.XFBML.parse();
+      return;
+    }
+    if (document.getElementById("facebook-jssdk")) return;
+    const script = document.createElement("script");
+    script.id = "facebook-jssdk";
+    script.src = "https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v19.0";
+    script.async = true;
+    script.defer = true;
+    script.crossOrigin = "anonymous";
+    document.body.appendChild(script);
+  }, [news]);
 
   return (
     <div className="min-h-full flex flex-col">
@@ -243,9 +268,15 @@ export default function Home() {
             </div>
           ) : (
             <div className="grid gap-6 lg:grid-cols-2">
-              {news.map((n) => {
-                const cardBody = (
-                  <>
+              {news.map((n) =>
+                n.facebook_url ? (
+                  // Real embedded post (photo/video/full text) via
+                  // Facebook's Post Plugin — not just a link to it.
+                  <article key={n.id} className="rounded-2xl border border-slate-200 p-3 shadow-sm hover:shadow-lg transition overflow-hidden bg-white flex justify-center">
+                    <div className="fb-post" data-href={fbHref(n.facebook_url)} data-width="500" data-show-text="true" />
+                  </article>
+                ) : (
+                  <article key={n.id} className="rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition overflow-hidden bg-white flex flex-col">
                     <div className="relative aspect-video bg-slate-100">
                       {n.cover_image_url ? (
                         <Image src={n.cover_image_url} alt="" fill className="object-cover" />
@@ -254,35 +285,14 @@ export default function Home() {
                           <Image src={asset("/logos/ri-gear-blue.png")} alt="" width={56} height={56} />
                         </div>
                       )}
-                      {n.facebook_url && (
-                        <span className="absolute top-3 left-3 text-xs font-semibold uppercase tracking-wide bg-white/90 text-blue-700 px-3 py-1 rounded-full">
-                          Facebook
-                        </span>
-                      )}
                     </div>
                     <div className="p-6 flex-1 flex flex-col">
-                      <h3 className="text-xl font-bold text-slate-900 mb-2 line-clamp-2">
-                        {t(n.title_mn ?? "", n.title_en ?? "") || t("Facebook дээрх пост", "Facebook post", "Facebookの投稿", "Facebook 帖子")}
-                      </h3>
+                      <h3 className="text-xl font-bold text-slate-900 mb-2 line-clamp-2">{t(n.title_mn ?? "", n.title_en ?? "")}</h3>
                       <p className="text-slate-600 text-sm line-clamp-3 flex-1">{t(n.body_mn ?? "", n.body_en ?? "")}</p>
-                      {n.facebook_url && (
-                        <span className="text-rotary-royal-blue font-semibold mt-3 text-sm">{t("Үзэх →", "View post →", "見る →", "查看 →")}</span>
-                      )}
                     </div>
-                  </>
-                );
-                const cardClass =
-                  "rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition overflow-hidden bg-white flex flex-col";
-                return n.facebook_url ? (
-                  <a key={n.id} href={fbHref(n.facebook_url)} target="_blank" rel="noopener noreferrer" className={cardClass}>
-                    {cardBody}
-                  </a>
-                ) : (
-                  <article key={n.id} className={cardClass}>
-                    {cardBody}
                   </article>
-                );
-              })}
+                )
+              )}
             </div>
           )}
         </div>
@@ -411,15 +421,6 @@ export default function Home() {
                   {t("Холбоос ба түншүүд", "Links & Partners", "リンクとパートナー", "链接与伙伴")}
                 </h2>
                 <div className="flex flex-wrap items-center gap-8">
-                  <a
-                    href={CLUB_FACEBOOK_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title="Facebook"
-                    className="shrink-0 hover:opacity-80 transition"
-                  >
-                    <Image src={asset("/logos/facebook-icon.svg")} alt="Facebook" width={40} height={40} className="w-10 h-10" />
-                  </a>
                   {links.map((l) => {
                     const logo = l.logo_url ?? KNOWN_LOGOS[l.name];
                     return logo ? (
@@ -443,36 +444,43 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Next upcoming event — fills the empty right-hand space
-                next to Sponsored/Links on wide screens; hidden entirely
-                if nothing's scheduled rather than showing an empty box. */}
-            {nextEvent && (
+            {/* Upcoming events — fills the empty right-hand space next
+                to Sponsored/Links on wide screens; hidden entirely if
+                nothing's scheduled rather than showing an empty box.
+                Every event still ahead is listed (scrolls if there are
+                more than fit), not just the soonest one. */}
+            {upcomingEvents.length > 0 && (
               <div className="rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">
-                {nextEvent.cover_image_url && (
-                  <div className="relative w-full aspect-video bg-slate-100">
-                    <Image src={nextEvent.cover_image_url} alt="" fill className="object-cover" />
-                  </div>
-                )}
-                <div className="p-5 flex gap-4 items-start">
-                  <div className="shrink-0 rounded-lg overflow-hidden border border-slate-200 w-14 text-center">
-                    <div className="bg-rotary-cardinal text-white text-[10px] font-bold uppercase py-0.5">
-                      {t(...MONTH_LABEL[nextEvent.event_date.slice(5, 7)])}
+                <p className="text-xs font-semibold text-rotary-azure uppercase tracking-wide px-5 pt-5">
+                  {t("Удахгүй болох арга хэмжээ", "Upcoming Events", "今後の予定", "即将举行的活动")}
+                </p>
+                <div className="max-h-[28rem] overflow-y-auto divide-y divide-slate-100 mt-3">
+                  {upcomingEvents.map((ev) => (
+                    <div key={ev.id} className="p-5 pt-4 flex gap-4 items-start">
+                      <div className="shrink-0 rounded-lg overflow-hidden border border-slate-200 w-14 text-center">
+                        <div className="bg-rotary-cardinal text-white text-[10px] font-bold uppercase py-0.5">
+                          {t(...MONTH_LABEL[ev.event_date.slice(5, 7)])}
+                        </div>
+                        <div className="text-xl font-extrabold text-slate-800 py-1">{ev.event_date.slice(8, 10)}</div>
+                      </div>
+                      <div className="min-w-0">
+                        {ev.cover_image_url && (
+                          <div className="relative w-full aspect-video bg-slate-100 rounded-lg overflow-hidden mb-2">
+                            <Image src={ev.cover_image_url} alt="" fill className="object-cover" />
+                          </div>
+                        )}
+                        <p className="font-bold text-slate-900 leading-snug">{t(ev.title_mn, ev.title_en)}</p>
+                        {ev.event_time && <p className="text-sm text-slate-500 mt-0.5">{ev.event_time}</p>}
+                        {ev.location && <p className="text-sm text-slate-500">{ev.location}</p>}
+                      </div>
                     </div>
-                    <div className="text-xl font-extrabold text-slate-800 py-1">{nextEvent.event_date.slice(8, 10)}</div>
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-rotary-azure uppercase tracking-wide mb-1">
-                      {t("Дараагийн арга хэмжээ", "Next Event", "次のイベント", "下次活动")}
-                    </p>
-                    <p className="font-bold text-slate-900 leading-snug">{t(nextEvent.title_mn, nextEvent.title_en)}</p>
-                    {nextEvent.event_time && <p className="text-sm text-slate-500 mt-0.5">{nextEvent.event_time}</p>}
-                    {nextEvent.location && <p className="text-sm text-slate-500">{nextEvent.location}</p>}
-                  </div>
+                  ))}
                 </div>
               </div>
             )}
           </div>
         </section>
+      <div id="fb-root" />
     </div>
   );
 }

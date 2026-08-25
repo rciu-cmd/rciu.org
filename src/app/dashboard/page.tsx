@@ -183,7 +183,7 @@ export default function DashboardPage() {
 type Category = "installation_ceremony" | "district_events" | "projects" | "other";
 
 const CATEGORY_LABELS: Record<Category, { mn: string; en: string }> = {
-  installation_ceremony: { mn: "Албан ёсны хүлээлцэх ёслол", en: "Installation Ceremony" },
+  installation_ceremony: { mn: "Албан ёсны ёслол", en: "Installation Ceremony" },
   district_events: { mn: "Дүүргийн арга хэмжээ", en: "District Event" },
   projects: { mn: "Төсөл", en: "Project" },
   other: { mn: "Бусад", en: "Other" },

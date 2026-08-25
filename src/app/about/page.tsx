@@ -45,7 +45,11 @@ export default function AboutPage() {
         )}
       </p>
 
-      <div className="grid gap-6 sm:grid-cols-2 mb-14">
+      {/* The old "Дүрэмт клуб" info card (chartered blurb + duplicate
+          PDF links) was redundant with the full certificate section
+          below, which already shows the image and the same links —
+          removed per the club's request. */}
+      <div className="max-w-xl mb-14">
         <div className="rounded-xl border border-slate-200 p-6">
           <h2 className="font-bold text-rotary-royal-blue mb-2">
             {t("Эрхэм зорилго", "Our Mission", "私たちの使命", "我们的使命")}
@@ -59,46 +63,18 @@ export default function AboutPage() {
             )}
           </p>
         </div>
-        <div className="rounded-xl border border-slate-200 p-6">
-          <h2 className="font-bold text-rotary-royal-blue mb-2">
-            {t("Дүрэмт клуб", "Officially Chartered", "正式認可クラブ", "正式注册俱乐部")}
-          </h2>
-          <p className="text-slate-600 text-sm mb-3">
-            {t(
-              "Rotary International-ийн дүрэмт гэрчилгээ, байгууллагын гэрчилгээ.",
-              "Chartered by Rotary International — official certificates on file.",
-              "ロータリー・インターナショナルより正式に認可されています。",
-              "由国际扶轮正式注册,证书存档在案。"
-            )}
-          </p>
-          <a href={asset("/certificates/rciu-charter-certificate.pdf")} target="_blank" rel="noopener noreferrer" className="text-rotary-azure font-semibold hover:underline text-sm">
-            {t("Дүрэмт клубын гэрчилгээ (PDF) — шинэ цонхонд нээх", "Charter Certificate (PDF) — open in new tab", "認可証明書 (PDF) — 新しいタブで開く", "特许证书 (PDF) — 在新标签页打开")}
-          </a>
-          <p className="text-xs text-slate-400 mt-3">
-            {t(
-              "Байгууллагын гэрчилгээ нь Interact Club of Urgoo-д хамаарах тул",
-              "The Certificate of Organization belongs to the Interact Club of Urgoo, so it's shown",
-              "組織証明書はアーゴー・インターアクトクラブのものであるため、",
-              "组织证书属于乌尔古扶青团,因此"
-            )}{" "}
-            <a href={asset("/certificates/urgoo-certificate-of-organization.pdf")} target="_blank" rel="noopener noreferrer" className="text-rotary-azure font-semibold hover:underline">
-              {t("тэнд", "there", "そちら", "在那里")}
-            </a>{" "}
-            {t("харагдана.", "instead, alongside the Interact club's info.", "に表示されます。", "显示。")}
-          </p>
-        </div>
       </div>
 
       {/* Charter certificate — shown right on the page, not just as a
           download link, so anyone can see it without opening a new tab. */}
       <div className="mb-14">
         <h2 className="text-2xl font-bold text-rotary-royal-blue mb-4">
-          {t("Дүрэмт клубын гэрчилгээ", "Charter Certificate", "認可証明書", "特许证书")}
+          {t("Клубын гэрчилгээ", "Charter Certificate", "認可証明書", "特许证书")}
         </h2>
         <div className="rounded-xl border border-slate-200 overflow-hidden bg-slate-50">
           <Image
             src={asset("/certificates/rciu-charter-certificate.png")}
-            alt={t("Дүрэмт клубын гэрчилгээ", "Charter Certificate", "認可証明書", "特许证书")}
+            alt={t("Клубын гэрчилгээ", "Charter Certificate", "認可証明書", "特许证书")}
             width={1600}
             height={1236}
             className="w-full h-auto"

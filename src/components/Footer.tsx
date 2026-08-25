@@ -4,6 +4,8 @@ import Image from "next/image";
 import { asset } from "@/lib/asset";
 import { useLanguage, LANGUAGES } from "@/lib/language-context";
 
+const CLUB_FACEBOOK_URL = "https://www.facebook.com/profile.php?id=100086308363177";
+
 export default function Footer() {
   const { lang, setLang, t } = useLanguage();
 
@@ -23,6 +25,19 @@ export default function Footer() {
               "蒙古国乌兰巴托 · 3450区"
             )}
           </p>
+          {/* Facebook — moved here from the "Links & Partners" strip
+              per the club's request. The icon's normal navy circle
+              would nearly disappear on this blue gradient, so it gets
+              a white plate behind it here for contrast. */}
+          <a
+            href={CLUB_FACEBOOK_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Facebook"
+            className="inline-flex mt-4 bg-white rounded-full p-0.5 hover:opacity-80 transition"
+          >
+            <Image src={asset("/logos/facebook-icon.svg")} alt="Facebook" width={32} height={32} className="w-8 h-8" />
+          </a>
         </div>
 
         <div className="text-sm text-blue-100">
