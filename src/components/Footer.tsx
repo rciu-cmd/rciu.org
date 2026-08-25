@@ -8,7 +8,7 @@ export default function Footer() {
   const { lang, setLang, t } = useLanguage();
 
   return (
-    <footer className="bg-gradient-to-br from-rotary-royal-blue to-[#0d2c5c] text-white ">
+    <footer className="bg-gradient-to-br from-rotary-royal-blue to-[#0d2c5c] text-white">
       <div className="container-page py-10 grid gap-8 sm:grid-cols-3">
         <div>
           <div className="flex items-center gap-2 mb-3">
