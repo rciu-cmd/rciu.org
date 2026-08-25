@@ -32,6 +32,7 @@ export default function AdminGalleryPage() {
   const [items, setItems] = useState<PhotoRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [view, setView] = useState<"photos" | "folders">("photos");
   const [folderFilter, setFolderFilter] = useState<string | null>(null);
   const [busyFolder, setBusyFolder] = useState<string | null>(null);
@@ -64,6 +65,30 @@ export default function AdminGalleryPage() {
     if (error) setError(error.message);
     else setItems((prev) => prev && prev.map((p) => (p.id === row.id ? { ...p, featured_home: !p.featured_home } : p)));
     setSavingId(null);
+  }
+
+  async function deletePhoto(row: PhotoRow) {
+    if (!confirm(t("Энэ зургийг устгах уу? Буцаах боломжгүй.", "Delete this photo? This can't be undone.", "この写真を削除しますか?元に戻せません。", "确定删除这张照片吗?此操作无法撤销。"))) return;
+    setDeletingId(row.id);
+    setError(null);
+    // Remove the file from Storage first, then the DB row — if the
+    // storage delete fails (e.g. already gone) we still clean up the
+    // now-orphaned row rather than leaving a broken entry behind.
+    const { error: storageError } = await supabase.storage.from("rciu-photos").remove([row.storage_path]);
+    if (storageError && !/not.?found/i.test(storageError.message)) {
+      setError(storageError.message);
+      setDeletingId(null);
+      return;
+    }
+    const table = row.source === "club" ? "club_photos" : "project_media";
+    const { error: rowError } = await supabase.from(table).delete().eq("id", row.id);
+    if (rowError) {
+      setError(rowError.message);
+      setDeletingId(null);
+      return;
+    }
+    setItems((prev) => prev && prev.filter((p) => p.id !== row.id));
+    setDeletingId(null);
   }
 
   // folder = everything in storage_path before the final "/" segment
@@ -192,15 +217,25 @@ export default function AdminGalleryPage() {
                     </div>
                     <div className="p-3 flex items-center justify-between gap-3">
                       <span className="text-xs text-slate-500 line-clamp-1">{p.caption || t("Тайлбаргүй", "No caption", "説明なし", "无说明")}</span>
-                      <button
-                        onClick={() => toggle(p)}
-                        disabled={savingId === p.id}
-                        aria-pressed={p.featured_home}
-                        className={`shrink-0 relative inline-flex h-6 w-11 items-center rounded-full transition ${p.featured_home ? "bg-rotary-gold" : "bg-slate-300"} disabled:opacity-50`}
-                        title={t("Нүүр хуудсанд харуулах", "Show on home page", "ホームページに表示", "在首页显示")}
-                      >
-                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${p.featured_home ? "translate-x-6" : "translate-x-1"}`} />
-                      </button>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          onClick={() => toggle(p)}
+                          disabled={savingId === p.id}
+                          aria-pressed={p.featured_home}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${p.featured_home ? "bg-rotary-gold" : "bg-slate-300"} disabled:opacity-50`}
+                          title={t("Нүүр хуудсанд харуулах", "Show on home page", "ホームページに表示", "在首页显示")}
+                        >
+                          <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${p.featured_home ? "translate-x-6" : "translate-x-1"}`} />
+                        </button>
+                        <button
+                          onClick={() => deletePhoto(p)}
+                          disabled={deletingId === p.id}
+                          title={t("Устгах", "Delete", "削除", "删除")}
+                          className="text-xs font-semibold px-2 py-1.5 rounded-md border border-rotary-cardinal text-rotary-cardinal hover:bg-rotary-cardinal hover:text-white disabled:opacity-50"
+                        >
+                          {deletingId === p.id ? "…" : t("Устгах", "Delete", "削除", "删除")}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );
