@@ -779,3 +779,31 @@ create policy project_inquiries_update_admin on public.project_inquiries
 drop policy if exists project_inquiries_delete_admin on public.project_inquiries;
 create policy project_inquiries_delete_admin on public.project_inquiries
   for delete using (public.is_super_admin());
+
+-- ------------------------------------------------------------
+-- member_travels (migration17) — data behind the "Where We've
+-- Traveled" world map on the About page. Admin-entered only.
+-- ------------------------------------------------------------
+create table if not exists public.member_travels (
+  id uuid primary key default gen_random_uuid(),
+  member_id uuid references public.members(id) on delete set null,
+  event_name text not null,
+  destination_city text not null,
+  destination_country text not null,
+  latitude double precision not null check (latitude between -90 and 90),
+  longitude double precision not null check (longitude between -180 and 180),
+  event_date date,
+  notes text,
+  created_at timestamptz not null default now()
+);
+
+alter table public.member_travels enable row level security;
+
+drop policy if exists member_travels_select_public on public.member_travels;
+create policy member_travels_select_public on public.member_travels
+  for select using (true);
+
+drop policy if exists member_travels_write_admin on public.member_travels;
+create policy member_travels_write_admin on public.member_travels
+  for all using (public.is_super_admin())
+  with check (public.is_super_admin());

@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { useLanguage } from "@/lib/language-context";
+import { useLanguage, Lang } from "@/lib/language-context";
+import { WORLD_CITIES } from "@/data/world-cities";
 
 type MemberOption = { id: string; first_name: string; last_name: string };
 
@@ -23,16 +24,17 @@ type TravelWithMember = TravelRow & { memberName: string | null };
 const EMPTY = {
   member_id: "",
   event_name: "",
-  destination_city: "",
-  destination_country: "",
-  latitude: "",
-  longitude: "",
+  country: "",
+  city: "",
   event_date: "",
   notes: "",
 };
 
+// Intl.DisplayNames' locale tags for the site's 4 languages.
+const INTL_LOCALE: Record<Lang, string> = { mn: "mn", en: "en", ja: "ja", zh: "zh" };
+
 export default function AdminTravelPage() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [items, setItems] = useState<TravelWithMember[] | null>(null);
   const [members, setMembers] = useState<MemberOption[]>([]);
   const [form, setForm] = useState(EMPTY);
@@ -67,24 +69,60 @@ export default function AdminTravelPage() {
       .then(({ data }) => setMembers((data as MemberOption[]) ?? []));
   }, []);
 
+  // Country dropdown — every ISO code present in the bundled city list,
+  // labelled in whatever language the admin is currently viewing in
+  // (falls back to the raw code if Intl.DisplayNames isn't available).
+  const countries = useMemo(() => {
+    const codes = Array.from(new Set(WORLD_CITIES.map((c) => c[1])));
+    let displayNames: Intl.DisplayNames | null = null;
+    try {
+      displayNames = new Intl.DisplayNames([INTL_LOCALE[lang]], { type: "region" });
+    } catch {
+      displayNames = null;
+    }
+    return codes
+      .map((code) => ({ code, label: displayNames?.of(code) ?? code }))
+      .sort((a, b) => a.label.localeCompare(b.label, lang));
+  }, [lang]);
+
+  // City dropdown — cities in the selected country only.
+  const citiesForCountry = useMemo(
+    () => WORLD_CITIES.filter((c) => c[1] === form.country),
+    [form.country]
+  );
+
+  // English country name is what actually gets stored, so the public
+  // map/list shows one consistent name regardless of which language an
+  // admin happened to be using when they added the trip.
+  const englishCountryName = useMemo(() => {
+    if (!form.country) return "";
+    try {
+      return new Intl.DisplayNames(["en"], { type: "region" }).of(form.country) ?? form.country;
+    } catch {
+      return form.country;
+    }
+  }, [form.country]);
+
   async function createTravel(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setError(null);
 
-    const lat = parseFloat(form.latitude);
-    const lng = parseFloat(form.longitude);
-    if (Number.isNaN(lat) || lat < -90 || lat > 90 || Number.isNaN(lng) || lng < -180 || lng > 180) {
+    const cityEntry = citiesForCountry.find((c) => c[0] === form.city);
+    if (!form.country || !cityEntry) {
       setBusy(false);
-      setError(t("Өргөрөг/уртраг буруу байна.", "Latitude/longitude is invalid.", "緯度・経度が正しくありません。", "纬度/经度无效。"));
+      setError(t("Улс, хотоо сонгоно уу.", "Please select a country and city.", "国と都市を選択してください。", "请选择国家和城市。"));
       return;
     }
+    const [cityLabel, , lat, lng] = cityEntry;
+    // Strip a disambiguating "(region code)" suffix, if present, before storing.
+    const cityName = cityLabel.replace(/\s*\([^)]*\)\s*$/, "");
 
     const { error } = await supabase.from("member_travels").insert({
       member_id: form.member_id || null,
       event_name: form.event_name,
-      destination_city: form.destination_city,
-      destination_country: form.destination_country,
+      destination_city: cityName,
+      destination_country: englishCountryName,
       latitude: lat,
       longitude: lng,
       event_date: form.event_date || null,
@@ -119,10 +157,10 @@ export default function AdminTravelPage() {
 
       <p className="text-sm text-slate-500 mb-6 max-w-2xl">
         {t(
-          "Энд нэмсэн аялал \"Бидний тухай\" хуудасны дэлхийн газрын зурган дээр харагдана. Зөвхөн олон улсын Ротари арга хэмжээнд оролцсон аялал нэмнэ (конвенц, дүүргийн бага хурал, эгч дүү клубын айлчлал гэх мэт). Өргөрөг/уртраг нь Google Maps дээр газрыг хайгаад баруун товч дараад олж болно.",
-          "Trips added here appear on the world map on the About page. Only add trips for official international Rotary events (convention, district conference abroad, sister-club visit, etc.). You can find latitude/longitude by searching the place on Google Maps and right-clicking it.",
-          "ここに追加した旅行は「私たちについて」ページの世界地図に表示されます。公式の国際ロータリー行事(大会、海外地区大会、姉妹クラブ訪問など)のみ追加してください。緯度経度はGoogleマップでその場所を検索し右クリックすると調べられます。",
-          "在此添加的行程将显示在「关于我们」页面的世界地图上。仅添加正式的国际扶轮活动(年会、境外分区年会、姊妹俱乐部互访等)。可在谷歌地图中搜索该地点并右键点击以获取经纬度。"
+          "Энд нэмсэн аялал \"Бидний тухай\" хуудасны дэлхийн газрын зурган дээр харагдана. Зөвхөн олон улсын Ротари арга хэмжээнд оролцсон аялал нэмнэ (конвенц, дүүргийн бага хурал, эгч дүү клубын айлчлал гэх мэт). Улс, хотоо доорх жагсаалтаас сонгоход байршил автоматаар тохируулагдана.",
+          "Trips added here appear on the world map on the About page. Only add trips for official international Rotary events (convention, district conference abroad, sister-club visit, etc.). Just pick the country and city below — the map location is set automatically.",
+          "ここに追加した旅行は「私たちについて」ページの世界地図に表示されます。公式の国際ロータリー行事(大会、海外地区大会、姉妹クラブ訪問など)のみ追加してください。下から国と都市を選択するだけで位置が自動的に設定されます。",
+          "在此添加的行程将显示在「关于我们」页面的世界地图上。仅添加正式的国际扶轮活动(年会、境外分区年会、姊妹俱乐部互访等)。只需在下方选择国家和城市，地图位置将自动设定。"
         )}
       </p>
 
@@ -138,14 +176,35 @@ export default function AdminTravelPage() {
             <input required placeholder={t("Арга хэмжээний нэр", "Event name", "イベント名", "活动名称")} value={form.event_name} onChange={(e) => setForm({ ...form, event_name: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
-            <input required placeholder={t("Хот", "City", "都市", "城市")} value={form.destination_city} onChange={(e) => setForm({ ...form, destination_city: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
-            <input required placeholder={t("Улс", "Country", "国", "国家")} value={form.destination_country} onChange={(e) => setForm({ ...form, destination_country: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
+            <select
+              required
+              value={form.country}
+              onChange={(e) => setForm({ ...form, country: e.target.value, city: "" })}
+              className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+            >
+              <option value="">{t("Улс сонгох", "Select country", "国を選択", "选择国家")}</option>
+              {countries.map((c) => (
+                <option key={c.code} value={c.code}>{c.label}</option>
+              ))}
+            </select>
+            <select
+              required
+              value={form.city}
+              onChange={(e) => setForm({ ...form, city: e.target.value })}
+              disabled={!form.country}
+              className="rounded-md border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-100 disabled:text-slate-400"
+            >
+              <option value="">
+                {form.country
+                  ? t("Хот сонгох", "Select city", "都市を選択", "选择城市")
+                  : t("Эхлээд улсаа сонгоно уу", "Select a country first", "先に国を選択してください", "请先选择国家")}
+              </option>
+              {citiesForCountry.map((c) => (
+                <option key={c[0]} value={c[0]}>{c[0]}</option>
+              ))}
+            </select>
           </div>
-          <div className="grid gap-3 sm:grid-cols-3">
-            <input required type="number" step="any" placeholder={t("Өргөрөг (lat)", "Latitude", "緯度", "纬度")} value={form.latitude} onChange={(e) => setForm({ ...form, latitude: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
-            <input required type="number" step="any" placeholder={t("Уртраг (lng)", "Longitude", "経度", "经度")} value={form.longitude} onChange={(e) => setForm({ ...form, longitude: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
-            <input type="date" value={form.event_date} onChange={(e) => setForm({ ...form, event_date: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
-          </div>
+          <input type="date" value={form.event_date} onChange={(e) => setForm({ ...form, event_date: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm sm:w-56" />
           <textarea placeholder={t("Тэмдэглэл (заавал биш)", "Notes (optional)", "メモ(任意)", "备注(可选)")} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
           {error && <p className="text-sm text-rotary-cardinal">{error}</p>}
           <button type="submit" disabled={busy} className="justify-self-start bg-rotary-royal-blue text-white font-semibold rounded-md px-5 py-2 text-sm disabled:opacity-60">
