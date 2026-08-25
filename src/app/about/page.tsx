@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { asset } from "@/lib/asset";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
@@ -95,10 +96,12 @@ export default function AboutPage() {
           {t("Дүрэмт клубын гэрчилгээ", "Charter Certificate", "認可証明書", "特许证书")}
         </h2>
         <div className="rounded-xl border border-slate-200 overflow-hidden bg-slate-50">
-          <iframe
-            src={asset("/certificates/rciu-charter-certificate.pdf")}
-            title={t("Дүрэмт клубын гэрчилгээ", "Charter Certificate", "認可証明書", "特许证书")}
-            className="w-full h-[600px]"
+          <Image
+            src={asset("/certificates/rciu-charter-certificate.png")}
+            alt={t("Дүрэмт клубын гэрчилгээ", "Charter Certificate", "認可証明書", "特许证书")}
+            width={1600}
+            height={1236}
+            className="w-full h-auto"
           />
         </div>
         <a href={asset("/certificates/rciu-charter-certificate.pdf")} target="_blank" rel="noopener noreferrer" className="text-rotary-azure font-semibold hover:underline text-sm mt-2 inline-block">

@@ -6,16 +6,21 @@ import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
 
-// Gates every /admin/* page behind is_admin. RLS also enforces this
-// server-side on every table (admin policies call public.is_admin()),
-// so this client check is about UX (redirect + nav), not security —
-// a non-admin who somehow loaded this UI still can't read/write
-// admin-only rows.
+// Gates every /admin/* page behind admin_level. RLS also enforces
+// this server-side on every table (super-only policies call
+// public.is_super_admin(); News/Projects stay open to any admin
+// level via public.is_admin()), so this client check is about UX
+// (redirect + which nav tabs show), not security — an editor-level
+// admin who somehow loads a super-only page still can't read/write
+// those tables; their requests just come back empty/blocked.
+const EDITOR_ALLOWED_PATHS = ["/admin/news", "/admin/projects"];
+
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const { t } = useLanguage();
   const router = useRouter();
   const pathname = usePathname();
   const [status, setStatus] = useState<"checking" | "ok" | "denied">("checking");
+  const [adminLevel, setAdminLevel] = useState<"none" | "editor" | "super">("none");
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -23,14 +28,24 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         router.replace("/login/");
         return;
       }
-      const { data } = await supabase.from("members").select("is_admin").eq("id", session.user.id).single();
-      if (data?.is_admin) {
-        setStatus("ok");
-      } else {
-        setStatus("denied");
-      }
+      const { data } = await supabase.from("members").select("admin_level").eq("id", session.user.id).single();
+      const level = (data?.admin_level as "none" | "editor" | "super" | undefined) ?? "none";
+      setAdminLevel(level);
+      setStatus(level === "none" ? "denied" : "ok");
     });
   }, [router]);
+
+  const isSuper = adminLevel === "super";
+  const isEditorOnlyPath = pathname != null && !EDITOR_ALLOWED_PATHS.some((p) => pathname.startsWith(p));
+
+  // Editors land on a bare "/admin" (there's no Overview page for
+  // them — it surfaces member/event data they can't see) — send them
+  // straight to News instead.
+  useEffect(() => {
+    if (status === "ok" && !isSuper && (pathname === "/admin" || pathname === "/admin/")) {
+      router.replace("/admin/news/");
+    }
+  }, [status, isSuper, pathname, router]);
 
   if (status === "checking") {
     return <div className="container-page py-20 text-center text-slate-400">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加载中…")}</div>;
@@ -49,7 +64,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     );
   }
 
-  const tabs = [
+  const allTabs = [
     { href: "/admin", label: t("Хураангуй", "Overview", "概要", "概览") },
     { href: "/admin/news", label: t("Мэдээ", "News", "ニュース", "新闻") },
     { href: "/admin/projects", label: t("Төслүүд", "Projects", "プロジェクト", "项目") },
@@ -63,12 +78,19 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     { href: "/admin/members", label: t("Гишүүд", "Members", "会員", "会员") },
     { href: "/admin/settings", label: t("Тохиргоо", "Settings", "設定", "设置") },
   ];
+  // Editors only ever see News + Projects — everything else in
+  // /admin is super-admin territory (member management, appointing
+  // other admins, board, history, partners, settings, etc.).
+  const tabs = isSuper ? allTabs : allTabs.filter((tab) => EDITOR_ALLOWED_PATHS.includes(tab.href));
 
   return (
     <div>
       <div className="bg-slate-900 text-white">
         <div className="container-page flex items-center justify-between py-4">
-          <h1 className="font-bold text-lg">{t("Админ самбар", "Admin Dashboard", "管理者ダッシュボード", "管理后台")}</h1>
+          <h1 className="font-bold text-lg">
+            {t("Админ самбар", "Admin Dashboard", "管理者ダッシュボード", "管理后台")}
+            {!isSuper && <span className="ml-2 text-xs font-normal text-slate-400">({t("редактор", "editor", "編集者", "编辑")})</span>}
+          </h1>
           <Link href="/dashboard" className="text-xs font-semibold text-slate-300 hover:text-white">
             {t("← Хувийн профайл руу", "← Back to My Dashboard", "← マイページへ", "← 返回我的主页")}
           </Link>
@@ -88,7 +110,25 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           })}
         </div>
       </div>
-      <div className="container-page py-10">{children}</div>
+      <div className="container-page py-10">
+        {!isSuper && isEditorOnlyPath ? (
+          <div className="text-center py-16">
+            <p className="text-slate-500 mb-4">
+              {t(
+                "Энэ хэсэг зөвхөн ерөнхий админд нээлттэй.",
+                "This section is only available to super admins.",
+                "このセクションはスーパー管理者のみ利用できます。",
+                "此部分仅限超级管理员使用。"
+              )}
+            </p>
+            <Link href="/admin/news" className="text-rotary-royal-blue font-semibold underline">
+              {t("Мэдээ рүү буцах", "Back to News", "ニュースに戻る", "返回新闻")}
+            </Link>
+          </div>
+        ) : (
+          children
+        )}
+      </div>
     </div>
   );
 }

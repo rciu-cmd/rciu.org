@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
+
+type AdminLevel = "none" | "editor" | "super";
 
 type MemberRow = {
   id: string;
@@ -16,51 +18,86 @@ type MemberRow = {
   honor_roll_priority: number | null;
   status: "pending" | "active" | "inactive";
   is_admin: boolean;
+  admin_level: AdminLevel;
 };
 
-type EditForm = { email: string; phone: string; rotary_id: string; highest_position: string; honor_roll_priority: string };
+type EditForm = { phone: string; rotary_id: string; highest_position: string; honor_roll_priority: string };
 
 export default function AdminMembersPage() {
   const { t } = useLanguage();
   const [items, setItems] = useState<MemberRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState<EditForm>({ email: "", phone: "", rotary_id: "", highest_position: "", honor_roll_priority: "" });
+  const [form, setForm] = useState<EditForm>({ phone: "", rotary_id: "", highest_position: "", honor_roll_priority: "" });
   const [busy, setBusy] = useState(false);
+
+  // Email is edited directly in its own table column now (not the
+  // expandable "Edit" panel below) — one draft string per member,
+  // saved individually on blur/Enter so it doesn't get tangled up
+  // with the other fields' save flow.
+  const [emailDrafts, setEmailDrafts] = useState<Record<string, string>>({});
+  const [savingEmailId, setSavingEmailId] = useState<string | null>(null);
+
+  // Whose row is "me" — used to disable editing your own admin level
+  // in this table (the database also hard-blocks this via a trigger;
+  // disabling it here is just so that's not a confusing dead click).
+  const [selfId, setSelfId] = useState<string | null>(null);
+  const [savingLevelId, setSavingLevelId] = useState<string | null>(null);
 
   async function refresh() {
     const { data, error } = await supabase
       .from("members")
-      .select("id, member_id, first_name, last_name, email, phone, rotary_id, highest_position, honor_roll_priority, status, is_admin")
+      .select("id, member_id, first_name, last_name, email, phone, rotary_id, highest_position, honor_roll_priority, status, is_admin, admin_level")
       .order("status", { ascending: true })
       .order("last_name", { ascending: true });
     if (error) setError(error.message);
-    else setItems(data as MemberRow[]);
+    else {
+      const rows = data as MemberRow[];
+      setItems(rows);
+      setEmailDrafts(Object.fromEntries(rows.map((m) => [m.id, m.email ?? ""])));
+    }
   }
 
   useEffect(() => {
     refresh();
+    supabase.auth.getSession().then(({ data: { session } }) => setSelfId(session?.user.id ?? null));
   }, []);
+
+  async function saveEmail(m: MemberRow) {
+    const value = (emailDrafts[m.id] ?? "").trim();
+    if (value === (m.email ?? "")) return; // unchanged, nothing to save
+    setSavingEmailId(m.id);
+    setError(null);
+    const { error } = await supabase.from("members").update({ email: value }).eq("id", m.id);
+    setSavingEmailId(null);
+    if (error) {
+      setError(error.message);
+      return;
+    }
+    refresh();
+  }
 
   async function setStatus(m: MemberRow, status: MemberRow["status"]) {
     await supabase.from("members").update({ status }).eq("id", m.id);
     refresh();
   }
 
-  async function toggleAdmin(m: MemberRow) {
-    if (!confirm(
-      m.is_admin
-        ? t("Админ эрхийг хасах уу?", "Remove admin access?", "管理者権限を削除しますか?", "确定移除管理员权限吗?")
-        : t("Админ эрх өгөх үү?", "Grant admin access?", "管理者権限を付与しますか?", "确定授予管理员权限吗?")
-    )) return;
-    await supabase.from("members").update({ is_admin: !m.is_admin }).eq("id", m.id);
+  async function setAdminLevel(m: MemberRow, level: AdminLevel) {
+    if (level === m.admin_level) return;
+    setSavingLevelId(m.id);
+    setError(null);
+    const { error } = await supabase.from("members").update({ admin_level: level }).eq("id", m.id);
+    setSavingLevelId(null);
+    if (error) {
+      setError(error.message);
+      return;
+    }
     refresh();
   }
 
   function startEdit(m: MemberRow) {
     setEditingId(m.id);
     setForm({
-      email: m.email ?? "",
       phone: m.phone ?? "",
       rotary_id: m.rotary_id ?? "",
       highest_position: m.highest_position ?? "",
@@ -73,7 +110,6 @@ export default function AdminMembersPage() {
     const { error } = await supabase
       .from("members")
       .update({
-        email: form.email,
         phone: form.phone || null,
         rotary_id: form.rotary_id || null,
         highest_position: form.highest_position || null,
@@ -128,97 +164,128 @@ export default function AdminMembersPage() {
           <h3 className="font-semibold text-slate-700 mb-3">{t("Бүх гишүүд", "All Members", "全会員", "全部会员")}</h3>
           <p className="text-xs text-slate-400 mb-4 max-w-xl">
             {t(
-              "Утас, Rotary ID, хамгийн өндөр албан тушаал талбарууд одоогоор хоосон байна — «Засах» дарж бөглөнө үү.",
-              "Phone, Rotary ID, and highest position are currently blank for everyone — click \"Edit\" to fill them in.",
-              "電話番号、Rotary ID、最高役職は現在すべて空欄です — 「編集」で入力してください。",
-              "电话、Rotary ID 和最高职位目前均为空 — 点击「编辑」填写。"
+              "И-мэйлийг доор шууд засварлаж болно. Утас, Rotary ID, хамгийн өндөр албан тушаалыг «Засах» дарж бөглөнө үү.",
+              "Email can be edited directly below. Phone, Rotary ID, and highest position — click \"Edit\" to fill them in.",
+              "メールは下で直接編集できます。電話番号、Rotary ID、最高役職は「編集」で入力してください。",
+              "邮箱可在下方直接编辑。电话、Rotary ID 和最高职位请点击「编辑」填写。"
             )}
           </p>
-          <div className="grid gap-2">
-            {others.map((m) => (
-              <div key={m.id} className="rounded-lg border border-slate-200 p-4">
-                <div className="flex items-center justify-between flex-wrap gap-2">
-                  <div>
-                    <p className="font-medium text-slate-900">
-                      {m.first_name} {m.last_name}
-                      {m.is_admin && <span className="ml-2 text-xs font-bold text-rotary-royal-blue">ADMIN</span>}
-                    </p>
-                    <p className="text-xs text-slate-500">{m.email} · {m.member_id}</p>
-                    <p className="text-xs text-slate-400">
-                      {m.phone || t("утасгүй", "no phone")} · {m.rotary_id ? `Rotary ID: ${m.rotary_id}` : t("Rotary ID алга", "no Rotary ID")}
-                      {m.highest_position && ` · ${m.highest_position}`}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <select
-                      value={m.status}
-                      onChange={(e) => setStatus(m, e.target.value as MemberRow["status"])}
-                      className="text-xs rounded-md border border-slate-300 px-2 py-1"
-                    >
-                      <option value="active">{t("Идэвхтэй", "Active", "現役", "活跃")}</option>
-                      <option value="inactive">{t("Идэвхгүй", "Inactive", "非活動", "非活跃")}</option>
-                      <option value="pending">{t("Хүлээгдэж буй", "Pending", "保留中", "待定")}</option>
-                    </select>
-                    <button
-                      onClick={() => (editingId === m.id ? setEditingId(null) : startEdit(m))}
-                      className="text-xs font-semibold px-3 py-1.5 rounded-md border border-slate-300 text-slate-600 hover:bg-slate-50"
-                    >
-                      {editingId === m.id ? t("Хаах", "Cancel", "キャンセル", "取消") : t("Засах", "Edit", "編集", "编辑")}
-                    </button>
-                    <button
-                      onClick={() => toggleAdmin(m)}
-                      className={`text-xs font-semibold px-3 py-1.5 rounded-md border ${m.is_admin ? "border-rotary-cardinal text-rotary-cardinal" : "border-rotary-royal-blue text-rotary-royal-blue"}`}
-                    >
-                      {m.is_admin ? t("Админ хасах", "Revoke Admin", "管理者権限を削除", "移除管理员") : t("Админ болгох", "Make Admin", "管理者にする", "设为管理员")}
-                    </button>
-                  </div>
-                </div>
-
-                {editingId === m.id && (
-                  <div className="mt-4 pt-4 border-t border-slate-100 grid gap-3 sm:grid-cols-2">
-                    <input
-                      type="email"
-                      placeholder={t("И-мэйл", "Email", "メール", "邮箱")}
-                      value={form.email}
-                      onChange={(e) => setForm({ ...form, email: e.target.value })}
-                      className="rounded-md border border-slate-300 px-3 py-2 text-sm"
-                    />
-                    <input
-                      placeholder={t("Утас", "Phone", "電話", "电话")}
-                      value={form.phone}
-                      onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                      className="rounded-md border border-slate-300 px-3 py-2 text-sm"
-                    />
-                    <input
-                      placeholder="Rotary ID"
-                      value={form.rotary_id}
-                      onChange={(e) => setForm({ ...form, rotary_id: e.target.value })}
-                      className="rounded-md border border-slate-300 px-3 py-2 text-sm"
-                    />
-                    <input
-                      placeholder={t("Хамгийн өндөр албан тушаал (жишээ: Клубын Ерөнхийлөгч 2020-21)", "Highest position (e.g. Club President 2020-21)", "最高役職(例:クラブ会長 2020-21)", "最高职位(例:俱乐部社长 2020-21)")}
-                      value={form.highest_position}
-                      onChange={(e) => setForm({ ...form, highest_position: e.target.value })}
-                      className="rounded-md border border-slate-300 px-3 py-2 text-sm sm:col-span-2"
-                    />
-                    <input
-                      type="number"
-                      placeholder={t("Алдрын самбарын байрлал (заавал биш — 1 = хамгийн эхэнд)", "Honor roll pin order (optional — 1 = shows first)", "名誉殿堂の順位(任意 — 1 = 最初に表示)", "荣誉榜排序(可选 — 1 = 最先显示)")}
-                      value={form.honor_roll_priority}
-                      onChange={(e) => setForm({ ...form, honor_roll_priority: e.target.value })}
-                      className="rounded-md border border-slate-300 px-3 py-2 text-sm sm:col-span-2"
-                    />
-                    <button
-                      onClick={() => saveEdit(m.id)}
-                      disabled={busy}
-                      className="justify-self-start bg-rotary-royal-blue text-white font-semibold rounded-md px-5 py-2 text-sm disabled:opacity-60 sm:col-span-2"
-                    >
-                      {busy ? t("Хадгалж байна…", "Saving…", "保存中…", "保存中…") : t("Хадгалах", "Save", "保存", "保存")}
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
+          <div className="overflow-x-auto rounded-lg border border-slate-200">
+            <table className="w-full text-sm border-collapse">
+              <thead>
+                <tr className="text-left text-xs font-semibold text-slate-500 uppercase bg-slate-50 border-b border-slate-200">
+                  <th className="py-2.5 px-3">{t("Нэр", "Name", "氏名", "姓名")}</th>
+                  <th className="py-2.5 px-3">{t("И-мэйл", "Email", "メール", "邮箱")}</th>
+                  <th className="py-2.5 px-3 hidden sm:table-cell">{t("Утас", "Phone", "電話", "电话")}</th>
+                  <th className="py-2.5 px-3">{t("Төлөв", "Status", "状態", "状态")}</th>
+                  <th className="py-2.5 px-3">{t("Үйлдэл", "Actions", "操作", "操作")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {others.map((m) => (
+                  <Fragment key={m.id}>
+                    <tr className="border-b border-slate-100 align-top hover:bg-slate-50/60">
+                      <td className="py-2.5 px-3">
+                        <p className="font-medium text-slate-900 whitespace-nowrap">
+                          {m.first_name} {m.last_name}
+                          {m.admin_level === "super" && <span className="ml-2 text-[10px] font-bold text-rotary-royal-blue">SUPER</span>}
+                          {m.admin_level === "editor" && <span className="ml-2 text-[10px] font-bold text-rotary-azure">EDITOR</span>}
+                        </p>
+                        <p className="text-xs text-slate-400">{m.member_id}</p>
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="email"
+                            value={emailDrafts[m.id] ?? ""}
+                            onChange={(e) => setEmailDrafts((prev) => ({ ...prev, [m.id]: e.target.value }))}
+                            onBlur={() => saveEmail(m)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                            }}
+                            className="w-full min-w-[180px] rounded-md border border-slate-300 px-2 py-1 text-sm focus:border-rotary-royal-blue focus:outline-none"
+                          />
+                          {savingEmailId === m.id && <span className="text-[10px] text-slate-400 shrink-0">{t("Хадгалж байна…", "Saving…", "保存中…", "保存中…")}</span>}
+                        </div>
+                      </td>
+                      <td className="py-2.5 px-3 hidden sm:table-cell text-slate-600 whitespace-nowrap">{m.phone || "—"}</td>
+                      <td className="py-2.5 px-3">
+                        <select
+                          value={m.status}
+                          onChange={(e) => setStatus(m, e.target.value as MemberRow["status"])}
+                          className="text-xs rounded-md border border-slate-300 px-2 py-1"
+                        >
+                          <option value="active">{t("Идэвхтэй", "Active", "現役", "活跃")}</option>
+                          <option value="inactive">{t("Идэвхгүй", "Inactive", "非活動", "非活跃")}</option>
+                          <option value="pending">{t("Хүлээгдэж буй", "Pending", "保留中", "待定")}</option>
+                        </select>
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <button
+                            onClick={() => (editingId === m.id ? setEditingId(null) : startEdit(m))}
+                            className="text-xs font-semibold px-2.5 py-1 rounded-md border border-slate-300 text-slate-600 hover:bg-slate-50 whitespace-nowrap"
+                          >
+                            {editingId === m.id ? t("Хаах", "Cancel", "キャンセル", "取消") : t("Засах", "Edit", "編集", "编辑")}
+                          </button>
+                          <select
+                            value={m.admin_level}
+                            onChange={(e) => setAdminLevel(m, e.target.value as AdminLevel)}
+                            disabled={m.id === selfId || savingLevelId === m.id}
+                            title={m.id === selfId ? t("Өөрийн эрхээ энд өөрчлөх боломжгүй.", "You can't change your own level here.", "自分の権限はここでは変更できません。", "无法在此更改自己的权限。") : undefined}
+                            className="text-xs rounded-md border border-slate-300 px-2 py-1 disabled:opacity-50 disabled:bg-slate-50"
+                          >
+                            <option value="none">{t("Админ биш", "Not admin", "管理者ではない", "非管理员")}</option>
+                            <option value="editor">{t("Editor (мэдээ, төсөл)", "Editor (news + projects)", "編集者(ニュース・プロジェクト)", "编辑(新闻+项目)")}</option>
+                            <option value="super">{t("Super (бүх эрх)", "Super (full access)", "スーパー(全権限)", "超级(全部权限)")}</option>
+                          </select>
+                        </div>
+                      </td>
+                    </tr>
+                    {editingId === m.id && (
+                      <tr key={`${m.id}-edit`} className="border-b border-slate-100 bg-slate-50/60">
+                        <td colSpan={5} className="p-4">
+                          <div className="grid gap-3 sm:grid-cols-2">
+                            <input
+                              placeholder={t("Утас", "Phone", "電話", "电话")}
+                              value={form.phone}
+                              onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                              className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                            />
+                            <input
+                              placeholder="Rotary ID"
+                              value={form.rotary_id}
+                              onChange={(e) => setForm({ ...form, rotary_id: e.target.value })}
+                              className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                            />
+                            <input
+                              placeholder={t("Хамгийн өндөр албан тушаал (жишээ: Клубын Ерөнхийлөгч 2020-21)", "Highest position (e.g. Club President 2020-21)", "最高役職(例:クラブ会長 2020-21)", "最高职位(例:俱乐部社长 2020-21)")}
+                              value={form.highest_position}
+                              onChange={(e) => setForm({ ...form, highest_position: e.target.value })}
+                              className="rounded-md border border-slate-300 px-3 py-2 text-sm sm:col-span-2"
+                            />
+                            <input
+                              type="number"
+                              placeholder={t("Алдрын самбарын байрлал (заавал биш — 1 = хамгийн эхэнд)", "Honor roll pin order (optional — 1 = shows first)", "名誉殿堂の順位(任意 — 1 = 最初に表示)", "荣誉榜排序(可选 — 1 = 最先显示)")}
+                              value={form.honor_roll_priority}
+                              onChange={(e) => setForm({ ...form, honor_roll_priority: e.target.value })}
+                              className="rounded-md border border-slate-300 px-3 py-2 text-sm sm:col-span-2"
+                            />
+                            <button
+                              onClick={() => saveEdit(m.id)}
+                              disabled={busy}
+                              className="justify-self-start bg-rotary-royal-blue text-white font-semibold rounded-md px-5 py-2 text-sm disabled:opacity-60 sm:col-span-2"
+                            >
+                              {busy ? t("Хадгалж байна…", "Saving…", "保存中…", "保存中…") : t("Хадгалах", "Save", "保存", "保存")}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}

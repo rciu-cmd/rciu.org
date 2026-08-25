@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
-import { asset } from "@/lib/asset";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
 
@@ -71,9 +69,6 @@ export default function JoinPage() {
               </li>
             ))}
           </ol>
-          <div className="flex items-center gap-3">
-            <Image src={asset("/logos/rciu-logo-transparent.png")} alt="" width={72} height={33} />
-          </div>
         </div>
 
         <div className="rounded-2xl border border-slate-200 shadow-sm p-8">

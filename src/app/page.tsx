@@ -40,6 +40,8 @@ type NewsRow = {
 type Stats = { phfPercent: number | null; affiliateCount: number | null; projectCount: number | null };
 type PhotoItem = { id: string; storage_path: string; caption: string | null; created_at: string };
 
+const CLUB_FACEBOOK_URL = "https://www.facebook.com/profile.php?id=100086308363177";
+
 const CAUSE_ICONS: Record<string, string> = {
   basic_education_literacy: "/causes/basic-education-literacy.png",
   maternal_child_health: "/causes/maternal-child-health.png",
@@ -120,14 +122,14 @@ export default function Home() {
   }, []);
 
   return (
-    <div>
+    <div className="min-h-full flex flex-col">
       {/* Hero — bold gradient using the official Rotary palette, with a
           large slow-spinning gear watermark for visual energy (purely
           decorative, never behind readable text). The 3 quick-stat tiles
           now live here too, under the heading — Donate was pulled out
           for now (per the club's request, it'll get its own home on
           another page later) so the stats take that spot instead. */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-rotary-royal-blue via-[#123a75] to-rotary-azure text-white">
+      <section className="last:flex-1 relative overflow-hidden bg-gradient-to-br from-rotary-royal-blue via-[#123a75] to-rotary-azure text-white">
         <Image
           src={asset("/logos/ri-gear-gold.png")}
           alt=""
@@ -178,7 +180,7 @@ export default function Home() {
           bottom) instead of each having its own flat white/gray block.
           This is "zone 2" of the page's 3-gradient flow: zone 1 is the
           Hero above, zone 3 is Sponsored/Links + Footer below. */}
-      <div className="bg-gradient-to-b from-[#eaf1fb] via-white to-[#fdf3e2]">
+      <div className="last:flex-1 bg-gradient-to-b from-[#eaf1fb] via-white to-[#fdf3e2]">
 
       {/* News — moved above Projects per the club's request, and given
           a bigger, more prominent treatment (was a small 3-up preview
@@ -344,8 +346,7 @@ export default function Home() {
           "Zone 3" of the gradient flow: fades from the gold tint above
           into a soft blue that leads into the Footer's own blue
           gradient right below, instead of a flat gray box. */}
-      {(affiliates.length > 0 || links.length > 0) && (
-        <section className="bg-gradient-to-b from-[#fdf3e2] to-[#eaf1fb] py-10">
+      <section className="last:flex-1 bg-gradient-to-b from-[#fdf3e2] to-[#eaf1fb] py-10">
           <div className="container-page">
             {affiliates.length > 0 && (
               <div className="mb-6">
@@ -365,37 +366,43 @@ export default function Home() {
               </div>
             )}
 
-            {links.length > 0 && (
-              <div>
-                <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3">
-                  {t("Холбоос ба түншүүд", "Links & Partners", "リンクとパートナー", "链接与伙伴")}
-                </h2>
-                <div className="flex flex-wrap items-center gap-8">
-                  {links.map((l) => {
-                    const logo = l.logo_url ?? KNOWN_LOGOS[l.name];
-                    return logo ? (
-                      <a
-                        key={l.id}
-                        href={l.url ?? undefined}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        title={l.name}
-                        className="shrink-0 hover:opacity-80 transition"
-                      >
-                        <Image src={logo.startsWith("http") ? logo : asset(logo)} alt={l.name} width={160} height={80} className="object-contain h-14 w-auto" />
-                      </a>
-                    ) : (
-                      <a key={l.id} href={l.url ?? undefined} target="_blank" rel="noopener noreferrer" title={l.name} className="text-xs font-bold text-slate-400 uppercase">
-                        {l.name}
-                      </a>
-                    );
-                  })}
-                </div>
+            <div>
+              <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3">
+                {t("Холбоос ба түншүүд", "Links & Partners", "リンクとパートナー", "链接与伙伴")}
+              </h2>
+              <div className="flex flex-wrap items-center gap-8">
+                <a
+                  href={CLUB_FACEBOOK_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Facebook"
+                  className="shrink-0 hover:opacity-80 transition"
+                >
+                  <Image src={asset("/logos/facebook-icon.svg")} alt="Facebook" width={40} height={40} className="w-10 h-10" />
+                </a>
+                {links.map((l) => {
+                  const logo = l.logo_url ?? KNOWN_LOGOS[l.name];
+                  return logo ? (
+                    <a
+                      key={l.id}
+                      href={l.url ?? undefined}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={l.name}
+                      className="shrink-0 hover:opacity-80 transition"
+                    >
+                      <Image src={logo.startsWith("http") ? logo : asset(logo)} alt={l.name} width={160} height={80} className="object-contain h-14 w-auto" />
+                    </a>
+                  ) : (
+                    <a key={l.id} href={l.url ?? undefined} target="_blank" rel="noopener noreferrer" title={l.name} className="text-xs font-bold text-slate-400 uppercase">
+                      {l.name}
+                    </a>
+                  );
+                })}
               </div>
-            )}
+            </div>
           </div>
         </section>
-      )}
     </div>
   );
 }

@@ -172,23 +172,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="container-page py-12 grid gap-6 sm:grid-cols-2">
-        <div className="rounded-xl border border-slate-200 p-6">
-          <h2 className="font-bold text-slate-900 mb-4">{t("Миний мэдээлэл", "My Info", "私の情報", "我的资料")}</h2>
-          <dl className="text-sm text-slate-600 space-y-2">
-            <Row label={t("И-мэйл", "Email", "メール", "邮箱")} value={member.email} />
-            <Row label={t("Утас", "Phone", "電話", "电话")} value={member.phone ?? "—"} />
-            <Row label={t("Хот", "City", "都市", "城市")} value={member.city ?? "—"} />
-            <Row label={t("Мэргэжил", "Classification", "職業", "职业")} value={member.classification ?? "—"} />
-          </dl>
-          <p className="text-xs text-slate-400 mt-4">
-            {t(
-              "Мэдээллээ засах боломж удахгүй нэмэгдэнэ.",
-              "Editing your profile will be enabled here soon.",
-              "プロフィール編集機能は近日追加予定です。",
-              "个人资料编辑功能即将上线。"
-            )}
-          </p>
-        </div>
+        <MyInfoCard member={member} setMember={setMember} t={t} />
 
         <PhotoUploadCard t={t} />
       </div>
@@ -215,6 +199,7 @@ function PhotoUploadCard({ t }: { t: (mn: string, en: string, ja?: string, zh?: 
   const thisYear = new Date().getFullYear();
   const [year, setYear] = useState(thisYear);
   const [category, setCategory] = useState<Category>("other");
+  const [subfolder, setSubfolder] = useState("");
   const [projects, setProjects] = useState<{ id: string; title_en: string }[]>([]);
   const [projectId, setProjectId] = useState("");
   const [caption, setCaption] = useState("");
@@ -247,9 +232,11 @@ function PhotoUploadCard({ t }: { t: (mn: string, en: string, ja?: string, zh?: 
     }
 
     const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
-    const folder = category === "projects" && projectId
+    const safeSubfolder = subfolder.trim().toLowerCase().replace(/[^a-z0-9\-_/]+/g, "-").replace(/^\/+|\/+$/g, "");
+    const baseFolder = category === "projects" && projectId
       ? `${year}/projects/${projectId}`
       : `${year}/${category}`;
+    const folder = safeSubfolder ? `${baseFolder}/${safeSubfolder}` : baseFolder;
     const path = `${folder}/${Date.now()}-${safeName}`;
 
     const { error: uploadError } = await supabase.storage.from("rciu-photos").upload(path, file);
@@ -282,6 +269,7 @@ function PhotoUploadCard({ t }: { t: (mn: string, en: string, ja?: string, zh?: 
     }
     setFile(null);
     setCaption("");
+    setSubfolder("");
     setDone(true);
   }
 
@@ -311,6 +299,23 @@ function PhotoUploadCard({ t }: { t: (mn: string, en: string, ja?: string, zh?: 
           </select>
         )}
 
+        <div>
+          <input
+            placeholder={t("Дэд хавтас (заавал биш, жишээ: gala-2026)", "Subfolder (optional, e.g. gala-2026)", "サブフォルダ(任意、例:gala-2026)", "子文件夹(可选,例如 gala-2026)")}
+            value={subfolder}
+            onChange={(e) => setSubfolder(e.target.value)}
+            className="rounded-md border border-slate-300 px-3 py-2 text-sm w-full"
+          />
+          <p className="text-xs text-slate-400 mt-1">
+            {t(
+              "Дурын нэр өгч болно — жишээ нь тодорхой арга хэмжээ бүрийг тусад нь эмхэлж болно.",
+              "Type any name to group photos further — e.g. a specific event within the category.",
+              "任意の名前を入力してさらに整理できます(例:カテゴリー内の特定のイベント)。",
+              "可输入任意名称进一步分类,例如某分类下的具体活动。"
+            )}
+          </p>
+        </div>
+
         <input
           type="file"
           accept="image/*"
@@ -337,6 +342,110 @@ function PhotoUploadCard({ t }: { t: (mn: string, en: string, ja?: string, zh?: 
           {busy ? t("Байршуулж байна…", "Uploading…", "アップロード中…", "上传中…") : t("Байршуулах", "Upload", "アップロード", "上传")}
         </button>
       </form>
+    </div>
+  );
+}
+
+// Self-service edit for phone/city/classification — allowed under the
+// members_update_self RLS policy (a member can always update their
+// own row). Email is intentionally left read-only here since it's
+// tied to how the member logs in; changing it needs an admin.
+function MyInfoCard({
+  member,
+  setMember,
+  t,
+}: {
+  member: Member;
+  setMember: (m: Member) => void;
+  t: (mn: string, en: string, ja?: string, zh?: string) => string;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState({ phone: member.phone ?? "", city: member.city ?? "", classification: member.classification ?? "" });
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  function startEdit() {
+    setForm({ phone: member.phone ?? "", city: member.city ?? "", classification: member.classification ?? "" });
+    setError(null);
+    setEditing(true);
+  }
+
+  async function save() {
+    setBusy(true);
+    setError(null);
+    const payload = {
+      phone: form.phone.trim() || null,
+      city: form.city.trim() || null,
+      classification: form.classification.trim() || null,
+    };
+    const { error } = await supabase.from("members").update(payload).eq("id", member.id);
+    setBusy(false);
+    if (error) {
+      setError(error.message);
+      return;
+    }
+    setMember({ ...member, ...payload });
+    setEditing(false);
+  }
+
+  return (
+    <div className="rounded-xl border border-slate-200 p-6">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="font-bold text-slate-900">{t("Миний мэдээлэл", "My Info", "私の情報", "我的资料")}</h2>
+        {!editing && (
+          <button onClick={startEdit} className="text-xs font-semibold px-3 py-1.5 rounded-md border border-slate-300 text-slate-600 hover:bg-slate-50">
+            {t("Засах", "Edit", "編集", "编辑")}
+          </button>
+        )}
+      </div>
+
+      {!editing ? (
+        <dl className="text-sm text-slate-600 space-y-2">
+          <Row label={t("И-мэйл", "Email", "メール", "邮箱")} value={member.email} />
+          <Row label={t("Утас", "Phone", "電話", "电话")} value={member.phone ?? "—"} />
+          <Row label={t("Хот", "City", "都市", "城市")} value={member.city ?? "—"} />
+          <Row label={t("Мэргэжил", "Classification", "職業", "职业")} value={member.classification ?? "—"} />
+        </dl>
+      ) : (
+        <div className="grid gap-3">
+          <input
+            placeholder={t("Утас", "Phone", "電話", "电话")}
+            value={form.phone}
+            onChange={(e) => setForm({ ...form, phone: e.target.value })}
+            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+          />
+          <input
+            placeholder={t("Хот", "City", "都市", "城市")}
+            value={form.city}
+            onChange={(e) => setForm({ ...form, city: e.target.value })}
+            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+          />
+          <input
+            placeholder={t("Мэргэжил", "Classification", "職業", "职业")}
+            value={form.classification}
+            onChange={(e) => setForm({ ...form, classification: e.target.value })}
+            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+          />
+          {error && <p className="text-sm text-rotary-cardinal">{error}</p>}
+          <div className="flex gap-2">
+            <button onClick={save} disabled={busy} className="bg-rotary-royal-blue text-white font-semibold rounded-md px-4 py-2 text-sm disabled:opacity-60">
+              {busy ? t("Хадгалж байна…", "Saving…", "保存中…", "保存中…") : t("Хадгалах", "Save", "保存", "保存")}
+            </button>
+            <button onClick={() => setEditing(false)} className="text-sm font-semibold px-4 py-2 rounded-md border border-slate-300 text-slate-600">
+              {t("Цуцлах", "Cancel", "キャンセル", "取消")}
+            </button>
+          </div>
+        </div>
+      )}
+
+      <p className="text-xs text-slate-400 mt-4">
+        {t(
+          "И-мэйл хаягийг өөрчлөх бол клубын админтай холбогдоно уу.",
+          "To change your email address, contact a club admin.",
+          "メールアドレスの変更はクラブ管理者にご連絡ください。",
+          "如需更改邮箱,请联系俱乐部管理员。"
+        )}
+      </p>
     </div>
   );
 }

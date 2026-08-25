@@ -47,7 +47,9 @@ create table if not exists public.members (
 
   status text not null default 'pending'
     check (status in ('pending', 'active', 'inactive')),
-  is_admin boolean not null default false,
+  is_admin boolean not null default false, -- auto-derived from admin_level, see trigger below — don't set directly
+  admin_level text not null default 'none'
+    check (admin_level in ('none','editor','super')), -- none | editor (News + Projects only) | super (everything, incl. appointing admins)
 
   -- Paul Harris Fellow / Major Donor recognition — tier only, no
   -- dollar figures live here (those stay in Rotary's own systems).
@@ -127,6 +129,37 @@ as $$
   select coalesce((select is_admin from public.members where id = auth.uid()), false);
 $$;
 
+-- "Is the current user a SUPER admin?" — the finer-grained tier on
+-- top of is_admin(). is_admin() stays true for both 'editor' and
+-- 'super' (News + Projects intentionally accept either); this one
+-- gates everything else in /admin (Members, Board, History, Partners,
+-- Settings, Events, the home Gallery curation, Join Inquiries).
+create or replace function public.is_super_admin()
+returns boolean
+language sql
+security definer
+stable
+set search_path = public
+as $$
+  select coalesce((select admin_level = 'super' from public.members where id = auth.uid()), false);
+$$;
+
+-- is_admin (boolean) is a derived mirror of admin_level, kept in sync
+-- automatically so every existing is_admin() check above keeps
+-- working without changes — set admin_level, never is_admin directly.
+create or replace function public.sync_is_admin_from_level()
+returns trigger language plpgsql as $$
+begin
+  new.is_admin := (new.admin_level <> 'none');
+  return new;
+end;
+$$;
+
+drop trigger if exists members_sync_is_admin on public.members;
+create trigger members_sync_is_admin
+  before insert or update on public.members
+  for each row execute function public.sync_is_admin_from_level();
+
 -- Public: only a safe subset of fields, via a view (see below) — the
 -- base table itself is never selectable by anon.
 drop policy if exists members_select_self on public.members;
@@ -136,14 +169,16 @@ create policy members_select_self on public.members
 drop policy if exists members_select_admin on public.members;
 create policy members_select_admin on public.members
   for select using (
-    public.is_admin()
+    public.is_super_admin()
   );
 
--- Note: this intentionally does NOT compare is_admin against its old
--- value (that would be the same self-referencing-subquery recursion
--- risk described above). Granting/revoking admin is done from the SQL
--- Editor directly, which bypasses RLS — never through a self-service
--- form — so this doesn't need to guard against self-promotion here.
+-- Note: this intentionally does NOT restrict which columns a member
+-- can touch on their own row (that would need column-level grants,
+-- which don't compose with RLS the way you'd want here) — instead,
+-- the trigger just below specifically blocks changing your OWN
+-- admin_level, which is the one column self-service editing must
+-- never be allowed to touch. Promoting/demoting always has to come
+-- from a different (super-admin) account, or the SQL Editor.
 drop policy if exists members_update_self on public.members;
 create policy members_update_self on public.members
   for update using (auth.uid() = id)
@@ -152,8 +187,23 @@ create policy members_update_self on public.members
 drop policy if exists members_update_admin on public.members;
 create policy members_update_admin on public.members
   for update using (
-    public.is_admin()
+    public.is_super_admin()
   );
+
+create or replace function public.protect_own_admin_level()
+returns trigger language plpgsql as $$
+begin
+  if auth.uid() = old.id and new.admin_level is distinct from old.admin_level then
+    raise exception 'cannot change your own admin level — ask another super admin, or use the SQL Editor';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists members_protect_own_admin_level on public.members;
+create trigger members_protect_own_admin_level
+  before update on public.members
+  for each row execute function public.protect_own_admin_level();
 
 -- Public-safe view: name, role, photo, PHF tier, major-donor flag —
 -- no email, phone, address, or exact dollar amounts, ever. Respects
@@ -210,8 +260,8 @@ create policy board_select_public on public.board_positions for select using (tr
 
 drop policy if exists board_write_admin on public.board_positions;
 create policy board_write_admin on public.board_positions
-  for all using (public.is_admin())
-  with check (public.is_admin());
+  for all using (public.is_super_admin())
+  with check (public.is_super_admin());
 
 -- Past presidents (historical list, not tied to member accounts —
 -- some past presidents may no longer have a login/member record).
@@ -231,8 +281,8 @@ create policy past_presidents_select_public on public.club_past_presidents for s
 
 drop policy if exists past_presidents_write_admin on public.club_past_presidents;
 create policy past_presidents_write_admin on public.club_past_presidents
-  for all using (public.is_admin())
-  with check (public.is_admin());
+  for all using (public.is_super_admin())
+  with check (public.is_super_admin());
 
 insert into public.club_past_presidents (name, year_range, sort_order)
 select v.name, v.year_range, v.sort_order
@@ -375,6 +425,10 @@ create policy project_media_delete_own_or_admin on public.project_media
     or public.is_admin()
   );
 
+drop policy if exists project_media_update_admin on public.project_media;
+create policy project_media_update_admin on public.project_media
+  for update using (public.is_super_admin()) with check (public.is_super_admin());
+
 -- ------------------------------------------------------------
 -- links & partners (Холбоос ба түншүүд) + affiliate clubs
 -- ------------------------------------------------------------
@@ -397,8 +451,8 @@ create policy links_select_public on public.links_partners for select using (tru
 
 drop policy if exists links_write_admin on public.links_partners;
 create policy links_write_admin on public.links_partners
-  for all using (public.is_admin())
-  with check (public.is_admin());
+  for all using (public.is_super_admin())
+  with check (public.is_super_admin());
 
 -- Sister clubs, sourced from rotarymongolia.org's RCIU profile page.
 -- No logos on file yet — add via /admin/partners once available.
@@ -449,8 +503,8 @@ create policy affiliate_select_public on public.affiliate_clubs for select using
 
 drop policy if exists affiliate_write_admin on public.affiliate_clubs;
 create policy affiliate_write_admin on public.affiliate_clubs
-  for all using (public.is_admin())
-  with check (public.is_admin());
+  for all using (public.is_super_admin())
+  with check (public.is_super_admin());
 
 -- Sourced from rotarymongolia.org's RCIU profile page. Chartered
 -- dates use Jan 1 of the founding year since only the year is
@@ -522,12 +576,12 @@ alter table public.stock_item_history enable row level security;
 -- regular members, not just unlinked from navigation.
 drop policy if exists stock_items_admin_only on public.stock_items;
 create policy stock_items_admin_only on public.stock_items
-  for all using (public.is_admin())
-  with check (public.is_admin());
+  for all using (public.is_super_admin())
+  with check (public.is_super_admin());
 
 drop policy if exists stock_history_admin_only on public.stock_item_history;
 create policy stock_history_admin_only on public.stock_item_history
-  for select using (public.is_admin());
+  for select using (public.is_super_admin());
 
 -- ------------------------------------------------------------
 -- site settings (meeting info, contact details — editable by admin)
@@ -547,8 +601,8 @@ create policy settings_select_public on public.site_settings for select using (t
 
 drop policy if exists settings_write_admin on public.site_settings;
 create policy settings_write_admin on public.site_settings
-  for all using (public.is_admin())
-  with check (public.is_admin());
+  for all using (public.is_super_admin())
+  with check (public.is_super_admin());
 
 -- Seed the meeting/contact details already confirmed by the club.
 -- Safe to re-run (upsert).
@@ -612,8 +666,8 @@ create policy events_select_members on public.events
 
 drop policy if exists events_write_admin on public.events;
 create policy events_write_admin on public.events
-  for all using (public.is_admin())
-  with check (public.is_admin());
+  for all using (public.is_super_admin())
+  with check (public.is_super_admin());
 
 -- ------------------------------------------------------------
 -- club_photos — general (non-project) photo library, organized by
@@ -649,8 +703,15 @@ drop policy if exists club_photos_delete_own_or_admin on public.club_photos;
 create policy club_photos_delete_own_or_admin on public.club_photos
   for delete using (
     uploaded_by = auth.uid()
-    or public.is_admin()
+    or public.is_super_admin()
   );
+
+-- club_photos/project_media never had an UPDATE policy at all, so the
+-- "feature on home page" toggle (see migration14) was silently
+-- blocked by RLS for everyone, admin or not, until this was added.
+drop policy if exists club_photos_update_admin on public.club_photos;
+create policy club_photos_update_admin on public.club_photos
+  for update using (public.is_super_admin()) with check (public.is_super_admin());
 
 -- ------------------------------------------------------------
 -- join_inquiries — submissions from the public "/join" page.
@@ -674,12 +735,12 @@ create policy join_inquiries_insert_anyone on public.join_inquiries
 
 drop policy if exists join_inquiries_select_admin on public.join_inquiries;
 create policy join_inquiries_select_admin on public.join_inquiries
-  for select using (public.is_admin());
+  for select using (public.is_super_admin());
 
 drop policy if exists join_inquiries_update_admin on public.join_inquiries;
 create policy join_inquiries_update_admin on public.join_inquiries
-  for update using (public.is_admin()) with check (public.is_admin());
+  for update using (public.is_super_admin()) with check (public.is_super_admin());
 
 drop policy if exists join_inquiries_delete_admin on public.join_inquiries;
 create policy join_inquiries_delete_admin on public.join_inquiries
-  for delete using (public.is_admin());
+  for delete using (public.is_super_admin());
