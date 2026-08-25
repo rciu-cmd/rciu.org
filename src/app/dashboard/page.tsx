@@ -91,15 +91,25 @@ export default function DashboardPage() {
             <p className="text-sm font-semibold uppercase tracking-wide text-white/70">
               {t("Хувийн профайл", "Member Dashboard", "会員ダッシュボード", "会员仪表盘")}
             </p>
-            <button
-              onClick={async () => {
-                await supabase.auth.signOut();
-                router.push("/login/");
-              }}
-              className="text-xs font-semibold bg-white/15 hover:bg-white/25 rounded-full px-4 py-1.5 shrink-0"
-            >
-              {t("Гарах", "Log Out", "ログアウト", "退出登录")}
-            </button>
+            <div className="flex flex-col items-end gap-2 shrink-0">
+              <button
+                onClick={async () => {
+                  await supabase.auth.signOut();
+                  router.push("/login/");
+                }}
+                className="text-xs font-semibold bg-white/15 hover:bg-white/25 rounded-full px-4 py-1.5"
+              >
+                {t("Гарах", "Log Out", "ログアウト", "退出登录")}
+              </button>
+              {member.is_admin && (
+                <Link
+                  href="/admin"
+                  className="inline-flex items-center gap-2 bg-white text-rotary-royal-blue font-semibold rounded-full px-4 py-1.5 text-xs hover:bg-white/90"
+                >
+                  {t("Админ самбар руу очих", "Go to Admin Dashboard", "管理者ダッシュボードへ", "前往管理后台")} →
+                </Link>
+              )}
+            </div>
           </div>
           <h1 className="text-3xl font-bold mb-2">{member.first_name} {member.last_name}</h1>
           {isPhf ? (
@@ -117,14 +127,6 @@ export default function DashboardPage() {
                 "您尚未成为保罗·哈里斯会员"
               )}
             </div>
-          )}
-          {member.is_admin && (
-            <Link
-              href="/admin"
-              className="mt-4 inline-flex items-center gap-2 bg-white text-rotary-royal-blue font-semibold rounded-full px-4 py-1.5 text-sm hover:bg-white/90"
-            >
-              {t("Админ самбар руу очих", "Go to Admin Dashboard", "管理者ダッシュボードへ", "前往管理后台")} →
-            </Link>
           )}
         </div>
       </section>

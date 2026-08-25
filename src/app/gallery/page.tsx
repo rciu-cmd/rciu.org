@@ -38,21 +38,55 @@ export default function GalleryPage() {
   const { t } = useLanguage();
   const router = useRouter();
   const [checkedAuth, setCheckedAuth] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [items, setItems] = useState<PhotoRow[] | null>(null);
   const [projectTitles, setProjectTitles] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [openFolder, setOpenFolder] = useState<string | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   // Login-gated, same pattern as /members — guests get redirected.
+  // Also checks admin_level, since the full-quality download button
+  // below is restricted to super admins only, not every member.
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session) {
         router.replace("/login/");
         return;
       }
       setCheckedAuth(true);
+      const { data } = await supabase.from("members").select("admin_level").eq("id", session.user.id).single();
+      setIsSuperAdmin((data?.admin_level as string | undefined) === "super");
     });
   }, [router]);
+
+  // Downloads the original, full-quality file — the Storage bucket
+  // never resizes or recompresses what members upload, so this is
+  // already the highest quality available, no separate "HQ" copy to
+  // fetch. Goes through fetch()+blob rather than a plain <a download>
+  // because the Storage URL is cross-origin, where the download
+  // attribute is silently ignored by browsers (they'd just open the
+  // image in a new tab instead of saving it).
+  async function downloadPhoto(p: PhotoRow) {
+    setDownloadingId(p.id);
+    try {
+      const url = supabase.storage.from("rciu-photos").getPublicUrl(p.storage_path).data.publicUrl;
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const filename = p.storage_path.split("/").pop() || "photo.jpg";
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      setError(t("Татаж авахад алдаа гарлаа.", "Couldn't download the photo.", "ダウンロードに失敗しました。", "下载失败。"));
+    }
+    setDownloadingId(null);
+  }
 
   useEffect(() => {
     if (!checkedAuth) return;
@@ -163,18 +197,30 @@ export default function GalleryPage() {
             {openGroup.photos.map((p) => {
               const url = supabase.storage.from("rciu-photos").getPublicUrl(p.storage_path).data.publicUrl;
               return (
-                <a
-                  key={p.id}
-                  href={url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-xl border border-slate-200 overflow-hidden bg-white block hover:shadow-lg transition"
-                >
-                  <div className="relative w-full aspect-video bg-slate-100">
-                    <Image src={url} alt={p.caption ?? ""} fill className="object-cover" />
+                <div key={p.id} className="rounded-xl border border-slate-200 overflow-hidden bg-white hover:shadow-lg transition">
+                  <a href={url} target="_blank" rel="noopener noreferrer" className="block">
+                    <div className="relative w-full aspect-video bg-slate-100">
+                      <Image src={url} alt={p.caption ?? ""} fill className="object-cover" />
+                    </div>
+                  </a>
+                  <div className="flex items-center justify-between gap-2 p-2">
+                    {p.caption ? (
+                      <p className="text-xs text-slate-500 line-clamp-1">{p.caption}</p>
+                    ) : (
+                      <span />
+                    )}
+                    {isSuperAdmin && (
+                      <button
+                        onClick={() => downloadPhoto(p)}
+                        disabled={downloadingId === p.id}
+                        title={t("Эх чанараар татах", "Download original quality", "元の画質でダウンロード", "下载原始画质")}
+                        className="shrink-0 text-xs font-semibold px-2 py-1 rounded-md border border-rotary-royal-blue text-rotary-royal-blue hover:bg-rotary-royal-blue hover:text-white disabled:opacity-50"
+                      >
+                        {downloadingId === p.id ? "…" : `⭳ ${t("Татах", "Download", "ダウンロード", "下载")}`}
+                      </button>
+                    )}
                   </div>
-                  {p.caption && <p className="text-xs text-slate-500 p-2 line-clamp-1">{p.caption}</p>}
-                </a>
+                </div>
               );
             })}
           </div>
