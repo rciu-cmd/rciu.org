@@ -28,6 +28,10 @@ const EMPTY = {
   city: "",
   event_date: "",
   notes: "",
+  manualEntry: false,
+  manualCity: "",
+  manualLat: "",
+  manualLng: "",
 };
 
 // Intl.DisplayNames' locale tags for the site's 4 languages.
@@ -108,15 +112,39 @@ export default function AdminTravelPage() {
     setBusy(true);
     setError(null);
 
-    const cityEntry = citiesForCountry.find((c) => c[0] === form.city);
-    if (!form.country || !cityEntry) {
+    if (!form.country) {
       setBusy(false);
-      setError(t("Улс, хотоо сонгоно уу.", "Please select a country and city.", "国と都市を選択してください。", "请选择国家和城市。"));
+      setError(t("Улсаа сонгоно уу.", "Please select a country.", "国を選択してください。", "请选择国家。"));
       return;
     }
-    const [cityLabel, , lat, lng] = cityEntry;
-    // Strip a disambiguating "(region code)" suffix, if present, before storing.
-    const cityName = cityLabel.replace(/\s*\([^)]*\)\s*$/, "");
+
+    let cityName: string;
+    let lat: number;
+    let lng: number;
+
+    if (form.manualEntry) {
+      const parsedLat = parseFloat(form.manualLat);
+      const parsedLng = parseFloat(form.manualLng);
+      if (!form.manualCity.trim() || Number.isNaN(parsedLat) || parsedLat < -90 || parsedLat > 90 || Number.isNaN(parsedLng) || parsedLng < -180 || parsedLng > 180) {
+        setBusy(false);
+        setError(t("Хотын нэр болон байршил дутуу эсвэл буруу байна.", "City name and/or coordinates are missing or invalid.", "都市名または座標が未入力か無効です。", "城市名称或坐标缺失或无效。"));
+        return;
+      }
+      cityName = form.manualCity.trim();
+      lat = parsedLat;
+      lng = parsedLng;
+    } else {
+      // Strip a disambiguating "(region code)" suffix, if present, before storing.
+      const cityEntry = citiesForCountry.find((c) => c[0] === form.city);
+      if (!cityEntry) {
+        setBusy(false);
+        setError(t("Жагсаалтаас хот сонгоно уу (эсвэл \"Жагсаалтад алга\" гэснийг сонгоод гараар оруулна уу).", "Please pick a city from the suggestions (or check \"Not in the list\" to enter it manually).", "候補から都市を選択してください(候補にない場合は「リストにない」を選択して手動入力してください)。", "请从建议列表中选择城市(如果没有,请勾选「列表中没有」手动输入)。"));
+        return;
+      }
+      cityName = cityEntry[0].replace(/\s*\([^)]*\)\s*$/, "");
+      lat = cityEntry[2];
+      lng = cityEntry[3];
+    }
 
     const { error } = await supabase.from("member_travels").insert({
       member_id: form.member_id || null,
@@ -157,10 +185,10 @@ export default function AdminTravelPage() {
 
       <p className="text-sm text-slate-500 mb-6 max-w-2xl">
         {t(
-          "Энд нэмсэн аялал \"Бидний тухай\" хуудасны дэлхийн газрын зурган дээр харагдана. Зөвхөн олон улсын Ротари арга хэмжээнд оролцсон аялал нэмнэ (конвенц, дүүргийн бага хурал, эгч дүү клубын айлчлал гэх мэт). Улс, хотоо доорх жагсаалтаас сонгоход байршил автоматаар тохируулагдана.",
-          "Trips added here appear on the world map on the About page. Only add trips for official international Rotary events (convention, district conference abroad, sister-club visit, etc.). Just pick the country and city below — the map location is set automatically.",
-          "ここに追加した旅行は「私たちについて」ページの世界地図に表示されます。公式の国際ロータリー行事(大会、海外地区大会、姉妹クラブ訪問など)のみ追加してください。下から国と都市を選択するだけで位置が自動的に設定されます。",
-          "在此添加的行程将显示在「关于我们」页面的世界地图上。仅添加正式的国际扶轮活动(年会、境外分区年会、姊妹俱乐部互访等)。只需在下方选择国家和城市，地图位置将自动设定。"
+          "Энд нэмсэн аялал \"Бидний тухай\" хуудасны дэлхийн газрын зурган дээр харагдана. Зөвхөн олон улсын Ротари арга хэмжээнд оролцсон аялал нэмнэ (конвенц, дүүргийн бага хурал, эгч дүү клубын айлчлал гэх мэт). Улсаа сонгоод хотын нэрийг бичиж эхлэхэд санал болгосон жагсаалтаас сонгоно уу — байршил автоматаар тохируулагдана. Хот жагсаалтад байхгүй бол доор \"гараар оруулах\"-ыг сонгож болно.",
+          "Trips added here appear on the world map on the About page. Only add trips for official international Rotary events (convention, district conference abroad, sister-club visit, etc.). Select the country, then start typing the city name and pick from the suggestions — the map location is set automatically. If a city isn't in the list, check \"enter manually\" below.",
+          "ここに追加した旅行は「私たちについて」ページの世界地図に表示されます。公式の国際ロータリー行事(大会、海外地区大会、姉妹クラブ訪問など)のみ追加してください。国を選択後、都市名を入力して候補から選ぶと位置が自動的に設定されます。リストにない場合は下の「手動入力」を選択してください。",
+          "在此添加的行程将显示在「关于我们」页面的世界地图上。仅添加正式的国际扶轮活动(年会、境外分区年会、姊妹俱乐部互访等)。选择国家后输入城市名称并从建议列表中选择,地图位置将自动设定。如果列表中没有该城市,请勾选下方的「手动输入」。"
         )}
       </p>
 
@@ -187,23 +215,85 @@ export default function AdminTravelPage() {
                 <option key={c.code} value={c.code}>{c.label}</option>
               ))}
             </select>
-            <select
-              required
-              value={form.city}
-              onChange={(e) => setForm({ ...form, city: e.target.value })}
-              disabled={!form.country}
-              className="rounded-md border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-100 disabled:text-slate-400"
-            >
-              <option value="">
-                {form.country
-                  ? t("Хот сонгох", "Select city", "都市を選択", "选择城市")
-                  : t("Эхлээд улсаа сонгоно уу", "Select a country first", "先に国を選択してください", "请先选择国家")}
-              </option>
-              {citiesForCountry.map((c) => (
-                <option key={c[0]} value={c[0]}>{c[0]}</option>
-              ))}
-            </select>
+
+            {!form.manualEntry ? (
+              <div>
+                <input
+                  required
+                  list="travel-city-options"
+                  placeholder={
+                    form.country
+                      ? t("Хот бичиж хайх…", "Type to search a city…", "都市名を入力して検索…", "输入城市名称搜索…")
+                      : t("Эхлээд улсаа сонгоно уу", "Select a country first", "先に国を選択してください", "请先选择国家")
+                  }
+                  value={form.city}
+                  onChange={(e) => setForm({ ...form, city: e.target.value })}
+                  disabled={!form.country}
+                  autoComplete="off"
+                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-100 disabled:text-slate-400"
+                />
+                <datalist id="travel-city-options">
+                  {citiesForCountry.map((c) => (
+                    <option key={c[0]} value={c[0]} />
+                  ))}
+                </datalist>
+              </div>
+            ) : (
+              <input
+                required
+                placeholder={t("Хотын нэр", "City name", "都市名", "城市名称")}
+                value={form.manualCity}
+                onChange={(e) => setForm({ ...form, manualCity: e.target.value })}
+                className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+              />
+            )}
           </div>
+
+          <label className="flex items-center gap-2 text-xs text-slate-500">
+            <input
+              type="checkbox"
+              checked={form.manualEntry}
+              onChange={(e) => setForm({ ...form, manualEntry: e.target.checked, city: "", manualCity: "", manualLat: "", manualLng: "" })}
+            />
+            {t(
+              "Хот жагсаалтад алга (гараар оруулах)",
+              "City not in the list (enter manually)",
+              "都市がリストにない(手動入力)",
+              "列表中没有此城市(手动输入)"
+            )}
+          </label>
+
+          {form.manualEntry && (
+            <div className="grid gap-3 sm:grid-cols-2 rounded-md bg-slate-50 border border-slate-200 p-3">
+              <input
+                required
+                type="number"
+                step="any"
+                placeholder={t("Өргөрөг (lat)", "Latitude", "緯度", "纬度")}
+                value={form.manualLat}
+                onChange={(e) => setForm({ ...form, manualLat: e.target.value })}
+                className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+              />
+              <input
+                required
+                type="number"
+                step="any"
+                placeholder={t("Уртраг (lng)", "Longitude", "経度", "经度")}
+                value={form.manualLng}
+                onChange={(e) => setForm({ ...form, manualLng: e.target.value })}
+                className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+              />
+              <p className="text-xs text-slate-400 sm:col-span-2">
+                {t(
+                  "Google Maps дээр газрыг хайгаад баруун товч дараад олж болно.",
+                  "Find these by searching the place on Google Maps and right-clicking it.",
+                  "Googleマップでその場所を検索し右クリックすると調べられます。",
+                  "可在谷歌地图中搜索该地点并右键点击以获取。"
+                )}
+              </p>
+            </div>
+          )}
+
           <input type="date" value={form.event_date} onChange={(e) => setForm({ ...form, event_date: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm sm:w-56" />
           <textarea placeholder={t("Тэмдэглэл (заавал биш)", "Notes (optional)", "メモ(任意)", "备注(可选)")} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={2} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
           {error && <p className="text-sm text-rotary-cardinal">{error}</p>}
