@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
 
@@ -16,6 +17,7 @@ type EventRow = {
   event_date: string;
   event_time: string | null;
   category: Category | null;
+  cover_image_url: string | null;
 };
 
 const CATEGORY_LABELS: Record<Category, { mn: string; en: string }> = {
@@ -43,6 +45,7 @@ export default function AdminEventsPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
   const [reminderStatus, setReminderStatus] = useState<Record<string, string>>({});
 
   async function refresh() {
@@ -59,6 +62,20 @@ export default function AdminEventsPage() {
     e.preventDefault();
     setBusy(true);
     setError(null);
+
+    let coverImageUrl: string | null = null;
+    if (file) {
+      const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+      const path = `events/${form.event_date}-${Date.now()}-${safeName}`;
+      const { error: uploadError } = await supabase.storage.from("rciu-photos").upload(path, file);
+      if (uploadError) {
+        setBusy(false);
+        setError(uploadError.message);
+        return;
+      }
+      coverImageUrl = supabase.storage.from("rciu-photos").getPublicUrl(path).data.publicUrl;
+    }
+
     const { error } = await supabase.from("events").insert({
       title_mn: form.title_mn,
       title_en: form.title_en,
@@ -68,6 +85,7 @@ export default function AdminEventsPage() {
       event_date: form.event_date,
       event_time: form.event_time || null,
       category: form.category,
+      cover_image_url: coverImageUrl,
     });
     setBusy(false);
     if (error) {
@@ -75,6 +93,7 @@ export default function AdminEventsPage() {
       return;
     }
     setForm(EMPTY);
+    setFile(null);
     setShowForm(false);
     refresh();
   }
@@ -137,6 +156,13 @@ export default function AdminEventsPage() {
           <input placeholder={t("Байршил", "Location", "場所", "地点")} value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
           <textarea placeholder={t("Тайлбар (MN)", "Description (MN)", "説明(MN)", "描述(MN)")} value={form.description_mn} onChange={(e) => setForm({ ...form, description_mn: e.target.value })} rows={2} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
           <textarea placeholder={t("Тайлбар (EN)", "Description (EN)", "説明(EN)", "描述(EN)")} value={form.description_en} onChange={(e) => setForm({ ...form, description_en: e.target.value })} rows={2} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
+          <div>
+            <p className="text-sm font-semibold text-slate-700 mb-1">{t("Зураг (заавал биш)", "Photo (optional)", "写真(任意)", "照片(可选)")}</p>
+            <p className="text-xs text-slate-400 mb-2">
+              {t("Ойрын арга хэмжээ нүүр хуудсанд зурагтай харагдана.", "Shown with the \"next event\" widget on the home page, if the event is upcoming.", "今後のイベントであればホームページの「次のイベント」に表示されます。", "如果是即将举行的活动，将显示在首页的「下次活动」卡片中。")}
+            </p>
+            <input type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="text-sm" />
+          </div>
           {error && <p className="text-sm text-rotary-cardinal">{error}</p>}
           <button type="submit" disabled={busy} className="justify-self-start bg-rotary-royal-blue text-white font-semibold rounded-md px-5 py-2 text-sm disabled:opacity-60">
             {busy ? t("Хадгалж байна…", "Saving…", "保存中…", "保存中…") : t("Хадгалах", "Save Event", "保存", "保存")}
@@ -153,13 +179,18 @@ export default function AdminEventsPage() {
             {upcoming.length === 0 && <p className="text-slate-400 text-sm">{t("Төлөвлөсөн үйл явдал алга.", "No upcoming events.", "予定されているイベントはありません。", "暂无即将举行的活动。")}</p>}
             {upcoming.map((ev) => (
               <div key={ev.id} className="rounded-xl border border-slate-200 p-5 flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-xs font-semibold text-rotary-azure">
-                    {ev.event_date}{ev.event_time ? ` · ${ev.event_time}` : ""}
-                    {ev.category && ` · ${t(CATEGORY_LABELS[ev.category].mn, CATEGORY_LABELS[ev.category].en)}`}
-                  </p>
-                  <p className="font-bold text-slate-900">{ev.title_en}</p>
-                  {ev.location && <p className="text-sm text-slate-500">{ev.location}</p>}
+                <div className="flex items-start gap-3">
+                  {ev.cover_image_url && (
+                    <Image src={ev.cover_image_url} alt="" width={48} height={48} className="rounded-md object-cover w-12 h-12 shrink-0" />
+                  )}
+                  <div>
+                    <p className="text-xs font-semibold text-rotary-azure">
+                      {ev.event_date}{ev.event_time ? ` · ${ev.event_time}` : ""}
+                      {ev.category && ` · ${t(CATEGORY_LABELS[ev.category].mn, CATEGORY_LABELS[ev.category].en)}`}
+                    </p>
+                    <p className="font-bold text-slate-900">{ev.title_en}</p>
+                    {ev.location && <p className="text-sm text-slate-500">{ev.location}</p>}
+                  </div>
                 </div>
                 <div className="flex flex-col gap-2 items-end shrink-0">
                   <button

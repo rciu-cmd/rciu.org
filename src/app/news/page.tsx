@@ -84,7 +84,7 @@ export default function NewsPage() {
           {items.map((n) =>
             n.facebook_url ? (
               <article key={n.id} className="rounded-2xl border border-slate-200 p-3 shadow-sm hover:shadow-lg transition overflow-hidden flex justify-center">
-                <div className="fb-post" data-href={n.facebook_url} data-width="500" data-show-text="true" />
+                <div className="fb-post" data-href={/^https?:\/\//i.test(n.facebook_url) ? n.facebook_url : `https://${n.facebook_url}`} data-width="500" data-show-text="true" />
               </article>
             ) : (
               <article key={n.id} className="rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-lg hover:-translate-y-1 transition">

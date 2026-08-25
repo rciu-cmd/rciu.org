@@ -65,6 +65,13 @@ export default function MembersPage() {
     return <div className="container-page py-20 text-center text-slate-400">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加载中…")}</div>;
   }
 
+  // Alphabetical, by first name then last name (matches how names are
+  // displayed — "First Last") — sorted client-side so it's guaranteed
+  // regardless of how the underlying view/query happens to order rows.
+  const alphabetical = (members ?? [])
+    .slice()
+    .sort((a, b) => `${a.first_name} ${a.last_name}`.localeCompare(`${b.first_name} ${b.last_name}`));
+
   const honorRoll = (members ?? [])
     .filter((m) => m.phf_level !== "none")
     .sort((a, b) => {
@@ -120,7 +127,7 @@ export default function MembersPage() {
 
       {members && members.length > 0 && (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-16">
-          {members.map((m) => {
+          {alphabetical.map((m) => {
             const theme = phfTheme(m.phf_level);
             return (
               <div key={m.member_id} className="rounded-xl border border-slate-200 p-5 shadow-sm flex gap-4 items-start">

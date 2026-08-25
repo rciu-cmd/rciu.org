@@ -646,6 +646,7 @@ create table if not exists public.events (
   event_time text,               -- free text, e.g. "18:00" — no timezone math needed for a single-city club
   category text check (category in ('installation_ceremony','district_events','projects','other')),
   project_id uuid references public.projects(id) on delete set null,
+  cover_image_url text,          -- optional photo, shown in the home page "next event" widget (migration16)
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -657,12 +658,12 @@ create trigger events_touch_updated_at
 
 alter table public.events enable row level security;
 
--- Signed-in members only (per the club's "calendar to admins only [to
--- manage], members see it on their dashboard" instruction) — not
--- public, since it's not linked from the public nav.
+-- Public read (migration16) — the home page shows the next upcoming
+-- event, so this can no longer be members-only. Was: auth.uid() is not null.
 drop policy if exists events_select_members on public.events;
-create policy events_select_members on public.events
-  for select using (auth.uid() is not null);
+drop policy if exists events_select_public on public.events;
+create policy events_select_public on public.events
+  for select using (true);
 
 drop policy if exists events_write_admin on public.events;
 create policy events_write_admin on public.events
@@ -743,4 +744,38 @@ create policy join_inquiries_update_admin on public.join_inquiries
 
 drop policy if exists join_inquiries_delete_admin on public.join_inquiries;
 create policy join_inquiries_delete_admin on public.join_inquiries
+  for delete using (public.is_super_admin());
+
+-- ------------------------------------------------------------
+-- project_inquiries (migration16) — submissions from the public
+-- "Join the Project" form on /projects. Like join_inquiries, but tied
+-- to a specific project (optional) instead of general club membership.
+-- ------------------------------------------------------------
+create table if not exists public.project_inquiries (
+  id uuid primary key default gen_random_uuid(),
+  project_id uuid references public.projects(id) on delete set null,
+  club_name text not null,
+  contact_name text,
+  email text not null,
+  message text,
+  status text not null default 'new' check (status in ('new','contacted','closed')),
+  created_at timestamptz not null default now()
+);
+
+alter table public.project_inquiries enable row level security;
+
+drop policy if exists project_inquiries_insert_anyone on public.project_inquiries;
+create policy project_inquiries_insert_anyone on public.project_inquiries
+  for insert with check (true);
+
+drop policy if exists project_inquiries_select_admin on public.project_inquiries;
+create policy project_inquiries_select_admin on public.project_inquiries
+  for select using (public.is_super_admin());
+
+drop policy if exists project_inquiries_update_admin on public.project_inquiries;
+create policy project_inquiries_update_admin on public.project_inquiries
+  for update using (public.is_super_admin()) with check (public.is_super_admin());
+
+drop policy if exists project_inquiries_delete_admin on public.project_inquiries;
+create policy project_inquiries_delete_admin on public.project_inquiries
   for delete using (public.is_super_admin());

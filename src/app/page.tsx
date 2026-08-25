@@ -39,8 +39,34 @@ type NewsRow = {
 };
 type Stats = { phfPercent: number | null; affiliateCount: number | null; projectCount: number | null };
 type PhotoItem = { id: string; storage_path: string; caption: string | null; created_at: string };
+type EventRow = {
+  id: string;
+  title_mn: string;
+  title_en: string;
+  location: string | null;
+  event_date: string;
+  event_time: string | null;
+  cover_image_url: string | null;
+};
 
 const CLUB_FACEBOOK_URL = "https://www.facebook.com/profile.php?id=100086308363177";
+
+// Stored Facebook post links should always be absolute (the admin form
+// requires it), but normalize defensively — a link missing "https://"
+// silently resolves as a path on rciu.org itself instead of opening
+// Facebook, which looks like "the link doesn't do anything".
+function fbHref(url: string): string {
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`;
+}
+
+const MONTH_LABEL: Record<string, [string, string, string, string]> = {
+  "01": ["1-р сар", "Jan", "1月", "1月"], "02": ["2-р сар", "Feb", "2月", "2月"],
+  "03": ["3-р сар", "Mar", "3月", "3月"], "04": ["4-р сар", "Apr", "4月", "4月"],
+  "05": ["5-р сар", "May", "5月", "5月"], "06": ["6-р сар", "Jun", "6月", "6月"],
+  "07": ["7-р сар", "Jul", "7月", "7月"], "08": ["8-р сар", "Aug", "8月", "8月"],
+  "09": ["9-р сар", "Sep", "9月", "9月"], "10": ["10-р сар", "Oct", "10月", "10月"],
+  "11": ["11-р сар", "Nov", "11月", "11月"], "12": ["12-р сар", "Dec", "12月", "12月"],
+};
 
 const CAUSE_ICONS: Record<string, string> = {
   basic_education_literacy: "/causes/basic-education-literacy.png",
@@ -62,6 +88,7 @@ export default function Home() {
   const [news, setNews] = useState<NewsRow[]>([]);
   const [stats, setStats] = useState<Stats>({ phfPercent: null, affiliateCount: null, projectCount: null });
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
+  const [nextEvent, setNextEvent] = useState<EventRow | null>(null);
 
   useEffect(() => {
     supabase.from("links_partners").select("id,name,url,logo_url").order("sort_order").then(({ data }) => setLinks((data as LinkRow[]) ?? []));
@@ -96,6 +123,18 @@ export default function Home() {
         .slice(0, 12);
       setPhotos(merged);
     });
+
+    // Next upcoming event — a small preview card next to Links &
+    // Partners, so visitors see there's something coming up without
+    // needing to log in (events became publicly readable in migration16).
+    const today = new Date().toISOString().slice(0, 10);
+    supabase
+      .from("events")
+      .select("id, title_mn, title_en, location, event_date, event_time, cover_image_url")
+      .gte("event_date", today)
+      .order("event_date", { ascending: true })
+      .limit(1)
+      .then(({ data }) => setNextEvent((data as EventRow[])?.[0] ?? null));
 
     // Every number here is read live from the database — the PHF %
     // and project count especially, so both update on their own as
@@ -235,7 +274,7 @@ export default function Home() {
                 const cardClass =
                   "rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition overflow-hidden bg-white flex flex-col";
                 return n.facebook_url ? (
-                  <a key={n.id} href={n.facebook_url} target="_blank" rel="noopener noreferrer" className={cardClass}>
+                  <a key={n.id} href={fbHref(n.facebook_url)} target="_blank" rel="noopener noreferrer" className={cardClass}>
                     {cardBody}
                   </a>
                 ) : (
@@ -347,60 +386,91 @@ export default function Home() {
           into a soft blue that leads into the Footer's own blue
           gradient right below, instead of a flat gray box. */}
       <section className="last:flex-1 bg-gradient-to-b from-[#fdf3e2] to-[#eaf1fb] py-10">
-          <div className="container-page">
-            {affiliates.length > 0 && (
-              <div className="mb-6">
+          <div className="container-page grid gap-10 lg:grid-cols-[1fr_320px] items-start">
+            <div>
+              {affiliates.length > 0 && (
+                <div className="mb-6">
+                  <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3">
+                    {t("Дэмждэг клубууд", "Sponsored Clubs", "スポンサークラブ", "赞助俱乐部")}
+                  </h2>
+                  <div className="flex flex-wrap items-center gap-8">
+                    {affiliates.map((a) => {
+                      const logo = a.logo_url ?? KNOWN_LOGOS[a.name];
+                      return logo ? (
+                        <Image key={a.id} src={logo.startsWith("http") ? logo : asset(logo)} alt={a.name} title={a.name} width={160} height={80} className="object-contain h-14 w-auto shrink-0" />
+                      ) : (
+                        <span key={a.id} title={a.name} className="text-xs font-bold text-slate-400 uppercase">{a.club_type}</span>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              <div>
                 <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3">
-                  {t("Дэмждэг клубууд", "Sponsored Clubs", "スポンサークラブ", "赞助俱乐部")}
+                  {t("Холбоос ба түншүүд", "Links & Partners", "リンクとパートナー", "链接与伙伴")}
                 </h2>
                 <div className="flex flex-wrap items-center gap-8">
-                  {affiliates.map((a) => {
-                    const logo = a.logo_url ?? KNOWN_LOGOS[a.name];
+                  <a
+                    href={CLUB_FACEBOOK_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="Facebook"
+                    className="shrink-0 hover:opacity-80 transition"
+                  >
+                    <Image src={asset("/logos/facebook-icon.svg")} alt="Facebook" width={40} height={40} className="w-10 h-10" />
+                  </a>
+                  {links.map((l) => {
+                    const logo = l.logo_url ?? KNOWN_LOGOS[l.name];
                     return logo ? (
-                      <Image key={a.id} src={logo.startsWith("http") ? logo : asset(logo)} alt={a.name} title={a.name} width={160} height={80} className="object-contain h-14 w-auto shrink-0" />
+                      <a
+                        key={l.id}
+                        href={l.url ?? undefined}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={l.name}
+                        className="shrink-0 hover:opacity-80 transition"
+                      >
+                        <Image src={logo.startsWith("http") ? logo : asset(logo)} alt={l.name} width={160} height={80} className="object-contain h-14 w-auto" />
+                      </a>
                     ) : (
-                      <span key={a.id} title={a.name} className="text-xs font-bold text-slate-400 uppercase">{a.club_type}</span>
+                      <a key={l.id} href={l.url ?? undefined} target="_blank" rel="noopener noreferrer" title={l.name} className="text-xs font-bold text-slate-400 uppercase">
+                        {l.name}
+                      </a>
                     );
                   })}
                 </div>
               </div>
-            )}
-
-            <div>
-              <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3">
-                {t("Холбоос ба түншүүд", "Links & Partners", "リンクとパートナー", "链接与伙伴")}
-              </h2>
-              <div className="flex flex-wrap items-center gap-8">
-                <a
-                  href={CLUB_FACEBOOK_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title="Facebook"
-                  className="shrink-0 hover:opacity-80 transition"
-                >
-                  <Image src={asset("/logos/facebook-icon.svg")} alt="Facebook" width={40} height={40} className="w-10 h-10" />
-                </a>
-                {links.map((l) => {
-                  const logo = l.logo_url ?? KNOWN_LOGOS[l.name];
-                  return logo ? (
-                    <a
-                      key={l.id}
-                      href={l.url ?? undefined}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title={l.name}
-                      className="shrink-0 hover:opacity-80 transition"
-                    >
-                      <Image src={logo.startsWith("http") ? logo : asset(logo)} alt={l.name} width={160} height={80} className="object-contain h-14 w-auto" />
-                    </a>
-                  ) : (
-                    <a key={l.id} href={l.url ?? undefined} target="_blank" rel="noopener noreferrer" title={l.name} className="text-xs font-bold text-slate-400 uppercase">
-                      {l.name}
-                    </a>
-                  );
-                })}
-              </div>
             </div>
+
+            {/* Next upcoming event — fills the empty right-hand space
+                next to Sponsored/Links on wide screens; hidden entirely
+                if nothing's scheduled rather than showing an empty box. */}
+            {nextEvent && (
+              <div className="rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">
+                {nextEvent.cover_image_url && (
+                  <div className="relative w-full aspect-video bg-slate-100">
+                    <Image src={nextEvent.cover_image_url} alt="" fill className="object-cover" />
+                  </div>
+                )}
+                <div className="p-5 flex gap-4 items-start">
+                  <div className="shrink-0 rounded-lg overflow-hidden border border-slate-200 w-14 text-center">
+                    <div className="bg-rotary-cardinal text-white text-[10px] font-bold uppercase py-0.5">
+                      {t(...MONTH_LABEL[nextEvent.event_date.slice(5, 7)])}
+                    </div>
+                    <div className="text-xl font-extrabold text-slate-800 py-1">{nextEvent.event_date.slice(8, 10)}</div>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-rotary-azure uppercase tracking-wide mb-1">
+                      {t("Дараагийн арга хэмжээ", "Next Event", "次のイベント", "下次活动")}
+                    </p>
+                    <p className="font-bold text-slate-900 leading-snug">{t(nextEvent.title_mn, nextEvent.title_en)}</p>
+                    {nextEvent.event_time && <p className="text-sm text-slate-500 mt-0.5">{nextEvent.event_time}</p>}
+                    {nextEvent.location && <p className="text-sm text-slate-500">{nextEvent.location}</p>}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </section>
     </div>

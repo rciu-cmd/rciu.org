@@ -74,27 +74,37 @@ export default function BoardPage() {
         </div>
       )}
 
+      {/* Top 3 leadership — large portrait photos (not the small circle
+          avatars used elsewhere) so President/VP/Secretary General get
+          a genuinely prominent, professional treatment. Each card is a
+          tall vertical block: full-width portrait photo on top, name
+          and role beneath — reads well from a single column on phones
+          up to a wide 3-across row on tablets/desktop. */}
       {leadership.length > 0 && (
         <div className="grid gap-6 sm:grid-cols-3 mb-10">
           {leadership.map((r) => {
             const photo = r.photo_url ?? r.members?.photo_url ?? null;
             return (
-              <div key={r.id} className="rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition text-center">
-                <div className="w-24 h-24 mx-auto rounded-full bg-blue-50 shrink-0 overflow-hidden flex items-center justify-center mb-4">
+              <div key={r.id} className="rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition overflow-hidden bg-white flex flex-col">
+                <div className="relative w-full aspect-[3/4] bg-blue-50 shrink-0">
                   {photo ? (
-                    <Image src={photo} alt="" width={96} height={96} className="object-cover w-full h-full" />
+                    <Image src={photo} alt="" fill className="object-cover" />
                   ) : (
-                    <span className="text-2xl font-bold text-rotary-royal-blue">
-                      {r.members?.first_name?.[0]}{r.members?.last_name?.[0]}
-                    </span>
+                    <div className="w-full h-full flex items-center justify-center">
+                      <span className="text-5xl font-bold text-rotary-royal-blue">
+                        {r.members?.first_name?.[0]}{r.members?.last_name?.[0]}
+                      </span>
+                    </div>
                   )}
                 </div>
-                <p className="font-bold text-slate-900">
-                  {r.members?.first_name} {r.members?.last_name}
-                </p>
-                <p className="text-rotary-royal-blue text-sm font-semibold">
-                  {t(r.role_mn, r.role_en, r.role_ja ?? undefined, r.role_zh ?? undefined)}
-                </p>
+                <div className="p-5 text-center">
+                  <p className="font-bold text-lg text-slate-900">
+                    {r.members?.first_name} {r.members?.last_name}
+                  </p>
+                  <p className="text-rotary-royal-blue text-sm font-semibold">
+                    {t(r.role_mn, r.role_en, r.role_ja ?? undefined, r.role_zh ?? undefined)}
+                  </p>
+                </div>
               </div>
             );
           })}

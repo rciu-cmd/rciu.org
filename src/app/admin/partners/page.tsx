@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
 
@@ -38,6 +39,7 @@ export default function AdminPartnersPage() {
   const { t } = useLanguage();
   const [items, setItems] = useState<LinkRow[] | null>(null);
   const [form, setForm] = useState(EMPTY);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -64,6 +66,7 @@ export default function AdminPartnersPage() {
       description_en: item.description_en ?? "",
       sort_order: String(item.sort_order),
     });
+    setLogoFile(null);
     setShowForm(true);
   }
 
@@ -71,11 +74,25 @@ export default function AdminPartnersPage() {
     e.preventDefault();
     setBusy(true);
     setError(null);
+
+    let logoUrl = form.logo_url || null;
+    if (logoFile) {
+      const safeName = logoFile.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+      const path = `logos/partners/${Date.now()}-${safeName}`;
+      const { error: uploadError } = await supabase.storage.from("rciu-photos").upload(path, logoFile);
+      if (uploadError) {
+        setBusy(false);
+        setError(uploadError.message);
+        return;
+      }
+      logoUrl = supabase.storage.from("rciu-photos").getPublicUrl(path).data.publicUrl;
+    }
+
     const payload = {
       name: form.name,
       category: form.category,
       url: form.url || null,
-      logo_url: form.logo_url || null,
+      logo_url: logoUrl,
       description_mn: form.description_mn || null,
       description_en: form.description_en || null,
       sort_order: Number(form.sort_order) || 0,
@@ -89,6 +106,7 @@ export default function AdminPartnersPage() {
       return;
     }
     setForm(EMPTY);
+    setLogoFile(null);
     setEditingId(null);
     setShowForm(false);
     refresh();
@@ -108,6 +126,7 @@ export default function AdminPartnersPage() {
           onClick={() => {
             setEditingId(null);
             setForm(EMPTY);
+            setLogoFile(null);
             setShowForm((v) => !v);
           }}
           className="text-sm font-semibold bg-rotary-royal-blue text-white rounded-md px-4 py-2"
@@ -135,9 +154,13 @@ export default function AdminPartnersPage() {
               ))}
             </select>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <input placeholder={t("Холбоос (URL)", "Website URL", "URL", "网址")} value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
-            <input placeholder={t("Лого URL (заавал биш)", "Logo URL (optional)", "ロゴURL(任意)", "徽标URL(可选)")} value={form.logo_url} onChange={(e) => setForm({ ...form, logo_url: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
+          <input placeholder={t("Холбоос (URL)", "Website URL", "URL", "网址")} value={form.url} onChange={(e) => setForm({ ...form, url: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
+          <div>
+            <p className="text-sm font-semibold text-slate-700 mb-1">{t("Лого (заавал биш)", "Logo (optional)", "ロゴ(任意)", "徽标(可选)")}</p>
+            {form.logo_url && !logoFile && (
+              <Image src={form.logo_url} alt="" width={56} height={56} className="object-contain mb-2 rounded border border-slate-200 bg-white p-1" />
+            )}
+            <input type="file" accept="image/*" onChange={(e) => setLogoFile(e.target.files?.[0] ?? null)} className="text-sm" />
           </div>
           <textarea placeholder={t("Тайлбар (MN)", "Description (MN)", "説明(MN)", "描述(MN)")} value={form.description_mn} onChange={(e) => setForm({ ...form, description_mn: e.target.value })} rows={2} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
           <textarea placeholder={t("Тайлбар (EN)", "Description (EN)", "説明(EN)", "描述(EN)")} value={form.description_en} onChange={(e) => setForm({ ...form, description_en: e.target.value })} rows={2} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />

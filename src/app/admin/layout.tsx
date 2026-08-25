@@ -75,6 +75,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     { href: "/admin/gallery", label: t("Зургийн цомог", "Gallery", "ギャラリー", "相册") },
     { href: "/admin/history", label: t("Түүх", "History", "歴史", "历史") },
     { href: "/admin/join-inquiries", label: t("Элсэх хүсэлт", "Join Inquiries", "入会問合せ", "入会申请") },
+    { href: "/admin/project-inquiries", label: t("Төслийн хүсэлт", "Project Inquiries", "プロジェクト問合せ", "项目申请") },
     { href: "/admin/members", label: t("Гишүүд", "Members", "会員", "会员") },
     { href: "/admin/settings", label: t("Тохиргоо", "Settings", "設定", "设置") },
   ];

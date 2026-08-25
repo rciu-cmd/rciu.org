@@ -11,15 +11,10 @@ export default function Navbar() {
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [authed, setAuthed] = useState<boolean | null>(null); // null = not checked yet
-  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setAuthed(!!session);
-      if (session) {
-        const { data } = await supabase.from("members").select("is_admin").eq("id", session.user.id).single();
-        setIsAdmin(!!data?.is_admin);
-      }
     });
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => setAuthed(!!session));
     return () => sub.subscription.unsubscribe();
@@ -28,6 +23,9 @@ export default function Navbar() {
   // No separate "Home" link — the logo + club name (below) already
   // links to "/", so a dedicated Home button would just be a duplicate.
   // "Members" (roster + honor roll) is for logged-in members only.
+  // No "Admin" link here even for admins — too many buttons once
+  // logged in, and Admin is already one click away from the Dashboard
+  // page (the "Go to Admin Dashboard" button on /dashboard).
   const links = [
     { href: "/about", label: t("Бидний тухай", "About", "私たちについて", "关于我们") },
     { href: "/news", label: t("Мэдээ", "News", "ニュース", "新闻") },
@@ -36,14 +34,13 @@ export default function Navbar() {
     ...(authed ? [{ href: "/members", label: t("Гишүүд", "Members", "会員", "会员") }] : []),
     { href: "/join", label: t("Нэгдэх", "Join Us", "入会案内", "加入我们") },
     { href: "/contact", label: t("Холбоо барих", "Contact", "お問い合わせ", "联系我们") },
-    ...(isAdmin ? [{ href: "/admin", label: t("Админ", "Admin", "管理者", "管理员") }] : []),
   ];
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200">
-      <div className="container-page flex items-center justify-between h-16">
+      <div className="container-page flex items-center justify-between h-20">
         <Link href="/" className="flex items-center gap-2 shrink-0">
-          <Image src={asset("/logos/district-3450.png")} alt="Rotary District 3450" width={44} height={24} className="object-contain hidden sm:block" />
+          <Image src={asset("/logos/district-3450.png")} alt="Rotary District 3450" width={160} height={80} className="object-contain hidden sm:block" />
           <Image src={asset("/logos/rciu-emblem.jpg")} alt="RCIU" width={40} height={40} className="rounded-full" />
           <span className="font-bold text-rotary-royal-blue leading-tight hidden sm:block">
             {t("Их Өргөө Ротари Клуб", "Rotary Club of Ikh Urgoo", "イク・ウルグー・ロータリークラブ", "扶轮伊赫乌尔古俱乐部")}

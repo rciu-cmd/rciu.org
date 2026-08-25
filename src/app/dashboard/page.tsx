@@ -200,6 +200,8 @@ function PhotoUploadCard({ t }: { t: (mn: string, en: string, ja?: string, zh?: 
   const [year, setYear] = useState(thisYear);
   const [category, setCategory] = useState<Category>("other");
   const [subfolder, setSubfolder] = useState("");
+  const [folderMode, setFolderMode] = useState<"select" | "new">("select");
+  const [existingFolders, setExistingFolders] = useState<string[]>([]);
   const [projects, setProjects] = useState<{ id: string; title_en: string }[]>([]);
   const [projectId, setProjectId] = useState("");
   const [caption, setCaption] = useState("");
@@ -214,6 +216,31 @@ function PhotoUploadCard({ t }: { t: (mn: string, en: string, ja?: string, zh?: 
       setProjects((data as { id: string; title_en: string }[]) ?? []);
     });
   }, [category]);
+
+  // Subfolders already used under this year+category, so members pick
+  // from a list instead of retyping ("gala-2026" vs "Gala 2026" vs
+  // "gala2026" all becoming separate folders by accident) — with a
+  // "+ Create new folder" option that reveals the free-text input.
+  useEffect(() => {
+    const baseFolder = `${year}/${category}`;
+    Promise.all([
+      supabase.from("club_photos").select("storage_path").eq("year", year).eq("category", category === "projects" ? "other" : category),
+      supabase.from("project_media").select("storage_path"),
+    ]).then(([clubRes, projectRes]) => {
+      const paths = [
+        ...((clubRes.data as { storage_path: string }[]) ?? []).map((r) => r.storage_path),
+        ...((projectRes.data as { storage_path: string }[]) ?? []).map((r) => r.storage_path),
+      ];
+      const folders = new Set<string>();
+      for (const p of paths) {
+        if (!p.startsWith(`${baseFolder}/`)) continue;
+        const rest = p.slice(baseFolder.length + 1);
+        const parts = rest.split("/");
+        if (parts.length > 1) folders.add(parts.slice(0, -1).join("/"));
+      }
+      setExistingFolders(Array.from(folders).sort());
+    });
+  }, [year, category]);
 
   async function upload(e: React.FormEvent) {
     e.preventDefault();
@@ -270,6 +297,7 @@ function PhotoUploadCard({ t }: { t: (mn: string, en: string, ja?: string, zh?: 
     setFile(null);
     setCaption("");
     setSubfolder("");
+    setFolderMode("select");
     setDone(true);
   }
 
@@ -300,12 +328,51 @@ function PhotoUploadCard({ t }: { t: (mn: string, en: string, ja?: string, zh?: 
         )}
 
         <div>
-          <input
-            placeholder={t("Дэд хавтас (заавал биш, жишээ: gala-2026)", "Subfolder (optional, e.g. gala-2026)", "サブフォルダ(任意、例:gala-2026)", "子文件夹(可选,例如 gala-2026)")}
-            value={subfolder}
-            onChange={(e) => setSubfolder(e.target.value)}
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm w-full"
-          />
+          <p className="text-xs text-slate-500 mb-1">
+            {t("Дэд хавтас (заавал биш)", "Subfolder (optional)", "サブフォルダ(任意)", "子文件夹(可选)")}
+          </p>
+          {folderMode === "select" ? (
+            <select
+              value={subfolder}
+              onChange={(e) => {
+                if (e.target.value === "__new__") {
+                  setSubfolder("");
+                  setFolderMode("new");
+                } else {
+                  setSubfolder(e.target.value);
+                }
+              }}
+              className="rounded-md border border-slate-300 px-3 py-2 text-sm w-full"
+            >
+              <option value="">{t("— Дэд хавтасгүй —", "— No subfolder —", "— サブフォルダなし —", "— 无子文件夹 —")}</option>
+              {existingFolders.map((f) => (
+                <option key={f} value={f}>{f}</option>
+              ))}
+              <option value="__new__">{t("+ Шинэ хавтас үүсгэх", "+ Create new folder", "+ 新しいフォルダを作成", "+ 新建文件夹")}</option>
+            </select>
+          ) : (
+            <div className="flex gap-2">
+              <input
+                autoFocus
+                placeholder={t("Шинэ хавтасны нэр (жишээ: gala-2026)", "New folder name (e.g. gala-2026)", "新しいフォルダ名(例:gala-2026)", "新文件夹名称(例如 gala-2026)")}
+                value={subfolder}
+                onChange={(e) => setSubfolder(e.target.value)}
+                className="rounded-md border border-slate-300 px-3 py-2 text-sm w-full"
+              />
+              {existingFolders.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSubfolder("");
+                    setFolderMode("select");
+                  }}
+                  className="shrink-0 text-xs font-semibold px-3 py-2 rounded-md border border-slate-300 text-slate-600 hover:bg-slate-50"
+                >
+                  {t("Жагсаалтаас сонгох", "Choose existing", "既存から選択", "从列表选择")}
+                </button>
+              )}
+            </div>
+          )}
           <p className="text-xs text-slate-400 mt-1">
             {t(
               "Дурын нэр өгч болно — жишээ нь тодорхой арга хэмжээ бүрийг тусад нь эмхэлж болно.",
