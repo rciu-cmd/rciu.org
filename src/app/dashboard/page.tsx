@@ -195,6 +195,13 @@ const CATEGORY_LABELS: Record<Category, { mn: string; en: string }> = {
 // project (project_media); everything else lands in the general
 // club_photos library. Requires the rciu-photos Storage bucket —
 // see supabase/migration06_photo_storage_bucket.sql.
+type FileStatus = "pending" | "uploading" | "done" | "error";
+
+// How many uploads run at once — no cap on how many photos can be
+// selected (pick as many as you want), this just paces how many hit
+// Supabase in parallel so a huge batch doesn't flood the connection.
+const UPLOAD_CONCURRENCY = 4;
+
 function PhotoUploadCard({ t }: { t: (mn: string, en: string, ja?: string, zh?: string) => string }) {
   const thisYear = new Date().getFullYear();
   const [year, setYear] = useState(thisYear);
@@ -205,10 +212,12 @@ function PhotoUploadCard({ t }: { t: (mn: string, en: string, ja?: string, zh?: 
   const [projects, setProjects] = useState<{ id: string; title_en: string }[]>([]);
   const [projectId, setProjectId] = useState("");
   const [caption, setCaption] = useState("");
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
+  const [statuses, setStatuses] = useState<FileStatus[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [summary, setSummary] = useState<{ ok: number; failed: number } | null>(null);
 
   useEffect(() => {
     if (category !== "projects") return;
@@ -242,36 +251,19 @@ function PhotoUploadCard({ t }: { t: (mn: string, en: string, ja?: string, zh?: 
     });
   }, [year, category]);
 
-  async function upload(e: React.FormEvent) {
-    e.preventDefault();
-    if (!file) return;
-    setBusy(true);
-    setError(null);
-    setDone(false);
-
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (!session) {
-      setBusy(false);
-      setError(t("Дахин нэвтэрнэ үү.", "Please log in again.", "再度ログインしてください。", "请重新登录。"));
-      return;
-    }
-
+  async function uploadOne(file: File, session: { user: { id: string } }): Promise<{ error: string | null }> {
     const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
     const safeSubfolder = subfolder.trim().toLowerCase().replace(/[^a-z0-9\-_/]+/g, "-").replace(/^\/+|\/+$/g, "");
     const baseFolder = category === "projects" && projectId
       ? `${year}/projects/${projectId}`
       : `${year}/${category}`;
     const folder = safeSubfolder ? `${baseFolder}/${safeSubfolder}` : baseFolder;
-    const path = `${folder}/${Date.now()}-${safeName}`;
+    // A random suffix (not just Date.now()) keeps filenames unique even
+    // when several uploads in the same batch land in the same millisecond.
+    const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safeName}`;
 
     const { error: uploadError } = await supabase.storage.from("rciu-photos").upload(path, file);
-    if (uploadError) {
-      setBusy(false);
-      setError(uploadError.message);
-      return;
-    }
+    if (uploadError) return { error: uploadError.message };
 
     const insertError =
       category === "projects" && projectId
@@ -289,15 +281,55 @@ function PhotoUploadCard({ t }: { t: (mn: string, en: string, ja?: string, zh?: 
             uploaded_by: session.user.id,
           })).error;
 
-    setBusy(false);
-    if (insertError) {
-      setError(insertError.message);
+    return { error: insertError?.message ?? null };
+  }
+
+  async function upload(e: React.FormEvent) {
+    e.preventDefault();
+    if (files.length === 0) return;
+    setBusy(true);
+    setError(null);
+    setDone(false);
+    setSummary(null);
+    setStatuses(files.map(() => "pending"));
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) {
+      setBusy(false);
+      setError(t("Дахин нэвтэрнэ үү.", "Please log in again.", "再度ログインしてください。", "请重新登录。"));
       return;
     }
-    setFile(null);
-    setCaption("");
-    setSubfolder("");
-    setFolderMode("select");
+    // Rebind to a variable TypeScript can prove is non-null inside the
+    // worker closures below (narrowing on `session` itself doesn't
+    // carry into a nested function declaration).
+    const activeSession = session;
+
+    let ok = 0;
+    let failed = 0;
+    let nextIndex = 0;
+
+    async function worker() {
+      while (nextIndex < files.length) {
+        const i = nextIndex++;
+        setStatuses((s) => { const next = [...s]; next[i] = "uploading"; return next; });
+        const { error: err } = await uploadOne(files[i], activeSession);
+        if (err) failed++; else ok++;
+        setStatuses((s) => { const next = [...s]; next[i] = err ? "error" : "done"; return next; });
+      }
+    }
+    await Promise.all(Array.from({ length: Math.min(UPLOAD_CONCURRENCY, files.length) }, worker));
+
+    setBusy(false);
+    setSummary({ ok, failed });
+    if (failed === 0) {
+      setFiles([]);
+      setStatuses([]);
+      setCaption("");
+      setSubfolder("");
+      setFolderMode("select");
+    }
     setDone(true);
   }
 
@@ -383,30 +415,77 @@ function PhotoUploadCard({ t }: { t: (mn: string, en: string, ja?: string, zh?: 
           </p>
         </div>
 
+        <div>
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={(e) => {
+              const picked = Array.from(e.target.files ?? []);
+              setFiles(picked);
+              setStatuses(picked.map(() => "pending"));
+              setDone(false);
+              setSummary(null);
+            }}
+            className="text-sm"
+          />
+          <p className="text-xs text-slate-400 mt-1">
+            {t(
+              "Хэдэн ч зураг зэрэг сонгож болно — бүгд ижил хавтас, тайлбартай орно.",
+              "Select as many photos as you like at once — they'll all use the same folder and caption.",
+              "何枚でも一度に選択できます — すべて同じフォルダとキャプションで保存されます。",
+              "可一次选择任意数量的照片 — 均使用相同的文件夹和说明。"
+            )}
+          </p>
+          {files.length > 0 && (
+            <p className="text-xs text-slate-500 mt-1 font-medium">
+              {t(`${files.length} зураг сонгосон`, `${files.length} photo${files.length > 1 ? "s" : ""} selected`, `${files.length}枚選択済み`, `已选择 ${files.length} 张照片`)}
+            </p>
+          )}
+        </div>
         <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-          className="text-sm"
-        />
-        <input
-          placeholder={t("Тайлбар (заавал биш)", "Caption (optional)", "キャプション(任意)", "说明(可选)")}
+          placeholder={t("Тайлбар (заавал биш, бүх зурагт хэрэглэгдэнэ)", "Caption (optional, applied to all)", "キャプション(任意、全写真に適用)", "说明(可选,适用于所有照片)")}
           value={caption}
           onChange={(e) => setCaption(e.target.value)}
           className="rounded-md border border-slate-300 px-3 py-2 text-sm"
         />
 
+        {busy && files.length > 1 && (
+          <p className="text-xs text-slate-500">
+            {t(
+              `Байршуулж байна… (${statuses.filter((s) => s === "done" || s === "error").length}/${files.length})`,
+              `Uploading… (${statuses.filter((s) => s === "done" || s === "error").length}/${files.length})`,
+              `アップロード中…(${statuses.filter((s) => s === "done" || s === "error").length}/${files.length})`,
+              `上传中…(${statuses.filter((s) => s === "done" || s === "error").length}/${files.length})`
+            )}
+          </p>
+        )}
+
         {error && <p className="text-sm text-rotary-cardinal">{error}</p>}
-        {done && (
-          <p className="text-sm text-green-700">{t("Зураг байршуулагдлаа!", "Photo uploaded!", "写真をアップロードしました!", "照片已上传!")}</p>
+
+        {done && summary && (
+          <p className={`text-sm ${summary.failed > 0 ? "text-rotary-cardinal" : "text-green-700"}`}>
+            {summary.failed === 0
+              ? t(`${summary.ok} зураг амжилттай байршлаа!`, `${summary.ok} photo${summary.ok > 1 ? "s" : ""} uploaded!`, `${summary.ok}枚アップロードしました!`, `已成功上传 ${summary.ok} 张照片!`)
+              : t(
+                  `${summary.ok} амжилттай, ${summary.failed} алдаатай. Алдаатай зургуудыг дахин оролдоно уу.`,
+                  `${summary.ok} uploaded, ${summary.failed} failed. Try selecting the failed ones again.`,
+                  `${summary.ok}枚成功、${summary.failed}枚失敗しました。失敗した写真は再度お試しください。`,
+                  `${summary.ok} 张成功,${summary.failed} 张失败。请重新尝试失败的照片。`
+                )}
+          </p>
         )}
 
         <button
           type="submit"
-          disabled={busy || !file || (category === "projects" && !projectId)}
+          disabled={busy || files.length === 0 || (category === "projects" && !projectId)}
           className="justify-self-start bg-rotary-royal-blue text-white font-semibold rounded-md px-5 py-2 text-sm disabled:opacity-60"
         >
-          {busy ? t("Байршуулж байна…", "Uploading…", "アップロード中…", "上传中…") : t("Байршуулах", "Upload", "アップロード", "上传")}
+          {busy
+            ? t("Байршуулж байна…", "Uploading…", "アップロード中…", "上传中…")
+            : files.length > 1
+              ? t(`${files.length} зураг байршуулах`, `Upload ${files.length} photos`, `${files.length}枚アップロード`, `上传 ${files.length} 张照片`)
+              : t("Байршуулах", "Upload", "アップロード", "上传")}
         </button>
       </form>
     </div>
