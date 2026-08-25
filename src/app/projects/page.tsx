@@ -104,7 +104,6 @@ const DONATE_ACCOUNT = {
   accountName: "ИХ ӨРГӨӨ РОТАРИ КЛУБ",
   accountNumber: "106201860897",
   iban: "MN150034106201860897",
-  productName: "БАЙГУУЛЛАГА ЭНГИЙН ХАРИЛЦАХ ДАНС",
   currency: "MNT",
 };
 
@@ -113,7 +112,6 @@ function DonateModal({ t, onClose }: { t: (mn: string, en: string, ja?: string, 
     [t("Дансны нэр", "Account Name", "口座名義", "账户名称"), DONATE_ACCOUNT.accountName],
     [t("Дансны дугаар", "Account Number", "口座番号", "账号"), DONATE_ACCOUNT.accountNumber],
     [t("IBAN дугаар", "IBAN", "IBAN", "IBAN"), DONATE_ACCOUNT.iban],
-    [t("Бүтээгдэхүүний нэр", "Account Type", "口座種別", "账户类型"), DONATE_ACCOUNT.productName],
     [t("Валют", "Currency", "通貨", "币种"), DONATE_ACCOUNT.currency],
   ];
   return (

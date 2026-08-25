@@ -5,14 +5,27 @@ import Image from "next/image";
 import { asset } from "@/lib/asset";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
+import WorldTravelMap, { TravelPoint } from "@/components/WorldTravelMap";
 
 type PresidentRow = { id: string; name: string; year_range: string };
+
+type TravelRow = {
+  id: string;
+  event_name: string;
+  destination_city: string;
+  destination_country: string;
+  latitude: number;
+  longitude: number;
+  event_date: string | null;
+  members: { first_name: string; last_name: string } | { first_name: string; last_name: string }[] | null;
+};
 
 export default function AboutPage() {
   const { t } = useLanguage();
   const [historyMn, setHistoryMn] = useState("");
   const [historyEn, setHistoryEn] = useState("");
   const [presidents, setPresidents] = useState<PresidentRow[]>([]);
+  const [travels, setTravels] = useState<TravelPoint[]>([]);
 
   useEffect(() => {
     supabase
@@ -29,6 +42,27 @@ export default function AboutPage() {
       .select("id, name, year_range")
       .order("sort_order")
       .then(({ data }) => setPresidents((data as PresidentRow[]) ?? []));
+    supabase
+      .from("member_travels")
+      .select("id, event_name, destination_city, destination_country, latitude, longitude, event_date, members(first_name, last_name)")
+      .then(({ data }) => {
+        const rows = (data as unknown as TravelRow[]) ?? [];
+        setTravels(
+          rows.map((r) => {
+            const m = Array.isArray(r.members) ? r.members[0] : r.members;
+            return {
+              id: r.id,
+              event_name: r.event_name,
+              destination_city: r.destination_city,
+              destination_country: r.destination_country,
+              latitude: r.latitude,
+              longitude: r.longitude,
+              event_date: r.event_date,
+              memberName: m ? `${m.first_name} ${m.last_name}` : null,
+            };
+          })
+        );
+      });
   }, []);
 
   return (
@@ -110,6 +144,23 @@ export default function AboutPage() {
               </li>
             ))}
           </ol>
+        </div>
+      )}
+
+      {travels.length > 0 && (
+        <div className="mt-14">
+          <h2 className="text-2xl font-bold text-rotary-royal-blue mb-2">
+            {t("Бидний хүрсэн газрууд", "Where We've Traveled", "私たちが訪れた場所", "我们足迹所至")}
+          </h2>
+          <p className="text-slate-600 max-w-2xl mb-4">
+            {t(
+              "Клубын гишүүд олон улсын Ротари арга хэмжээнд оролцохоор дэлхийн өнцөг булан бүрт аялсаар байна.",
+              "Our members travel around the world to take part in international Rotary events.",
+              "当クラブの会員は国際ロータリー行事に参加するため世界各地を訪れています。",
+              "我们的会员为参加国际扶轮活动而奔赴世界各地。"
+            )}
+          </p>
+          <WorldTravelMap travels={travels} t={t} />
         </div>
       )}
     </div>
