@@ -40,7 +40,11 @@ export default function Navbar() {
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200">
       <div className="container-page flex items-center justify-between h-20">
         <Link href="/" className="flex items-center gap-2 shrink-0">
+<<<<<<< HEAD
           <Image src={asset("/logos/district-3450.png")} alt="Rotary District 3450" width={160} height={80} className="object-contain hidden sm:block" />
+=======
+          <Image src={asset("/logos/district-3450.png")} alt="Rotary District 3450" width={120} height={60} className="object-contain hidden sm:block" />
+>>>>>>> 5967019b15f4c5efe6e07afcd8008de00e633f3e
           <Image src={asset("/logos/rciu-emblem.jpg")} alt="RCIU" width={40} height={40} className="rounded-full" />
           <span className="font-bold text-rotary-royal-blue leading-tight hidden sm:block">
             {t("Их Өргөө Ротари Клуб", "Rotary Club of Ikh Urgoo", "イク・ウルグー・ロータリークラブ", "扶轮伊赫乌尔古俱乐部")}
