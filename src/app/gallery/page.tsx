@@ -18,6 +18,13 @@ type PhotoRow = {
   storage_path: string;
   caption: string | null;
   created_at: string;
+  // Only set for source: "project" — the photo's real link to its
+  // project, straight from the project_media row. Used instead of
+  // parsing the storage_path so that renaming a folder in Admin →
+  // Gallery → Folders (which rewrites the path text) can never break
+  // the "which project is this" label — the path is just where the
+  // file happens to live, not the source of truth for that.
+  projectId: string | null;
 };
 
 type ClubCategory = "installation_ceremony" | "district_events" | "other";
@@ -97,13 +104,14 @@ export default function GalleryPage() {
     ]).then(([clubRes, projectRes, projectsRes]) => {
       if (clubRes.error) setError(clubRes.error.message);
       if (projectRes.error) setError((prev) => prev ?? projectRes.error?.message ?? null);
-      const club = ((clubRes.data as Omit<PhotoRow, "source">[]) ?? []).map((p) => ({ ...p, source: "club" as const }));
-      const project = ((projectRes.data as (Omit<PhotoRow, "source"> & { project_id: string })[]) ?? []).map((p) => ({
+      const club = ((clubRes.data as Omit<PhotoRow, "source" | "projectId">[]) ?? []).map((p) => ({ ...p, source: "club" as const, projectId: null }));
+      const project = ((projectRes.data as (Omit<PhotoRow, "source" | "projectId"> & { project_id: string })[]) ?? []).map((p) => ({
         id: p.id,
         source: "project" as const,
         storage_path: p.storage_path,
         caption: p.caption,
         created_at: p.created_at,
+        projectId: p.project_id,
       }));
       setItems([...club, ...project].sort((a, b) => (a.created_at < b.created_at ? 1 : -1)));
 
@@ -131,7 +139,12 @@ export default function GalleryPage() {
         const [year, categoryOrProjects, third, ...restParts] = parts;
         let label: string;
         if (categoryOrProjects === "projects") {
-          const projectTitle = third ? (projectTitles[third] ?? t("Тодорхойгүй төсөл", "Unknown project")) : "";
+          // Prefer the photo's real project_id (from the DB row) over
+          // the folder path's third segment — the path is just where
+          // the file lives and can be renamed by an admin; project_id
+          // is the actual, unbreakable link to the project.
+          const projectLookupKey = p.projectId ?? third;
+          const projectTitle = projectLookupKey ? (projectTitles[projectLookupKey] ?? t("Тодорхойгүй төсөл", "Unknown project")) : "";
           const subfolder = restParts.join(" / ");
           label = [year, t("Төслүүд", "Projects"), projectTitle, subfolder].filter(Boolean).join(" · ");
         } else {
