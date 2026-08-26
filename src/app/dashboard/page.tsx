@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -177,6 +178,10 @@ export default function DashboardPage() {
         <MyInfoCard member={member} setMember={setMember} t={t} />
 
         <PhotoUploadCard t={t} />
+      </div>
+
+      <div className="container-page pb-12">
+        <AwardSubmissionCard t={t} memberId={member.id} />
       </div>
     </div>
   );
@@ -495,6 +500,171 @@ function PhotoUploadCard({ t }: { t: (mn: string, en: string, ja?: string, zh?: 
               : t("Байршуулах", "Upload", "アップロード", "上传")}
         </button>
       </form>
+    </div>
+  );
+}
+
+type AwardStatus = "pending" | "approved" | "rejected";
+type AwardSubmission = {
+  id: string;
+  title: string;
+  comment: string | null;
+  file_url: string | null;
+  file_type: "image" | "pdf" | null;
+  status: AwardStatus;
+  created_at: string;
+};
+
+const AWARD_STATUS_STYLE: Record<AwardStatus, string> = {
+  pending: "bg-amber-100 text-amber-700",
+  approved: "bg-green-100 text-green-700",
+  rejected: "bg-rotary-cardinal/10 text-rotary-cardinal",
+};
+
+// Lets a member submit an award/recognition entry for the About page —
+// goes in as 'pending' and only shows publicly once an admin approves
+// it (see /admin/awards), so this card also shows the member their own
+// submissions and where each one stands.
+function AwardSubmissionCard({ t, memberId }: { t: (mn: string, en: string, ja?: string, zh?: string) => string; memberId: string }) {
+  const [title, setTitle] = useState("");
+  const [comment, setComment] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [mine, setMine] = useState<AwardSubmission[] | null>(null);
+
+  async function refresh() {
+    const { data } = await supabase
+      .from("club_awards")
+      .select("id, title, comment, file_url, file_type, status, created_at")
+      .eq("submitted_by", memberId)
+      .order("created_at", { ascending: false });
+    setMine((data as AwardSubmission[]) ?? []);
+  }
+
+  useEffect(() => {
+    refresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time load for this member
+  }, []);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+
+    let fileUrl: string | null = null;
+    let fileType: "image" | "pdf" | null = null;
+    if (file) {
+      if (file.type.startsWith("image/")) fileType = "image";
+      else if (file.type === "application/pdf") fileType = "pdf";
+      else {
+        setBusy(false);
+        setError(t("Зөвхөн зураг эсвэл PDF файл байршуулна уу.", "Only image or PDF files are allowed.", "画像またはPDFファイルのみアップロードできます。", "仅支持上传图片或 PDF 文件。"));
+        return;
+      }
+      const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+      const path = `awards/${memberId}/${Date.now()}-${safeName}`;
+      const { error: uploadError } = await supabase.storage.from("rciu-photos").upload(path, file);
+      if (uploadError) {
+        setBusy(false);
+        setError(uploadError.message);
+        return;
+      }
+      fileUrl = supabase.storage.from("rciu-photos").getPublicUrl(path).data.publicUrl;
+    }
+
+    const { error: insertError } = await supabase.from("club_awards").insert({
+      submitted_by: memberId,
+      title,
+      comment: comment || null,
+      file_url: fileUrl,
+      file_type: fileType,
+    });
+    setBusy(false);
+    if (insertError) {
+      setError(insertError.message);
+      return;
+    }
+    setTitle("");
+    setComment("");
+    setFile(null);
+    refresh();
+  }
+
+  async function remove(a: AwardSubmission) {
+    if (!confirm(t("Устгах уу?", "Delete this submission?", "削除しますか?", "确定删除吗?"))) return;
+    await supabase.from("club_awards").delete().eq("id", a.id);
+    refresh();
+  }
+
+  return (
+    <div className="rounded-xl border border-slate-200 p-6">
+      <h2 className="font-bold text-slate-900 mb-1">{t("Шагнал нэмэх", "Submit an Award", "受賞情報を投稿", "提交奖项")}</h2>
+      <p className="text-xs text-slate-400 mb-4 max-w-xl">
+        {t(
+          "Админ хянаад зөвшөөрсний дараа \"Бидний тухай\" хуудсанд харагдана.",
+          "Shown on the About page once an admin reviews and approves it.",
+          "管理者が確認・承認した後、「私たちについて」ページに表示されます。",
+          "经管理员审核批准后,将显示在「关于我们」页面。"
+        )}
+      </p>
+      <form onSubmit={submit} className="grid gap-3 mb-6">
+        <input
+          required
+          placeholder={t("Гарчиг", "Title", "タイトル", "标题")}
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+        />
+        <textarea
+          placeholder={t("Тайлбар (заавал биш)", "Comment (optional)", "コメント(任意)", "说明(可选)")}
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          rows={2}
+          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+        />
+        <div>
+          <input type="file" accept="image/*,application/pdf" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="text-sm" />
+          <p className="text-xs text-slate-400 mt-1">
+            {t("Зураг эсвэл PDF (заавал биш)", "Photo or PDF (optional)", "写真またはPDF(任意)", "照片或 PDF(可选)")}
+          </p>
+        </div>
+        {error && <p className="text-sm text-rotary-cardinal">{error}</p>}
+        <button type="submit" disabled={busy} className="justify-self-start bg-rotary-royal-blue text-white font-semibold rounded-md px-5 py-2 text-sm disabled:opacity-60">
+          {busy ? t("Илгээж байна…", "Submitting…", "送信中…", "提交中…") : t("Илгээх", "Submit", "送信", "提交")}
+        </button>
+      </form>
+
+      {mine && mine.length > 0 && (
+        <div className="grid gap-2">
+          {mine.map((a) => (
+            <div key={a.id} className="rounded-lg border border-slate-200 p-3 flex items-center gap-3">
+              <div className="w-14 h-14 rounded-md overflow-hidden bg-slate-100 shrink-0 flex items-center justify-center">
+                {a.file_type === "image" && a.file_url ? (
+                  <Image src={a.file_url} alt="" width={56} height={56} className="object-cover w-14 h-14" />
+                ) : a.file_type === "pdf" ? (
+                  <span className="text-[10px] font-bold text-rotary-royal-blue">PDF</span>
+                ) : (
+                  <span className="text-[10px] text-slate-400">—</span>
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold text-slate-900 text-sm truncate">{a.title}</p>
+                <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full mt-0.5 ${AWARD_STATUS_STYLE[a.status]}`}>
+                  {a.status === "pending" && t("Хянагдаж байна", "Pending review", "審査中", "审核中")}
+                  {a.status === "approved" && t("Батлагдсан", "Approved", "承認済み", "已批准")}
+                  {a.status === "rejected" && t("Татгалзсан", "Rejected", "却下", "已拒绝")}
+                </span>
+              </div>
+              {a.status === "pending" && (
+                <button onClick={() => remove(a)} className="shrink-0 text-xs font-semibold px-2 py-1.5 rounded-md border border-rotary-cardinal text-rotary-cardinal hover:bg-rotary-cardinal hover:text-white">
+                  {t("Устгах", "Delete", "削除", "删除")}
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

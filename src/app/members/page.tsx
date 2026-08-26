@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { asset } from "@/lib/asset";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
 import { phfTheme } from "@/lib/phf";
@@ -21,8 +20,6 @@ type DirectoryMember = {
   email: string | null;
   phone: string | null;
   rotary_id: string | null;
-  highest_position: string | null;
-  honor_roll_priority: number | null;
   phf_level: string;
   major_donor: boolean;
 };
@@ -71,23 +68,6 @@ export default function MembersPage() {
   const alphabetical = (members ?? [])
     .slice()
     .sort((a, b) => `${a.first_name} ${a.last_name}`.localeCompare(`${b.first_name} ${b.last_name}`));
-
-  const honorRoll = (members ?? [])
-    .filter((m) => m.phf_level !== "none")
-    .sort((a, b) => {
-      // A set honor_roll_priority pins a member to the top, in
-      // ascending priority order, ahead of the normal PHF-tier sort.
-      const pa = a.honor_roll_priority;
-      const pb = b.honor_roll_priority;
-      if (pa != null || pb != null) {
-        if (pa == null) return 1;
-        if (pb == null) return -1;
-        if (pa !== pb) return pa - pb;
-      }
-      const rankDiff = phfRank(b.phf_level) - phfRank(a.phf_level);
-      if (rankDiff !== 0) return rankDiff;
-      return a.last_name.localeCompare(b.last_name);
-    });
 
   return (
     <div className="container-page py-14">
@@ -167,59 +147,6 @@ export default function MembersPage() {
           })}
         </div>
       )}
-
-      {/* Honor roll — ranked top to bottom by recognition level, with
-          contact info. Visible to logged-in members only (this page
-          and the members_directory view are both login-gated), so
-          this is a members' contact directory, not a public listing. */}
-      <section className="rounded-2xl bg-white border border-slate-200 text-rotary-royal-blue p-8">
-        <div className="flex items-center gap-3 mb-2">
-          <Image src={asset("/logos/ri-gear-gold.png")} alt="" width={32} height={32} />
-          <h2 className="text-2xl font-bold">
-            {t("Paul Harris Fellow алдрын самбар", "Paul Harris Fellow Honor Roll", "ポール・ハリス・フェロー 名誉殿堂", "保罗·哈里斯会员荣誉榜")}
-          </h2>
-        </div>
-        <p className="text-slate-500 text-sm mb-6 max-w-xl">
-          {t(
-            "The Rotary Foundation-д хувь нэмэр оруулсныг нь хүлээн зөвшөөрсөн клубын гишүүд, өндөр зэрэглэлээс бага руу эрэмбэлэгдсэн. Мөнгөн дүн энд харагдахгүй.",
-            "Club members recognized for their contributions to The Rotary Foundation, ranked highest to lowest. Dollar amounts are kept private — only recognition tier is shown.",
-            "ロータリー財団への貢献が認められた会員を、階級の高い順に表示しています。金額は非公開です。",
-            "表彰对扶轮基金会做出贡献的会员,按级别从高到低排列。捐款金额不公开显示。"
-          )}
-        </p>
-        {honorRoll.length === 0 ? (
-          <p className="text-slate-400 text-sm">{t("Удахгүй…", "Coming soon…", "近日公開…", "即将上线…")}</p>
-        ) : (
-          <ol className="flex flex-col divide-y divide-slate-100">
-            {honorRoll.map((m, i) => (
-              <li key={m.member_id} className="flex flex-wrap items-center gap-4 py-4">
-                <span className="text-rotary-azure font-bold w-6 text-right shrink-0">{i + 1}</span>
-                <PhfPinBadge level={m.phf_level} size={40} majorDonor={m.major_donor} />
-                <div className="min-w-[10rem] flex-1">
-                  <p className="font-semibold text-slate-900">
-                    {m.first_name} {m.last_name}
-                    {m.major_donor && (
-                      <span className="ml-2 text-rotary-gold text-xs font-bold align-middle">★ {t("Их хандивлагч", "Major Donor", "メジャードナー", "重要捐赠人")}</span>
-                    )}
-                  </p>
-                  {m.highest_position && <p className="text-xs text-rotary-azure">{m.highest_position}</p>}
-                </div>
-                <span
-                  className="inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full text-white shrink-0"
-                  style={{ background: phfTheme(m.phf_level).accent }}
-                >
-                  {m.phf_level}
-                </span>
-              </li>
-            ))}
-          </ol>
-        )}
-      </section>
     </div>
   );
-}
-
-function phfRank(level: string): number {
-  const order = ["none", "PHF", "PHF+1", "PHF+2", "PHF+3", "PHF+4", "PHF+5", "PHF+6", "PHF+7", "PHF+8"];
-  return order.indexOf(level);
 }

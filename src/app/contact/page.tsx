@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useLanguage } from "@/lib/language-context";
 
 export default function ContactPage() {
@@ -7,9 +8,21 @@ export default function ContactPage() {
 
   return (
     <div className="container-page py-14">
-      <h1 className="text-3xl font-bold text-rotary-royal-blue mb-3">
-        {t("Холбоо барих", "Contact Us", "お問い合わせ", "联系我们")}
-      </h1>
+      <div className="flex flex-wrap items-start justify-between gap-6 mb-3">
+        <h1 className="text-3xl font-bold text-rotary-royal-blue">
+          {t("Холбоо барих", "Contact Us", "お問い合わせ", "联系我们")}
+        </h1>
+        {/* Standalone CTA, deliberately not blue like the rest of the
+            page — Rotary gold makes it read as an action, not just
+            another info block, since this is the button most visitors
+            will actually want to click. */}
+        <Link
+          href="/join"
+          className="shrink-0 inline-block text-sm font-bold px-6 py-3 rounded-full bg-rotary-gold text-slate-900 shadow-sm hover:brightness-95 transition"
+        >
+          {t("Одоо элсэх →", "Join Us Now →", "今すぐ入会 →", "立即加入 →")}
+        </Link>
+      </div>
       <p className="text-slate-600 max-w-2xl mb-10">
         {t(
           "Уулзалт, төсөл, гишүүнчлэл болон дурын бусад асуултын хувьд бидэнтэй чөлөөтэй холбогдоно уу — манай баг тантай тун удахгүй холбогдох болно.",

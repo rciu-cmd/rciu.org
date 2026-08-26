@@ -39,15 +39,6 @@ type NewsRow = {
 };
 type Stats = { phfPercent: number | null; affiliateCount: number | null; projectCount: number | null };
 type PhotoItem = { id: string; storage_path: string; caption: string | null; created_at: string };
-type EventRow = {
-  id: string;
-  title_mn: string;
-  title_en: string;
-  location: string | null;
-  event_date: string;
-  event_time: string | null;
-  cover_image_url: string | null;
-};
 
 // Stored Facebook post links should always be absolute (the admin form
 // requires it), but normalize defensively — a link missing "https://"
@@ -62,15 +53,6 @@ declare global {
     FB?: { XFBML: { parse: () => void } };
   }
 }
-
-const MONTH_LABEL: Record<string, [string, string, string, string]> = {
-  "01": ["1-р сар", "Jan", "1月", "1月"], "02": ["2-р сар", "Feb", "2月", "2月"],
-  "03": ["3-р сар", "Mar", "3月", "3月"], "04": ["4-р сар", "Apr", "4月", "4月"],
-  "05": ["5-р сар", "May", "5月", "5月"], "06": ["6-р сар", "Jun", "6月", "6月"],
-  "07": ["7-р сар", "Jul", "7月", "7月"], "08": ["8-р сар", "Aug", "8月", "8月"],
-  "09": ["9-р сар", "Sep", "9月", "9月"], "10": ["10-р сар", "Oct", "10月", "10月"],
-  "11": ["11-р сар", "Nov", "11月", "11月"], "12": ["12-р сар", "Dec", "12月", "12月"],
-};
 
 const CAUSE_ICONS: Record<string, string> = {
   basic_education_literacy: "/causes/basic-education-literacy.png",
@@ -92,7 +74,6 @@ export default function Home() {
   const [news, setNews] = useState<NewsRow[]>([]);
   const [stats, setStats] = useState<Stats>({ phfPercent: null, affiliateCount: null, projectCount: null });
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
-  const [upcomingEvents, setUpcomingEvents] = useState<EventRow[]>([]);
 
   useEffect(() => {
     supabase.from("links_partners").select("id,name,url,logo_url").order("sort_order").then(({ data }) => setLinks((data as LinkRow[]) ?? []));
@@ -127,18 +108,6 @@ export default function Home() {
         .slice(0, 12);
       setPhotos(merged);
     });
-
-    // Upcoming events — a small calendar card next to Links & Partners,
-    // so visitors see what's coming up without needing to log in
-    // (events became publicly readable in migration16). Shows every
-    // event still ahead, not just the next one, in a scrollable list.
-    const today = new Date().toISOString().slice(0, 10);
-    supabase
-      .from("events")
-      .select("id, title_mn, title_en, location, event_date, event_time, cover_image_url")
-      .gte("event_date", today)
-      .order("event_date", { ascending: true })
-      .then(({ data }) => setUpcomingEvents((data as EventRow[]) ?? []));
 
     // Every number here is read live from the database — the PHF %
     // and project count especially, so both update on their own as
@@ -396,88 +365,51 @@ export default function Home() {
           into a soft blue that leads into the Footer's own blue
           gradient right below, instead of a flat gray box. */}
       <section className="last:flex-1 bg-gradient-to-b from-[#fdf3e2] to-[#eaf1fb] py-10">
-          <div className="container-page grid gap-10 lg:grid-cols-[1fr_320px] items-start">
-            <div>
-              {affiliates.length > 0 && (
-                <div className="mb-6">
-                  <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3">
-                    {t("Дэмждэг клубууд", "Sponsored Clubs", "スポンサークラブ", "赞助俱乐部")}
-                  </h2>
-                  <div className="flex flex-wrap items-center gap-8">
-                    {affiliates.map((a) => {
-                      const logo = a.logo_url ?? KNOWN_LOGOS[a.name];
-                      return logo ? (
-                        <Image key={a.id} src={logo.startsWith("http") ? logo : asset(logo)} alt={a.name} title={a.name} width={160} height={80} className="object-contain h-14 w-auto shrink-0" />
-                      ) : (
-                        <span key={a.id} title={a.name} className="text-xs font-bold text-slate-400 uppercase">{a.club_type}</span>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              <div>
+          <div className="container-page">
+            {affiliates.length > 0 && (
+              <div className="mb-6">
                 <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3">
-                  {t("Холбоос ба түншүүд", "Links & Partners", "リンクとパートナー", "链接与伙伴")}
+                  {t("Дэмждэг клубууд", "Sponsored Clubs", "スポンサークラブ", "赞助俱乐部")}
                 </h2>
                 <div className="flex flex-wrap items-center gap-8">
-                  {links.map((l) => {
-                    const logo = l.logo_url ?? KNOWN_LOGOS[l.name];
+                  {affiliates.map((a) => {
+                    const logo = a.logo_url ?? KNOWN_LOGOS[a.name];
                     return logo ? (
-                      <a
-                        key={l.id}
-                        href={l.url ?? undefined}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        title={l.name}
-                        className="shrink-0 hover:opacity-80 transition"
-                      >
-                        <Image src={logo.startsWith("http") ? logo : asset(logo)} alt={l.name} width={160} height={80} className="object-contain h-14 w-auto" />
-                      </a>
+                      <Image key={a.id} src={logo.startsWith("http") ? logo : asset(logo)} alt={a.name} title={a.name} width={160} height={80} className="object-contain h-20 w-auto shrink-0" />
                     ) : (
-                      <a key={l.id} href={l.url ?? undefined} target="_blank" rel="noopener noreferrer" title={l.name} className="text-xs font-bold text-slate-400 uppercase">
-                        {l.name}
-                      </a>
+                      <span key={a.id} title={a.name} className="text-xs font-bold text-slate-400 uppercase">{a.club_type}</span>
                     );
                   })}
                 </div>
               </div>
-            </div>
-
-            {/* Upcoming events — fills the empty right-hand space next
-                to Sponsored/Links on wide screens; hidden entirely if
-                nothing's scheduled rather than showing an empty box.
-                Every event still ahead is listed (scrolls if there are
-                more than fit), not just the soonest one. */}
-            {upcomingEvents.length > 0 && (
-              <div className="rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">
-                <p className="text-xs font-semibold text-rotary-azure uppercase tracking-wide px-5 pt-5">
-                  {t("Удахгүй болох арга хэмжээ", "Upcoming Events", "今後の予定", "即将举行的活动")}
-                </p>
-                <div className="max-h-[28rem] overflow-y-auto divide-y divide-slate-100 mt-3">
-                  {upcomingEvents.map((ev) => (
-                    <div key={ev.id} className="p-5 pt-4 flex gap-4 items-start">
-                      <div className="shrink-0 rounded-lg overflow-hidden border border-slate-200 w-14 text-center">
-                        <div className="bg-rotary-cardinal text-white text-[10px] font-bold uppercase py-0.5">
-                          {t(...MONTH_LABEL[ev.event_date.slice(5, 7)])}
-                        </div>
-                        <div className="text-xl font-extrabold text-slate-800 py-1">{ev.event_date.slice(8, 10)}</div>
-                      </div>
-                      <div className="min-w-0">
-                        {ev.cover_image_url && (
-                          <div className="relative w-full aspect-video bg-slate-100 rounded-lg overflow-hidden mb-2">
-                            <Image src={ev.cover_image_url} alt="" fill className="object-cover" />
-                          </div>
-                        )}
-                        <p className="font-bold text-slate-900 leading-snug">{t(ev.title_mn, ev.title_en)}</p>
-                        {ev.event_time && <p className="text-sm text-slate-500 mt-0.5">{ev.event_time}</p>}
-                        {ev.location && <p className="text-sm text-slate-500">{ev.location}</p>}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
             )}
+
+            <div>
+              <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3">
+                {t("Холбоос ба түншүүд", "Links & Partners", "リンクとパートナー", "链接与伙伴")}
+              </h2>
+              <div className="flex flex-wrap items-center gap-8">
+                {links.map((l) => {
+                  const logo = l.logo_url ?? KNOWN_LOGOS[l.name];
+                  return logo ? (
+                    <a
+                      key={l.id}
+                      href={l.url ?? undefined}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title={l.name}
+                      className="shrink-0 hover:opacity-80 transition"
+                    >
+                      <Image src={logo.startsWith("http") ? logo : asset(logo)} alt={l.name} width={160} height={80} className="object-contain h-20 w-auto" />
+                    </a>
+                  ) : (
+                    <a key={l.id} href={l.url ?? undefined} target="_blank" rel="noopener noreferrer" title={l.name} className="text-xs font-bold text-slate-400 uppercase">
+                      {l.name}
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </section>
       <div id="fb-root" />

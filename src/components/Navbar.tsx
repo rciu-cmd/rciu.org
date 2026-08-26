@@ -22,17 +22,17 @@ export default function Navbar() {
 
   // No separate "Home" link — the logo + club name (below) already
   // links to "/", so a dedicated Home button would just be a duplicate.
-  // "Members" (roster + honor roll) is for logged-in members only.
   // No "Admin" link here even for admins — too many buttons once
   // logged in, and Admin is already one click away from the Dashboard
   // page (the "Go to Admin Dashboard" button on /dashboard).
+  // Board and Members moved onto the About page as buttons (Members
+  // only shows there once logged in); Join Us moved onto the Contact
+  // page as its own CTA — keeps this bar down to 5 links.
   const links = [
     { href: "/about", label: t("Бидний тухай", "About", "私たちについて", "关于我们") },
     { href: "/news", label: t("Мэдээ", "News", "ニュース", "新闻") },
     { href: "/projects", label: t("Төслүүд", "Projects", "プロジェクト", "项目") },
-    { href: "/board", label: t("Удирдлага", "Board", "役員", "理事会") },
-    ...(authed ? [{ href: "/members", label: t("Гишүүд", "Members", "会員", "会员") }] : []),
-    { href: "/join", label: t("Нэгдэх", "Join Us", "入会案内", "加入我们") },
+    { href: "/events", label: t("Арга хэмжээ", "Events", "イベント", "活动") },
     { href: "/contact", label: t("Холбоо барих", "Contact", "お問い合わせ", "联系我们") },
   ];
 

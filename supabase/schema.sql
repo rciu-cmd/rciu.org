@@ -207,13 +207,16 @@ create trigger members_protect_own_admin_level
 
 -- Public-safe view: name, role, photo, PHF tier, major-donor flag —
 -- no email, phone, address, or exact dollar amounts, ever. Respects
--- each member's own honor_roll_visible opt-out.
+-- each member's own honor_roll_visible opt-out. Also carries
+-- highest_position + honor_roll_priority (migration18) since the
+-- Paul Harris Fellow Honor Roll now lives on the public About page.
 create or replace view public.members_public as
 select
   member_id, first_name, last_name, name_local, classification, position,
-  photo_url, city,
+  photo_url, city, highest_position,
   case when honor_roll_visible then phf_level else 'none' end as phf_level,
-  case when honor_roll_visible then major_donor else false end as major_donor
+  case when honor_roll_visible then major_donor else false end as major_donor,
+  case when honor_roll_visible then honor_roll_priority else null end as honor_roll_priority
 from public.members
 where status = 'active';
 
@@ -807,3 +810,74 @@ drop policy if exists member_travels_write_admin on public.member_travels;
 create policy member_travels_write_admin on public.member_travels
   for all using (public.is_super_admin())
   with check (public.is_super_admin());
+
+-- member_travel_participants (migration18) — lets one trip list more
+-- than one member; member_travels.member_id is left in place but
+-- unused going forward.
+create table if not exists public.member_travel_participants (
+  travel_id uuid not null references public.member_travels(id) on delete cascade,
+  member_id uuid not null references public.members(id) on delete cascade,
+  primary key (travel_id, member_id)
+);
+
+alter table public.member_travel_participants enable row level security;
+
+drop policy if exists member_travel_participants_select_public on public.member_travel_participants;
+create policy member_travel_participants_select_public on public.member_travel_participants
+  for select using (true);
+
+drop policy if exists member_travel_participants_write_admin on public.member_travel_participants;
+create policy member_travel_participants_write_admin on public.member_travel_participants
+  for all using (public.is_super_admin())
+  with check (public.is_super_admin());
+
+-- ------------------------------------------------------------
+-- club_awards (migration18) — member-submitted award/recognition
+-- entries, reviewed by an admin before showing on the public About
+-- page. Submitted from the member Dashboard.
+-- ------------------------------------------------------------
+create table if not exists public.club_awards (
+  id uuid primary key default gen_random_uuid(),
+  submitted_by uuid references public.members(id) on delete set null,
+  title text not null,
+  comment text,
+  file_url text,
+  file_type text check (file_type in ('image', 'pdf')),
+  status text not null default 'pending' check (status in ('pending', 'approved', 'rejected')),
+  created_at timestamptz not null default now(),
+  reviewed_at timestamptz,
+  reviewed_by uuid references public.members(id) on delete set null
+);
+
+alter table public.club_awards enable row level security;
+
+drop policy if exists club_awards_select_approved on public.club_awards;
+create policy club_awards_select_approved on public.club_awards
+  for select using (status = 'approved');
+
+drop policy if exists club_awards_select_own on public.club_awards;
+create policy club_awards_select_own on public.club_awards
+  for select using (submitted_by = auth.uid());
+
+drop policy if exists club_awards_select_admin on public.club_awards;
+create policy club_awards_select_admin on public.club_awards
+  for select using (public.is_super_admin());
+
+drop policy if exists club_awards_insert_member on public.club_awards;
+create policy club_awards_insert_member on public.club_awards
+  for insert with check (
+    submitted_by = auth.uid()
+    and status = 'pending'
+    and exists (select 1 from public.members m where m.id = auth.uid() and m.status = 'active')
+  );
+
+drop policy if exists club_awards_delete_own_pending_or_admin on public.club_awards;
+create policy club_awards_delete_own_pending_or_admin on public.club_awards
+  for delete using (
+    (submitted_by = auth.uid() and status = 'pending')
+    or public.is_super_admin()
+  );
+
+drop policy if exists club_awards_update_admin on public.club_awards;
+create policy club_awards_update_admin on public.club_awards
+  for update using (public.is_super_admin()) with check (public.is_super_admin());

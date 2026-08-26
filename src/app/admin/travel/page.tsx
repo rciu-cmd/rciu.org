@@ -9,7 +9,6 @@ type MemberOption = { id: string; first_name: string; last_name: string };
 
 type TravelRow = {
   id: string;
-  member_id: string | null;
   event_name: string;
   destination_city: string;
   destination_country: string;
@@ -19,10 +18,10 @@ type TravelRow = {
   notes: string | null;
 };
 
-type TravelWithMember = TravelRow & { memberName: string | null };
+type TravelWithMembers = TravelRow & { memberNames: string[] };
 
 const EMPTY = {
-  member_id: "",
+  member_ids: [] as string[],
   event_name: "",
   country: "",
   city: "",
@@ -39,7 +38,7 @@ const INTL_LOCALE: Record<Lang, string> = { mn: "mn", en: "en", ja: "ja", zh: "z
 
 export default function AdminTravelPage() {
   const { t, lang } = useLanguage();
-  const [items, setItems] = useState<TravelWithMember[] | null>(null);
+  const [items, setItems] = useState<TravelWithMembers[] | null>(null);
   const [members, setMembers] = useState<MemberOption[]>([]);
   const [form, setForm] = useState(EMPTY);
   const [busy, setBusy] = useState(false);
@@ -49,16 +48,30 @@ export default function AdminTravelPage() {
   async function refresh() {
     const { data, error } = await supabase
       .from("member_travels")
-      .select("id, member_id, event_name, destination_city, destination_country, latitude, longitude, event_date, notes, members(first_name, last_name)")
+      .select("id, event_name, destination_city, destination_country, latitude, longitude, event_date, notes, member_travel_participants(members(first_name, last_name))")
       .order("event_date", { ascending: false });
     if (error) {
       setError(error.message);
       return;
     }
-    type Row = TravelRow & { members: { first_name: string; last_name: string } | { first_name: string; last_name: string }[] | null };
+    type ParticipantRow = { members: { first_name: string; last_name: string } | { first_name: string; last_name: string }[] | null };
+    type Row = TravelRow & { member_travel_participants: ParticipantRow[] | null };
     const rows = ((data as unknown as Row[]) ?? []).map((r) => {
-      const m = Array.isArray(r.members) ? r.members[0] : r.members;
-      return { ...r, memberName: m ? `${m.first_name} ${m.last_name}` : null };
+      const memberNames = (r.member_travel_participants ?? []).flatMap((p) => {
+        const m = Array.isArray(p.members) ? p.members[0] : p.members;
+        return m ? [`${m.first_name} ${m.last_name}`] : [];
+      });
+      return {
+        id: r.id,
+        event_name: r.event_name,
+        destination_city: r.destination_city,
+        destination_country: r.destination_country,
+        latitude: r.latitude,
+        longitude: r.longitude,
+        event_date: r.event_date,
+        notes: r.notes,
+        memberNames,
+      };
     });
     setItems(rows);
   }
@@ -146,21 +159,37 @@ export default function AdminTravelPage() {
       lng = cityEntry[3];
     }
 
-    const { error } = await supabase.from("member_travels").insert({
-      member_id: form.member_id || null,
-      event_name: form.event_name,
-      destination_city: cityName,
-      destination_country: englishCountryName,
-      latitude: lat,
-      longitude: lng,
-      event_date: form.event_date || null,
-      notes: form.notes || null,
-    });
-    setBusy(false);
-    if (error) {
-      setError(error.message);
+    const { data: inserted, error } = await supabase
+      .from("member_travels")
+      .insert({
+        event_name: form.event_name,
+        destination_city: cityName,
+        destination_country: englishCountryName,
+        latitude: lat,
+        longitude: lng,
+        event_date: form.event_date || null,
+        notes: form.notes || null,
+      })
+      .select("id")
+      .single();
+    if (error || !inserted) {
+      setBusy(false);
+      setError(error?.message ?? t("Хадгалахад алдаа гарлаа.", "Couldn't save the trip.", "保存できませんでした。", "保存失败。"));
       return;
     }
+
+    if (form.member_ids.length > 0) {
+      const { error: participantsError } = await supabase
+        .from("member_travel_participants")
+        .insert(form.member_ids.map((member_id) => ({ travel_id: inserted.id, member_id })));
+      if (participantsError) {
+        setBusy(false);
+        setError(participantsError.message);
+        return;
+      }
+    }
+
+    setBusy(false);
     setForm(EMPTY);
     setShowForm(false);
     refresh();
@@ -194,14 +223,39 @@ export default function AdminTravelPage() {
 
       {showForm && (
         <form onSubmit={createTravel} className="rounded-xl border border-slate-200 p-6 mb-8 grid gap-3">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <select value={form.member_id} onChange={(e) => setForm({ ...form, member_id: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm">
-              <option value="">{t("Гишүүн (заавал биш)", "Member (optional)", "会員(任意)", "会员(可选)")}</option>
-              {members.map((m) => (
-                <option key={m.id} value={m.id}>{m.first_name} {m.last_name}</option>
-              ))}
-            </select>
-            <input required placeholder={t("Арга хэмжээний нэр", "Event name", "イベント名", "活动名称")} value={form.event_name} onChange={(e) => setForm({ ...form, event_name: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
+          <input required placeholder={t("Арга хэмжээний нэр", "Event name", "イベント名", "活动名称")} value={form.event_name} onChange={(e) => setForm({ ...form, event_name: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
+
+          <div>
+            <p className="text-xs font-semibold text-slate-600 mb-1">
+              {t("Оролцсон гишүүд (заавал биш, олноор сонгож болно)", "Members who went (optional, pick as many as went)", "参加した会員(任意、複数選択可)", "参加的会员(可选,可多选)")}
+            </p>
+            <div className="rounded-md border border-slate-300 max-h-40 overflow-y-auto p-2 grid sm:grid-cols-2 gap-x-4">
+              {members.map((m) => {
+                const checked = form.member_ids.includes(m.id);
+                return (
+                  <label key={m.id} className="flex items-center gap-2 text-sm py-0.5">
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          member_ids: e.target.checked
+                            ? [...form.member_ids, m.id]
+                            : form.member_ids.filter((id) => id !== m.id),
+                        })
+                      }
+                    />
+                    {m.first_name} {m.last_name}
+                  </label>
+                );
+              })}
+            </div>
+            {form.member_ids.length > 0 && (
+              <p className="text-xs text-slate-500 mt-1">
+                {t(`${form.member_ids.length} гишүүн сонгосон`, `${form.member_ids.length} member${form.member_ids.length > 1 ? "s" : ""} selected`, `${form.member_ids.length}名選択済み`, `已选择 ${form.member_ids.length} 名会员`)}
+              </p>
+            )}
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <select
@@ -319,7 +373,7 @@ export default function AdminTravelPage() {
                   {it.event_date && ` · ${it.event_date}`}
                 </p>
                 <p className="font-bold text-slate-900">{it.event_name}</p>
-                {it.memberName && <p className="text-sm text-slate-500">{it.memberName}</p>}
+                {it.memberNames.length > 0 && <p className="text-sm text-slate-500">{it.memberNames.join(", ")}</p>}
                 {it.notes && <p className="text-sm text-slate-400 mt-1">{it.notes}</p>}
               </div>
               <button onClick={() => remove(it)} className="text-xs font-semibold px-3 py-1.5 rounded-md border border-rotary-cardinal text-rotary-cardinal hover:bg-rotary-cardinal hover:text-white shrink-0">
