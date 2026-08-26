@@ -49,7 +49,7 @@ export default function Footer() {
 
         <div className="text-sm text-blue-100">
           <p className="font-semibold text-white mb-2">{t("Холбоо барих", "Contact", "お問い合わせ", "聯繫方式", "문의")}</p>
-          <p>rciu.mng@gmail.com</p>
+          <p>contact@rciu.org</p>
           <p>+976 99031147</p>
 
           {/* Language switcher lives here now — moved off the navbar

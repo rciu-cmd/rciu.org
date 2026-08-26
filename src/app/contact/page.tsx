@@ -49,7 +49,20 @@ export default function ContactPage() {
           <h2 className="font-bold text-rotary-royal-blue mb-4">
             {t("И-мэйл, утасны дугаар", "Email & Phone", "メール・電話", "郵箱與電話")}
           </h2>
-          <p className="text-slate-700">rciu.mng@gmail.com</p>
+          <div className="grid gap-1 mb-2">
+            <p className="text-slate-700">
+              <span className="text-xs text-slate-400 mr-1.5">{t("Ерөнхий", "General", "総合", "一般")}:</span>
+              contact@rciu.org
+            </p>
+            <p className="text-slate-700">
+              <span className="text-xs text-slate-400 mr-1.5">{t("Нарийн бичиг", "Secretary", "書記", "秘書")}:</span>
+              secretary@rciu.org
+            </p>
+            <p className="text-slate-700">
+              <span className="text-xs text-slate-400 mr-1.5">{t("Ерөнхийлөгч", "President", "会長", "社長")}:</span>
+              president@rciu.org
+            </p>
+          </div>
           <p className="text-slate-700">+976 99031147</p>
         </div>
 
