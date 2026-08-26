@@ -149,7 +149,7 @@ export default function EventsPage() {
                   <div
                     key={i}
                     className={`aspect-square rounded-lg p-1.5 text-sm flex flex-col items-center justify-start gap-1 ${
-                      isToday ? "bg-rotary-royal-blue/10 ring-1 ring-rotary-royal-blue" : dayEvents.length > 0 ? "bg-amber-50" : ""
+                      isToday ? "bg-rotary-royal-blue/10 ring-1 ring-rotary-royal-blue" : dayEvents.length > 0 ? "bg-rotary-gold/25" : ""
                     }`}
                   >
                     <span className={`font-semibold ${isToday ? "text-rotary-royal-blue" : "text-slate-700"}`}>{d.getDate()}</span>
