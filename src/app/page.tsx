@@ -7,7 +7,7 @@ import { asset } from "@/lib/asset";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
 
-type LinkRow = { id: string; name: string; url: string | null; logo_url: string | null };
+type LinkRow = { id: string; name: string; url: string | null; logo_url: string | null; category: string | null };
 type AffiliateRow = {
   id: string;
   name: string;
@@ -69,6 +69,8 @@ const STATUS_LABEL: Record<ProjectRow["status"], { mn: string; en: string }> = {
 export default function Home() {
   const { t } = useLanguage();
   const [links, setLinks] = useState<LinkRow[]>([]);
+  const districtLinks = links.filter((l) => l.category === "district");
+  const clubLinks = links.filter((l) => l.category !== "district");
   const [affiliates, setAffiliates] = useState<AffiliateRow[]>([]);
   const [projects, setProjects] = useState<ProjectRow[]>([]);
   const [news, setNews] = useState<NewsRow[]>([]);
@@ -76,7 +78,7 @@ export default function Home() {
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
 
   useEffect(() => {
-    supabase.from("links_partners").select("id,name,url,logo_url").order("sort_order").then(({ data }) => setLinks((data as LinkRow[]) ?? []));
+    supabase.from("links_partners").select("id,name,url,logo_url,category").order("sort_order").then(({ data }) => setLinks((data as LinkRow[]) ?? []));
     supabase
       .from("affiliate_clubs")
       .select("id,name,club_type,logo_url,president_name,contact_phone,contact_email,member_count")
@@ -388,27 +390,35 @@ export default function Home() {
               <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3">
                 {t("Холбоос ба түншүүд", "Links & Partners", "リンクとパートナー", "鏈接與夥伴")}
               </h2>
-              <div className="flex flex-wrap items-center gap-8">
-                {links.map((l) => {
-                  const logo = l.logo_url ?? KNOWN_LOGOS[l.name];
-                  return logo ? (
-                    <a
-                      key={l.id}
-                      href={l.url ?? undefined}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title={l.name}
-                      className="shrink-0 hover:opacity-80 transition"
-                    >
-                      <Image src={logo.startsWith("http") ? logo : asset(logo)} alt={l.name} width={160} height={80} className="object-contain h-20 w-auto" />
-                    </a>
-                  ) : (
-                    <a key={l.id} href={l.url ?? undefined} target="_blank" rel="noopener noreferrer" title={l.name} className="text-xs font-bold text-slate-400 uppercase">
-                      {l.name}
-                    </a>
-                  );
-                })}
-              </div>
+              {/* Districts and clubs each get their own single-line row
+                  (was one big wrapping grid) — logos are shrunk to fit
+                  more per row, and each row scrolls horizontally on
+                  narrow screens / once a row grows past what fits
+                  rather than ever wrapping to a second line. */}
+              {districtLinks.length > 0 && (
+                <div className="mb-3">
+                  <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-1.5">
+                    {t("Дүүргүүд", "Districts", "地区", "地區")}
+                  </p>
+                  <div className="flex flex-nowrap items-center gap-4 overflow-x-auto pb-1">
+                    {districtLinks.map((l) => (
+                      <PartnerLogo key={l.id} link={l} />
+                    ))}
+                  </div>
+                </div>
+              )}
+              {clubLinks.length > 0 && (
+                <div>
+                  <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-1.5">
+                    {t("Клубууд", "Clubs", "クラブ", "俱樂部")}
+                  </p>
+                  <div className="flex flex-nowrap items-center gap-4 overflow-x-auto pb-1">
+                    {clubLinks.map((l) => (
+                      <PartnerLogo key={l.id} link={l} />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </section>
@@ -425,6 +435,28 @@ const KNOWN_LOGOS: Record<string, string> = {
   "Urgoo Interact Club": "/logos/urgoo-interact.png",
   "Makati Legazpi Rotary Club": "/logos/makati-legazpi.png",
 };
+
+// One logo (or text fallback) in the Districts/Clubs strips below —
+// sized smaller than the old h-20 grid so a full row fits on one line
+// instead of wrapping.
+function PartnerLogo({ link }: { link: LinkRow }) {
+  const logo = link.logo_url ?? KNOWN_LOGOS[link.name];
+  return logo ? (
+    <a
+      href={link.url ?? undefined}
+      target="_blank"
+      rel="noopener noreferrer"
+      title={link.name}
+      className="shrink-0 hover:opacity-80 transition"
+    >
+      <Image src={logo.startsWith("http") ? logo : asset(logo)} alt={link.name} width={120} height={48} className="object-contain h-12 w-auto" />
+    </a>
+  ) : (
+    <a href={link.url ?? undefined} target="_blank" rel="noopener noreferrer" title={link.name} className="shrink-0 text-xs font-bold text-slate-400 uppercase whitespace-nowrap">
+      {link.name}
+    </a>
+  );
+}
 
 // Compact stat tile for the Hero (dark background) — a smaller, glassy
 // variant of the old full-size white StatCard, sized to sit 3-up under
