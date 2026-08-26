@@ -406,6 +406,13 @@ create table if not exists public.projects (
   status text not null default 'ongoing' check (status in ('ongoing','completed','planned')),
   start_date date,
   end_date date,
+  -- How the project is funded: a club-run Local Project has no outside
+  -- grant at all; a District Grant (DG) and a Global Grant (GG) are
+  -- both Rotary Foundation grant programs and both get an official
+  -- grant number assigned (by the district for DG, by TRF for GG) —
+  -- only Local Project has no grant_number to enter.
+  project_type text not null default 'local_project'
+    check (project_type in ('local_project','district_grant','global_grant')),
   -- Funding figures — optional, admin-entered per project (e.g. for a
   -- Rotary Foundation global grant). No dollar amounts are assumed;
   -- these stay null until an admin fills them in and confirms them.

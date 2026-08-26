@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
 
 type CauseIcon = "basic_education_literacy" | "maternal_child_health" | "disease_prevention" | "other";
+type ProjectType = "local_project" | "district_grant" | "global_grant";
 
 type ProjectRow = {
   id: string;
@@ -17,9 +18,26 @@ type ProjectRow = {
   cover_image_url: string | null;
   cause_icon: CauseIcon | null;
   status: "ongoing" | "completed" | "planned";
+  project_type: ProjectType;
   funding_amount: number | null;
   funding_currency: string;
   grant_number: string | null;
+};
+
+const PROJECT_TYPE_LABEL: Record<ProjectType, { mn: string; en: string; ja: string; zh: string }> = {
+  local_project: { mn: "Орон нутгийн төсөл", en: "Local Project", ja: "地域プロジェクト", zh: "本地項目" },
+  district_grant: { mn: "Дүүргийн тэтгэлэг (DG)", en: "District Grant (DG)", ja: "地区補助金(DG)", zh: "地區獎助金(DG)" },
+  global_grant: { mn: "Глобал тэтгэлэг (GG)", en: "Global Grant (GG)", ja: "グローバル補助金(GG)", zh: "全球獎助金(GG)" },
+};
+
+// Local Project has no outside grant at all; District Grant and Global
+// Grant are both Rotary Foundation grant programs and both get an
+// official grant number assigned — so the "Grant number" field only
+// makes sense (and only shows) for those two.
+const HAS_GRANT_NUMBER: Record<ProjectType, boolean> = {
+  local_project: false,
+  district_grant: true,
+  global_grant: true,
 };
 
 const CAUSES: { value: CauseIcon; icon: string | null; label_mn: string; label_en: string }[] = [
@@ -34,18 +52,21 @@ const EMPTY = {
   title_en: "",
   description_mn: "",
   description_en: "",
-  cover_image_url: "",
   cause_icon: "other" as CauseIcon,
   status: "ongoing" as ProjectRow["status"],
+  project_type: "local_project" as ProjectType,
   funding_amount: "",
   funding_currency: "USD",
   grant_number: "",
 };
 
+const MAX_PHOTOS = 3;
+
 export default function AdminProjectsPage() {
   const { t } = useLanguage();
   const [items, setItems] = useState<ProjectRow[] | null>(null);
   const [form, setForm] = useState(EMPTY);
+  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -60,28 +81,103 @@ export default function AdminProjectsPage() {
     refresh();
   }, []);
 
+  function handlePhotoPick(fileList: FileList | null) {
+    if (!fileList) return;
+    const picked = Array.from(fileList).slice(0, MAX_PHOTOS);
+    if (fileList.length > MAX_PHOTOS) {
+      setError(
+        t(
+          `Хамгийн ихдээ ${MAX_PHOTOS} зураг сонгоно уу — эхний ${MAX_PHOTOS}-г авлаа.`,
+          `Up to ${MAX_PHOTOS} photos — kept the first ${MAX_PHOTOS}.`,
+          `最大${MAX_PHOTOS}枚まで — 最初の${MAX_PHOTOS}枚を使用します。`,
+          `最多${MAX_PHOTOS}張照片 — 已保留前${MAX_PHOTOS}張。`
+        )
+      );
+    } else {
+      setError(null);
+    }
+    setPhotoFiles(picked);
+  }
+
+  // Uploads each selected photo into this project's own storage folder
+  // and records it in project_media — the same table the public
+  // gallery and the members' own dashboard uploads already use, so
+  // these photos automatically show up there too, not just on the
+  // project card's auto-collage.
+  async function uploadProjectPhotos(projectId: string): Promise<{ urls: string[]; error: string | null }> {
+    if (photoFiles.length === 0) return { urls: [], error: null };
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const year = new Date().getFullYear();
+    const urls: string[] = [];
+    for (const file of photoFiles) {
+      const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+      const path = `${year}/projects/${projectId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safeName}`;
+      const { error: uploadError } = await supabase.storage.from("rciu-photos").upload(path, file);
+      if (uploadError) return { urls, error: uploadError.message };
+      const { error: mediaError } = await supabase.from("project_media").insert({
+        project_id: projectId,
+        uploaded_by: session?.user.id ?? null,
+        storage_path: path,
+      });
+      if (mediaError) return { urls, error: mediaError.message };
+      urls.push(supabase.storage.from("rciu-photos").getPublicUrl(path).data.publicUrl);
+    }
+    return { urls, error: null };
+  }
+
   async function createProject(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setError(null);
-    const { error } = await supabase.from("projects").insert({
-      title_mn: form.title_mn,
-      title_en: form.title_en,
-      description_mn: form.description_mn || null,
-      description_en: form.description_en || null,
-      cover_image_url: form.cover_image_url || null,
-      cause_icon: form.cause_icon,
-      status: form.status,
-      funding_amount: form.funding_amount ? Number(form.funding_amount) : null,
-      funding_currency: form.funding_currency || "USD",
-      grant_number: form.grant_number || null,
-    });
-    setBusy(false);
-    if (error) {
-      setError(error.message);
+
+    const { data: inserted, error: insertError } = await supabase
+      .from("projects")
+      .insert({
+        title_mn: form.title_mn,
+        title_en: form.title_en,
+        description_mn: form.description_mn || null,
+        description_en: form.description_en || null,
+        cause_icon: form.cause_icon,
+        status: form.status,
+        project_type: form.project_type,
+        funding_amount: form.funding_amount ? Number(form.funding_amount) : null,
+        funding_currency: form.funding_currency || "USD",
+        grant_number: HAS_GRANT_NUMBER[form.project_type] ? form.grant_number || null : null,
+      })
+      .select()
+      .single();
+    if (insertError || !inserted) {
+      setBusy(false);
+      setError(insertError?.message ?? "Insert failed");
       return;
     }
+
+    // Photos are uploaded after the project row exists (project_media
+    // needs a real project_id to attach to). The first uploaded photo
+    // also becomes cover_image_url, so the homepage's project grid —
+    // which only ever shows one image — keeps working without any
+    // changes there.
+    const { urls, error: photoError } = await uploadProjectPhotos(inserted.id);
+    if (photoError) {
+      setBusy(false);
+      setError(photoError);
+      // The project itself saved fine even though a photo failed —
+      // don't lose that progress, just leave the form open so the
+      // admin can see what happened and retry the photos separately
+      // from the project's row below.
+      setShowForm(false);
+      refresh();
+      return;
+    }
+    if (urls.length > 0) {
+      await supabase.from("projects").update({ cover_image_url: urls[0] }).eq("id", inserted.id);
+    }
+
+    setBusy(false);
     setForm(EMPTY);
+    setPhotoFiles([]);
     setShowForm(false);
     refresh();
   }
@@ -114,7 +210,31 @@ export default function AdminProjectsPage() {
           </div>
           <textarea placeholder={t("Тайлбар (MN)", "Description (MN)", "説明(MN)", "描述(MN)")} value={form.description_mn} onChange={(e) => setForm({ ...form, description_mn: e.target.value })} rows={3} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
           <textarea placeholder={t("Тайлбар (EN)", "Description (EN)", "説明(EN)", "描述(EN)")} value={form.description_en} onChange={(e) => setForm({ ...form, description_en: e.target.value })} rows={3} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
-          <input placeholder={t("Зургийн URL (заавал биш)", "Cover photo URL (optional)", "写真URL(任意)", "封面照片URL(可選)")} value={form.cover_image_url} onChange={(e) => setForm({ ...form, cover_image_url: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
+          <div>
+            <p className="text-sm font-semibold text-slate-700 mb-1">
+              {t(`Зураг (заавал биш, хамгийн ихдээ ${MAX_PHOTOS})`, `Photos (optional, up to ${MAX_PHOTOS})`, `写真(任意、最大${MAX_PHOTOS}枚)`, `照片(可選，最多${MAX_PHOTOS}張)`)}
+            </p>
+            <p className="text-xs text-slate-400 mb-2">
+              {t(
+                "1-ээс 3 зураг сонговол хамгийн эхнийх нь нүүр хуудасны төсөл дээр, бүгд хамтдаа коллаж болж харагдана.",
+                "Pick 1-3 photos — they're combined into an automatic collage on the project card, and the first one is used as the cover photo elsewhere on the site.",
+                "1〜3枚の写真を選択すると、プロジェクトカードに自動コラージュとして表示されます。最初の1枚はサイト内の他の場所でカバー写真として使われます。",
+                "選擇1-3張照片，將自動拼成項目卡片上的拼貼圖，第一張會作為封面照片顯示在網站其他位置。"
+              )}
+            </p>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={(e) => handlePhotoPick(e.target.files)}
+              className="text-sm"
+            />
+            {photoFiles.length > 0 && (
+              <p className="text-xs text-slate-500 mt-1">
+                {photoFiles.map((f) => f.name).join(", ")}
+              </p>
+            )}
+          </div>
 
           <div>
             <p className="text-sm font-semibold text-slate-700 mb-2">{t("Чиглэл сонгох", "Pick a focus area", "分野を選択", "選擇關注領域")}</p>
@@ -144,11 +264,38 @@ export default function AdminProjectsPage() {
           </select>
 
           <div>
+            <p className="text-sm font-semibold text-slate-700 mb-2">{t("Санхүүжилтийн төрөл", "Funding type", "資金の種類", "資助類型")}</p>
+            <div className="grid grid-cols-3 gap-3">
+              {(Object.keys(PROJECT_TYPE_LABEL) as ProjectType[]).map((pt) => (
+                <button
+                  type="button"
+                  key={pt}
+                  onClick={() => setForm({ ...form, project_type: pt })}
+                  className={`rounded-lg border-2 px-3 py-2 text-xs font-semibold text-center ${form.project_type === pt ? "border-rotary-azure bg-blue-50 text-rotary-azure" : "border-slate-200 text-slate-600"}`}
+                >
+                  {t(PROJECT_TYPE_LABEL[pt].mn, PROJECT_TYPE_LABEL[pt].en, PROJECT_TYPE_LABEL[pt].ja, PROJECT_TYPE_LABEL[pt].zh)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
             <p className="text-sm font-semibold text-slate-700 mb-2">{t("Санхүүжилт (заавал биш)", "Funding (optional)", "資金(任意)", "資助(可選)")}</p>
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className={`grid gap-3 ${HAS_GRANT_NUMBER[form.project_type] ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
               <input type="number" min="0" step="0.01" placeholder={t("Дүн", "Amount", "金額", "金額")} value={form.funding_amount} onChange={(e) => setForm({ ...form, funding_amount: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
               <input placeholder={t("Валют (жишээ: USD)", "Currency (e.g. USD)", "通貨(例:USD)", "貨幣(例:USD)")} value={form.funding_currency} onChange={(e) => setForm({ ...form, funding_currency: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
-              <input placeholder={t("Global Grant дугаар (заавал биш)", "Grant number (optional)", "グラント番号(任意)", "資助編號(可選)")} value={form.grant_number} onChange={(e) => setForm({ ...form, grant_number: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
+              {HAS_GRANT_NUMBER[form.project_type] && (
+                <input
+                  placeholder={
+                    form.project_type === "global_grant"
+                      ? t("GG дугаар (заавал биш)", "GG number (optional)", "GG番号(任意)", "GG編號(可選)")
+                      : t("DG дугаар (заавал биш)", "DG number (optional)", "DG番号(任意)", "DG編號(可選)")
+                  }
+                  value={form.grant_number}
+                  onChange={(e) => setForm({ ...form, grant_number: e.target.value })}
+                  className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                />
+              )}
             </div>
           </div>
 
@@ -170,7 +317,14 @@ export default function AdminProjectsPage() {
               <div className="flex gap-3">
                 {cause?.icon && <Image src={asset(cause.icon)} alt="" width={32} height={32} className="shrink-0" />}
                 <div>
-                  <p className="font-bold text-slate-900">{item.title_en}</p>
+                  <p className="font-bold text-slate-900">
+                    {item.title_en}
+                    {item.project_type !== "local_project" && (
+                      <span className="ml-2 text-[10px] font-bold text-rotary-azure align-middle">
+                        {item.project_type === "global_grant" ? "GG" : "DG"}
+                      </span>
+                    )}
+                  </p>
                   <p className="text-sm text-slate-500 line-clamp-2">{item.description_en}</p>
                   {item.funding_amount != null && (
                     <p className="text-xs text-rotary-azure font-semibold mt-1">

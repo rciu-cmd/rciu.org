@@ -14,6 +14,7 @@ type ProjectRow = {
   description_en: string | null;
   status: string;
   cover_image_url: string | null;
+  project_type: "local_project" | "district_grant" | "global_grant";
   funding_amount: number | null;
   funding_currency: string;
   grant_number: string | null;
@@ -22,6 +23,7 @@ type ProjectRow = {
 export default function ProjectsPage() {
   const { t } = useLanguage();
   const [items, setItems] = useState<ProjectRow[] | null>(null);
+  const [photosByProject, setPhotosByProject] = useState<Record<string, string[]>>({});
   const [showJoinForm, setShowJoinForm] = useState(false);
   const [showDonate, setShowDonate] = useState(false);
 
@@ -31,6 +33,23 @@ export default function ProjectsPage() {
       .select("*")
       .order("created_at", { ascending: false })
       .then(({ data }) => setItems((data as ProjectRow[]) ?? []));
+
+    // Up to 3 photos per project, for the auto-collage on each card —
+    // same project_media rows the member dashboard uploads into and
+    // the public gallery already reads.
+    supabase
+      .from("project_media")
+      .select("project_id,storage_path,created_at")
+      .order("created_at", { ascending: true })
+      .then(({ data }) => {
+        const grouped: Record<string, string[]> = {};
+        for (const row of (data as { project_id: string; storage_path: string }[]) ?? []) {
+          const url = supabase.storage.from("rciu-photos").getPublicUrl(row.storage_path).data.publicUrl;
+          (grouped[row.project_id] ??= []).push(url);
+        }
+        for (const id in grouped) grouped[id] = grouped[id].slice(0, 3);
+        setPhotosByProject(grouped);
+      });
   }, []);
 
   return (
@@ -76,23 +95,74 @@ export default function ProjectsPage() {
 
       {items && items.length > 0 && (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {items.map((p) => (
-            <article key={p.id} className="rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-lg hover:-translate-y-1 transition">
-              <span className="inline-block text-xs font-semibold uppercase tracking-wide text-rotary-azure mb-2">
-                {p.status}
-              </span>
-              <h2 className="font-bold text-slate-900 mb-2">{t(p.title_mn, p.title_en)}</h2>
-              {p.description_en && <p className="text-slate-600 text-sm line-clamp-3">{t(p.description_mn ?? "", p.description_en)}</p>}
-              {p.funding_amount != null && (
-                <p className="text-sm text-rotary-azure font-semibold mt-3">
-                  {p.funding_currency} {p.funding_amount.toLocaleString()}
-                  {p.grant_number && ` · ${p.grant_number}`}
-                </p>
-              )}
-            </article>
-          ))}
+          {items.map((p) => {
+            const photos = photosByProject[p.id] ?? (p.cover_image_url ? [p.cover_image_url] : []);
+            return (
+              <article key={p.id} className="rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition">
+                {photos.length > 0 && <ProjectPhotoCollage photos={photos} />}
+                <div className="p-6">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="inline-block text-xs font-semibold uppercase tracking-wide text-rotary-azure">
+                      {p.status}
+                    </span>
+                    {p.project_type !== "local_project" && (
+                      <span className="inline-block text-[10px] font-bold text-white bg-rotary-gold rounded-full px-2 py-0.5">
+                        {p.project_type === "global_grant" ? "GG" : "DG"}
+                      </span>
+                    )}
+                  </div>
+                  <h2 className="font-bold text-slate-900 mb-2">{t(p.title_mn, p.title_en)}</h2>
+                  {p.description_en && <p className="text-slate-600 text-sm line-clamp-3">{t(p.description_mn ?? "", p.description_en)}</p>}
+                  {p.funding_amount != null && (
+                    <p className="text-sm text-rotary-azure font-semibold mt-3">
+                      {p.funding_currency} {p.funding_amount.toLocaleString()}
+                      {p.grant_number && ` · ${p.grant_number}`}
+                    </p>
+                  )}
+                </div>
+              </article>
+            );
+          })}
         </div>
       )}
+    </div>
+  );
+}
+
+// Auto-collage for a project card's photos — 1 photo fills the top,
+// 2 sit side by side, 3 puts one large photo on the left with the
+// other two stacked on the right. photos.length is always 1-3 here
+// (callers cap it), so no >3 layout is needed.
+function ProjectPhotoCollage({ photos }: { photos: string[] }) {
+  if (photos.length === 1) {
+    return (
+      <div className="relative w-full aspect-video bg-slate-100">
+        <Image src={photos[0]} alt="" fill className="object-cover" />
+      </div>
+    );
+  }
+  if (photos.length === 2) {
+    return (
+      <div className="grid grid-cols-2 gap-0.5 w-full aspect-video bg-slate-100">
+        {photos.map((url, i) => (
+          <div key={i} className="relative">
+            <Image src={url} alt="" fill className="object-cover" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+  return (
+    <div className="grid grid-cols-2 grid-rows-2 gap-0.5 w-full aspect-video bg-slate-100">
+      <div className="relative row-span-2">
+        <Image src={photos[0]} alt="" fill className="object-cover" />
+      </div>
+      <div className="relative">
+        <Image src={photos[1]} alt="" fill className="object-cover" />
+      </div>
+      <div className="relative">
+        <Image src={photos[2]} alt="" fill className="object-cover" />
+      </div>
     </div>
   );
 }
