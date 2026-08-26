@@ -6,6 +6,7 @@ import Link from "next/link";
 import { asset } from "@/lib/asset";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
+import ProjectPhotoCollage from "@/components/ProjectPhotoCollage";
 
 type LinkRow = { id: string; name: string; url: string | null; logo_url: string | null; category: string | null };
 type AffiliateRow = {
@@ -73,6 +74,7 @@ export default function Home() {
   const clubLinks = links.filter((l) => l.category !== "district");
   const [affiliates, setAffiliates] = useState<AffiliateRow[]>([]);
   const [projects, setProjects] = useState<ProjectRow[]>([]);
+  const [projectPhotos, setProjectPhotos] = useState<Record<string, string[]>>({});
   const [news, setNews] = useState<NewsRow[]>([]);
   const [stats, setStats] = useState<Stats>({ phfPercent: null, affiliateCount: null, projectCount: null });
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
@@ -90,6 +92,22 @@ export default function Home() {
       .order("created_at", { ascending: false })
       .limit(4)
       .then(({ data }) => setProjects((data as ProjectRow[]) ?? []));
+    // Up to 3 photos per project, for the same auto-collage the full
+    // /projects page uses — keeps the homepage preview in sync with it
+    // instead of only ever showing the single cover_image_url.
+    supabase
+      .from("project_media")
+      .select("project_id,storage_path,created_at")
+      .order("created_at", { ascending: true })
+      .then(({ data }) => {
+        const grouped: Record<string, string[]> = {};
+        for (const row of (data as { project_id: string; storage_path: string }[]) ?? []) {
+          const url = supabase.storage.from("rciu-photos").getPublicUrl(row.storage_path).data.publicUrl;
+          (grouped[row.project_id] ??= []).push(url);
+        }
+        for (const id in grouped) grouped[id] = grouped[id].slice(0, 3);
+        setProjectPhotos(grouped);
+      });
     supabase
       .from("news")
       .select("id,title_mn,title_en,body_mn,body_en,cover_image_url,facebook_url")
@@ -298,30 +316,33 @@ export default function Home() {
           </div>
         ) : (
           <div className="grid gap-8 lg:grid-cols-2">
-            {projects.map((p) => (
-              <article key={p.id} className="rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition overflow-hidden bg-white flex flex-col">
-                <div className="relative aspect-video bg-slate-100">
-                  {p.cover_image_url ? (
-                    <Image src={p.cover_image_url} alt="" fill className="object-cover" />
-                  ) : p.cause_icon && CAUSE_ICONS[p.cause_icon] ? (
-                    <div className="w-full h-full flex items-center justify-center bg-blue-50">
-                      <Image src={asset(CAUSE_ICONS[p.cause_icon])} alt="" width={72} height={72} />
-                    </div>
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-slate-300 text-sm">{t("Зураг алга", "No photo yet", "写真なし", "暫無照片")}</div>
-                  )}
-                  <span className="absolute top-3 left-3 text-xs font-semibold uppercase tracking-wide bg-white/90 text-rotary-azure px-3 py-1 rounded-full">
-                    {t(STATUS_LABEL[p.status].mn, STATUS_LABEL[p.status].en)}
-                  </span>
-                </div>
-                <div className="p-6 flex-1 flex flex-col">
-                  <h3 className="text-xl font-bold text-slate-900 mb-2">{t(p.title_mn, p.title_en)}</h3>
-                  {(p.description_mn || p.description_en) && (
-                    <p className="text-slate-600 text-sm line-clamp-3">{t(p.description_mn ?? "", p.description_en ?? "")}</p>
-                  )}
-                </div>
-              </article>
-            ))}
+            {projects.map((p) => {
+              const photos = projectPhotos[p.id] ?? (p.cover_image_url ? [p.cover_image_url] : []);
+              return (
+                <article key={p.id} className="rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition overflow-hidden bg-white flex flex-col">
+                  <div className="relative">
+                    {photos.length > 0 ? (
+                      <ProjectPhotoCollage photos={photos} />
+                    ) : p.cause_icon && CAUSE_ICONS[p.cause_icon] ? (
+                      <div className="w-full aspect-video flex items-center justify-center bg-blue-50">
+                        <Image src={asset(CAUSE_ICONS[p.cause_icon])} alt="" width={72} height={72} />
+                      </div>
+                    ) : (
+                      <div className="w-full aspect-video flex items-center justify-center text-slate-300 text-sm bg-slate-100">{t("Зураг алга", "No photo yet", "写真なし", "暫無照片")}</div>
+                    )}
+                    <span className="absolute top-3 left-3 text-xs font-semibold uppercase tracking-wide bg-white/90 text-rotary-azure px-3 py-1 rounded-full">
+                      {t(STATUS_LABEL[p.status].mn, STATUS_LABEL[p.status].en)}
+                    </span>
+                  </div>
+                  <div className="p-6 flex-1 flex flex-col">
+                    <h3 className="text-xl font-bold text-slate-900 mb-2">{t(p.title_mn, p.title_en)}</h3>
+                    {(p.description_mn || p.description_en) && (
+                      <p className="text-slate-600 text-sm line-clamp-3">{t(p.description_mn ?? "", p.description_en ?? "")}</p>
+                    )}
+                  </div>
+                </article>
+              );
+            })}
           </div>
         )}
         <Link href="/projects" className="sm:hidden mt-6 inline-block text-rotary-royal-blue font-semibold hover:underline">

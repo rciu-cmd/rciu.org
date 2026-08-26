@@ -70,6 +70,8 @@ export default function AdminProjectsPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [existingCoverUrl, setExistingCoverUrl] = useState<string | null>(null);
 
   async function refresh() {
     const { data, error } = await supabase.from("projects").select("*").order("created_at", { ascending: false });
@@ -127,39 +129,78 @@ export default function AdminProjectsPage() {
     return { urls, error: null };
   }
 
-  async function createProject(e: React.FormEvent) {
+  function startEdit(item: ProjectRow) {
+    setEditingId(item.id);
+    setForm({
+      title_mn: item.title_mn,
+      title_en: item.title_en,
+      description_mn: item.description_mn ?? "",
+      description_en: item.description_en ?? "",
+      cause_icon: item.cause_icon ?? "other",
+      status: item.status,
+      project_type: item.project_type,
+      funding_amount: item.funding_amount != null ? String(item.funding_amount) : "",
+      funding_currency: item.funding_currency,
+      grant_number: item.grant_number ?? "",
+    });
+    setExistingCoverUrl(item.cover_image_url);
+    setPhotoFiles([]);
+    setError(null);
+    setShowForm(true);
+  }
+
+  function cancelForm() {
+    setEditingId(null);
+    setForm(EMPTY);
+    setPhotoFiles([]);
+    setExistingCoverUrl(null);
+    setError(null);
+    setShowForm(false);
+  }
+
+  async function saveProject(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setError(null);
 
-    const { data: inserted, error: insertError } = await supabase
-      .from("projects")
-      .insert({
-        title_mn: form.title_mn,
-        title_en: form.title_en,
-        description_mn: form.description_mn || null,
-        description_en: form.description_en || null,
-        cause_icon: form.cause_icon,
-        status: form.status,
-        project_type: form.project_type,
-        funding_amount: form.funding_amount ? Number(form.funding_amount) : null,
-        funding_currency: form.funding_currency || "USD",
-        grant_number: HAS_GRANT_NUMBER[form.project_type] ? form.grant_number || null : null,
-      })
-      .select()
-      .single();
-    if (insertError || !inserted) {
-      setBusy(false);
-      setError(insertError?.message ?? "Insert failed");
-      return;
+    const payload = {
+      title_mn: form.title_mn,
+      title_en: form.title_en,
+      description_mn: form.description_mn || null,
+      description_en: form.description_en || null,
+      cause_icon: form.cause_icon,
+      status: form.status,
+      project_type: form.project_type,
+      funding_amount: form.funding_amount ? Number(form.funding_amount) : null,
+      funding_currency: form.funding_currency || "USD",
+      grant_number: HAS_GRANT_NUMBER[form.project_type] ? form.grant_number || null : null,
+    };
+
+    let projectId = editingId;
+    if (editingId) {
+      const { error: updateError } = await supabase.from("projects").update(payload).eq("id", editingId);
+      if (updateError) {
+        setBusy(false);
+        setError(updateError.message);
+        return;
+      }
+    } else {
+      const { data: inserted, error: insertError } = await supabase.from("projects").insert(payload).select().single();
+      if (insertError || !inserted) {
+        setBusy(false);
+        setError(insertError?.message ?? "Insert failed");
+        return;
+      }
+      projectId = inserted.id;
     }
 
-    // Photos are uploaded after the project row exists (project_media
-    // needs a real project_id to attach to). The first uploaded photo
-    // also becomes cover_image_url, so the homepage's project grid —
-    // which only ever shows one image — keeps working without any
-    // changes there.
-    const { urls, error: photoError } = await uploadProjectPhotos(inserted.id);
+    // Photos are uploaded once the project row exists (project_media
+    // needs a real project_id to attach to). New photos are ADDED to
+    // whatever's already there when editing — they don't replace the
+    // existing ones. The first photo only becomes cover_image_url if
+    // the project didn't already have one, so re-editing an existing
+    // project's text never silently swaps out its cover photo.
+    const { urls, error: photoError } = await uploadProjectPhotos(projectId!);
     if (photoError) {
       setBusy(false);
       setError(photoError);
@@ -167,18 +208,16 @@ export default function AdminProjectsPage() {
       // don't lose that progress, just leave the form open so the
       // admin can see what happened and retry the photos separately
       // from the project's row below.
-      setShowForm(false);
+      cancelForm();
       refresh();
       return;
     }
-    if (urls.length > 0) {
-      await supabase.from("projects").update({ cover_image_url: urls[0] }).eq("id", inserted.id);
+    if (urls.length > 0 && !existingCoverUrl) {
+      await supabase.from("projects").update({ cover_image_url: urls[0] }).eq("id", projectId!);
     }
 
     setBusy(false);
-    setForm(EMPTY);
-    setPhotoFiles([]);
-    setShowForm(false);
+    cancelForm();
     refresh();
   }
 
@@ -197,13 +236,13 @@ export default function AdminProjectsPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold text-slate-900">{t("Төсөл удирдах", "Manage Projects", "プロジェクト管理", "項目管理")}</h2>
-        <button onClick={() => setShowForm((v) => !v)} className="text-sm font-semibold bg-rotary-azure text-white rounded-md px-4 py-2">
+        <button onClick={() => (showForm ? cancelForm() : setShowForm(true))} className="text-sm font-semibold bg-rotary-azure text-white rounded-md px-4 py-2">
           {showForm ? t("Хаах", "Cancel", "キャンセル", "取消") : t("+ Шинэ төсөл", "+ New Project", "+ 新規プロジェクト", "+ 新建項目")}
         </button>
       </div>
 
       {showForm && (
-        <form onSubmit={createProject} className="rounded-xl border border-slate-200 p-6 mb-8 grid gap-4">
+        <form onSubmit={saveProject} className="rounded-xl border border-slate-200 p-6 mb-8 grid gap-4">
           <div className="grid gap-3 sm:grid-cols-2">
             <input required placeholder={t("Гарчиг (MN)", "Title (MN)", "タイトル(MN)", "標題(MN)")} value={form.title_mn} onChange={(e) => setForm({ ...form, title_mn: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
             <input required placeholder={t("Гарчиг (EN)", "Title (EN)", "タイトル(EN)", "標題(EN)")} value={form.title_en} onChange={(e) => setForm({ ...form, title_en: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
@@ -222,6 +261,12 @@ export default function AdminProjectsPage() {
                 "選擇1-3張照片，將自動拼成項目卡片上的拼貼圖，第一張會作為封面照片顯示在網站其他位置。"
               )}
             </p>
+            {existingCoverUrl && (
+              <div className="mb-2">
+                <p className="text-xs text-slate-400 mb-1">{t("Одоогийн зураг", "Current photo", "現在の写真", "目前的照片")}</p>
+                <Image src={existingCoverUrl} alt="" width={100} height={75} className="rounded-md object-cover w-24 h-[4.5rem] border border-slate-200" />
+              </div>
+            )}
             <input
               type="file"
               accept="image/*"
@@ -301,7 +346,11 @@ export default function AdminProjectsPage() {
 
           {error && <p className="text-sm text-rotary-cardinal">{error}</p>}
           <button type="submit" disabled={busy} className="justify-self-start bg-rotary-azure text-white font-semibold rounded-md px-5 py-2 text-sm disabled:opacity-60">
-            {busy ? t("Хадгалж байна…", "Saving…", "保存中…", "保存中…") : t("Хадгалах", "Save Project", "保存", "保存")}
+            {busy
+              ? t("Хадгалж байна…", "Saving…", "保存中…", "保存中…")
+              : editingId
+                ? t("Шинэчлэх", "Update Project", "更新", "更新")
+                : t("Хадгалах", "Save Project", "保存", "保存")}
           </button>
         </form>
       )}
@@ -344,9 +393,14 @@ export default function AdminProjectsPage() {
                   <option value="ongoing">{t("Хэрэгжиж буй", "Ongoing", "実施中", "進行中")}</option>
                   <option value="completed">{t("Дууссан", "Completed", "完了", "已完成")}</option>
                 </select>
-                <button onClick={() => remove(item)} className="text-xs font-semibold px-3 py-1.5 rounded-md border border-rotary-cardinal text-rotary-cardinal hover:bg-rotary-cardinal hover:text-white">
-                  {t("Устгах", "Delete", "削除", "刪除")}
-                </button>
+                <div className="flex gap-2">
+                  <button onClick={() => startEdit(item)} className="text-xs font-semibold px-3 py-1.5 rounded-md border border-rotary-azure text-rotary-azure hover:bg-rotary-azure hover:text-white">
+                    {t("Засах", "Edit", "編集", "編輯")}
+                  </button>
+                  <button onClick={() => remove(item)} className="text-xs font-semibold px-3 py-1.5 rounded-md border border-rotary-cardinal text-rotary-cardinal hover:bg-rotary-cardinal hover:text-white">
+                    {t("Устгах", "Delete", "削除", "刪除")}
+                  </button>
+                </div>
               </div>
             </div>
           );
