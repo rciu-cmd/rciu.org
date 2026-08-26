@@ -6,7 +6,7 @@ import Link from "next/link";
 import { asset } from "@/lib/asset";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
-import { phfTheme } from "@/lib/phf";
+import { effectiveTheme } from "@/lib/phf";
 import PhfPinBadge from "@/components/PhfPinBadge";
 import WorldTravelMap, { TravelPoint } from "@/components/WorldTravelMap";
 
@@ -304,17 +304,14 @@ export default function AboutPage() {
                 <div className="min-w-[10rem] flex-1">
                   <p className="font-semibold text-slate-900">
                     {m.first_name} {m.last_name}
-                    {m.major_donor && (
-                      <span className="ml-2 text-rotary-gold text-xs font-bold align-middle">★ {t("Их хандивлагч", "Major Donor", "メジャードナー", "重要捐贈人")}</span>
-                    )}
                   </p>
                   {m.highest_position && <p className="text-xs text-rotary-azure">{m.highest_position}</p>}
                 </div>
                 <span
                   className="inline-flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full text-white shrink-0"
-                  style={{ background: phfTheme(m.phf_level).accent }}
+                  style={{ background: effectiveTheme(m.phf_level, m.major_donor).accent }}
                 >
-                  {m.phf_level}
+                  {m.major_donor ? t("Их хандивлагч", "Major Donor", "メジャードナー", "重要捐贈人") : m.phf_level}
                 </span>
               </li>
             ))}

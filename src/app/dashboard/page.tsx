@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
-import { phfTheme } from "@/lib/phf";
+import { effectiveTheme } from "@/lib/phf";
 import PhfPinBadge from "@/components/PhfPinBadge";
 
 type Member = {
@@ -80,12 +80,13 @@ export default function DashboardPage() {
     return <div className="container-page py-20 text-center text-slate-500">{t("Профайл олдсонгүй.", "Profile not found.", "プロフィールが見つかりません。", "未找到個人資料。")}</div>;
   }
 
-  const theme = phfTheme(member.phf_level);
-  const isPhf = member.phf_level !== "none";
+  const theme = effectiveTheme(member.phf_level, member.major_donor);
+  const isPhf = member.phf_level !== "none" || member.major_donor;
 
   return (
     <div>
-      {/* Header changes color/gradient by PHF tier — sapphire for +1..+5, ruby for +6..+8, gold for base PHF */}
+      {/* Header changes color/gradient by PHF tier — sapphire for +1..+5, ruby for +6..+8, gold for base PHF,
+          platinum for Major Donor (overrides whatever PHF tier they also hold — see src/lib/phf.ts) */}
       <section className="text-white" style={{ background: theme.gradient }}>
         <div className="container-page py-14">
           <div className="flex items-start justify-between gap-4 mb-2">
@@ -116,8 +117,7 @@ export default function DashboardPage() {
           {isPhf ? (
             <div className="inline-flex items-center gap-2 bg-white/15 rounded-full px-4 py-1.5 text-sm font-semibold">
               <PhfPinBadge level={member.phf_level} size={24} majorDonor={member.major_donor} />
-              {theme.label}
-              {member.major_donor && <span className="text-rotary-gold">★ {t("Их хандивлагч", "Major Donor", "メジャードナー", "重要捐贈人")}</span>}
+              {member.major_donor ? t("Их хандивлагч", "Major Donor", "メジャードナー", "重要捐贈人") : theme.label}
             </div>
           ) : (
             <div className="inline-flex items-center gap-2 bg-white/15 rounded-full px-4 py-1.5 text-sm">

@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
-import { phfTheme } from "@/lib/phf";
+import { effectiveTheme } from "@/lib/phf";
 import PhfPinBadge from "@/components/PhfPinBadge";
 
 type DirectoryMember = {
@@ -108,7 +108,7 @@ export default function MembersPage() {
       {members && members.length > 0 && (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-16">
           {alphabetical.map((m) => {
-            const theme = phfTheme(m.phf_level);
+            const theme = effectiveTheme(m.phf_level, m.major_donor);
             return (
               <div key={m.member_id} className="rounded-xl border border-slate-200 p-5 shadow-sm flex gap-4 items-start">
                 <div
@@ -132,7 +132,7 @@ export default function MembersPage() {
                     {m.phone && <span>{m.phone}</span>}
                     {m.rotary_id && <span>Rotary ID: {m.rotary_id}</span>}
                   </div>
-                  {m.phf_level !== "none" && (
+                  {(m.phf_level !== "none" || m.major_donor) && (
                     <span
                       className="inline-flex items-center gap-1 mt-2 text-xs font-semibold px-2 py-0.5 rounded-full text-white"
                       style={{ background: theme.accent }}

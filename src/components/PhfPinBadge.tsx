@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { asset } from "@/lib/asset";
-import { phfTheme } from "@/lib/phf";
+import { phfTheme, MAJOR_DONOR_THEME } from "@/lib/phf";
 
 // Real Rotary-style pin photos (uploaded by the club), one per level.
 const PIN_IMAGES: Record<string, string> = {
@@ -26,15 +26,13 @@ export default function PhfPinBadge({
   size?: number;
   majorDonor?: boolean;
 }) {
-  const theme = phfTheme(level);
-  if (level === "none") return null;
-
   // Major Donor pin (diamond-shaped) takes priority over the regular
-  // gem pin — Rotary Foundation Major Donor recognition sits alongside
-  // the PHF gem scale rather than on it.
+  // gem pin — Major Donor recognition replaces the PHF+N display
+  // entirely (not shown alongside it), so this renders even for a
+  // member whose phf_level is "none".
   if (majorDonor) {
     return (
-      <span className="inline-flex items-center" title={`${theme.label} · Major Donor`}>
+      <span className="inline-flex items-center" title={MAJOR_DONOR_THEME.label}>
         <Image
           src={asset("/badges/phf/phf-major-donor.png")}
           alt="Major Donor"
@@ -45,6 +43,9 @@ export default function PhfPinBadge({
       </span>
     );
   }
+
+  const theme = phfTheme(level);
+  if (level === "none") return null;
 
   const image = PIN_IMAGES[level];
   if (image) {
