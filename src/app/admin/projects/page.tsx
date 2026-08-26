@@ -71,7 +71,8 @@ export default function AdminProjectsPage() {
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [existingCoverUrl, setExistingCoverUrl] = useState<string | null>(null);
+  const [existingPhotos, setExistingPhotos] = useState<{ id: string; storage_path: string; url: string }[]>([]);
+  const [removingPhotoId, setRemovingPhotoId] = useState<string | null>(null);
 
   async function refresh() {
     const { data, error } = await supabase.from("projects").select("*").order("created_at", { ascending: false });
@@ -85,15 +86,23 @@ export default function AdminProjectsPage() {
 
   function handlePhotoPick(fileList: FileList | null) {
     if (!fileList) return;
-    const picked = Array.from(fileList).slice(0, MAX_PHOTOS);
-    if (fileList.length > MAX_PHOTOS) {
+    const remainingSlots = Math.max(0, MAX_PHOTOS - existingPhotos.length);
+    const picked = Array.from(fileList).slice(0, remainingSlots);
+    if (fileList.length > remainingSlots) {
       setError(
-        t(
-          `Хамгийн ихдээ ${MAX_PHOTOS} зураг сонгоно уу — эхний ${MAX_PHOTOS}-г авлаа.`,
-          `Up to ${MAX_PHOTOS} photos — kept the first ${MAX_PHOTOS}.`,
-          `最大${MAX_PHOTOS}枚まで — 最初の${MAX_PHOTOS}枚を使用します。`,
-          `最多${MAX_PHOTOS}張照片 — 已保留前${MAX_PHOTOS}張。`
-        )
+        remainingSlots === 0
+          ? t(
+              `Хамгийн ихдээ ${MAX_PHOTOS} зураг байх ёстой — эхлээд дээрх зургуудаас нэгийг устгана уу.`,
+              `Already at the ${MAX_PHOTOS}-photo limit — delete one above first.`,
+              `すでに最大${MAX_PHOTOS}枚です — 先に上の写真を1枚削除してください。`,
+              `已達最多${MAX_PHOTOS}張的上限 — 請先刪除上方的一張照片。`
+            )
+          : t(
+              `Хамгийн ихдээ ${MAX_PHOTOS} зураг сонгоно уу — эхний ${remainingSlots}-г авлаа.`,
+              `Up to ${MAX_PHOTOS} photos total — kept the first ${remainingSlots}.`,
+              `合計最大${MAX_PHOTOS}枚まで — 最初の${remainingSlots}枚を使用します。`,
+              `總共最多${MAX_PHOTOS}張 — 已保留前${remainingSlots}張。`
+            )
       );
     } else {
       setError(null);
@@ -129,7 +138,7 @@ export default function AdminProjectsPage() {
     return { urls, error: null };
   }
 
-  function startEdit(item: ProjectRow) {
+  async function startEdit(item: ProjectRow) {
     setEditingId(item.id);
     setForm({
       title_mn: item.title_mn,
@@ -143,19 +152,54 @@ export default function AdminProjectsPage() {
       funding_currency: item.funding_currency,
       grant_number: item.grant_number ?? "",
     });
-    setExistingCoverUrl(item.cover_image_url);
     setPhotoFiles([]);
     setError(null);
     setShowForm(true);
+
+    const { data } = await supabase
+      .from("project_media")
+      .select("id,storage_path")
+      .eq("project_id", item.id)
+      .order("created_at", { ascending: true });
+    setExistingPhotos(
+      ((data as { id: string; storage_path: string }[]) ?? []).map((row) => ({
+        ...row,
+        url: supabase.storage.from("rciu-photos").getPublicUrl(row.storage_path).data.publicUrl,
+      }))
+    );
   }
 
   function cancelForm() {
     setEditingId(null);
     setForm(EMPTY);
     setPhotoFiles([]);
-    setExistingCoverUrl(null);
+    setExistingPhotos([]);
     setError(null);
     setShowForm(false);
+  }
+
+  // Recomputes cover_image_url from whatever photos are left after an
+  // add/remove, so it always matches the first photo in order — never
+  // stale, and never requires the admin to also remember to hit Save
+  // just to fix the cover after deleting the photo it pointed to.
+  async function syncCoverImage(projectId: string, remainingPhotos: { url: string }[]) {
+    await supabase.from("projects").update({ cover_image_url: remainingPhotos[0]?.url ?? null }).eq("id", projectId);
+  }
+
+  async function removeExistingPhoto(photo: { id: string; storage_path: string; url: string }) {
+    if (!editingId) return;
+    if (!confirm(t("Энэ зургийг устгах уу?", "Delete this photo?", "この写真を削除しますか?", "確定刪除此照片嗎?"))) return;
+    setRemovingPhotoId(photo.id);
+    await supabase.storage.from("rciu-photos").remove([photo.storage_path]);
+    const { error: deleteError } = await supabase.from("project_media").delete().eq("id", photo.id);
+    setRemovingPhotoId(null);
+    if (deleteError) {
+      setError(deleteError.message);
+      return;
+    }
+    const remaining = existingPhotos.filter((p) => p.id !== photo.id);
+    setExistingPhotos(remaining);
+    await syncCoverImage(editingId, remaining);
   }
 
   async function saveProject(e: React.FormEvent) {
@@ -196,10 +240,10 @@ export default function AdminProjectsPage() {
 
     // Photos are uploaded once the project row exists (project_media
     // needs a real project_id to attach to). New photos are ADDED to
-    // whatever's already there when editing — they don't replace the
-    // existing ones. The first photo only becomes cover_image_url if
-    // the project didn't already have one, so re-editing an existing
-    // project's text never silently swaps out its cover photo.
+    // whatever's already there when editing (existingPhotos, after any
+    // in-place deletions) — cover_image_url is then recomputed from
+    // that combined, in-order list, so it always matches whatever the
+    // first photo actually is.
     const { urls, error: photoError } = await uploadProjectPhotos(projectId!);
     if (photoError) {
       setBusy(false);
@@ -212,8 +256,8 @@ export default function AdminProjectsPage() {
       refresh();
       return;
     }
-    if (urls.length > 0 && !existingCoverUrl) {
-      await supabase.from("projects").update({ cover_image_url: urls[0] }).eq("id", projectId!);
+    if (urls.length > 0) {
+      await syncCoverImage(projectId!, [...existingPhotos, ...urls.map((url) => ({ url }))]);
     }
 
     setBusy(false);
@@ -261,19 +305,41 @@ export default function AdminProjectsPage() {
                 "選擇1-3張照片，將自動拼成項目卡片上的拼貼圖，第一張會作為封面照片顯示在網站其他位置。"
               )}
             </p>
-            {existingCoverUrl && (
-              <div className="mb-2">
-                <p className="text-xs text-slate-400 mb-1">{t("Одоогийн зураг", "Current photo", "現在の写真", "目前的照片")}</p>
-                <Image src={existingCoverUrl} alt="" width={100} height={75} className="rounded-md object-cover w-24 h-[4.5rem] border border-slate-200" />
+            {existingPhotos.length > 0 && (
+              <div className="mb-3">
+                <p className="text-xs text-slate-400 mb-1">{t("Одоогийн зургууд — × дарж устгана", "Current photos — click × to remove", "現在の写真 — ×で削除", "目前的照片 — 點×刪除")}</p>
+                <div className="flex flex-wrap gap-2">
+                  {existingPhotos.map((photo, i) => (
+                    <div key={photo.id} className="relative">
+                      <Image src={photo.url} alt="" width={100} height={75} className="rounded-md object-cover w-24 h-[4.5rem] border border-slate-200" />
+                      {i === 0 && (
+                        <span className="absolute bottom-0.5 left-0.5 text-[9px] font-bold bg-white/90 text-rotary-azure rounded px-1">
+                          {t("Нүүр", "Cover", "カバー", "封面")}
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => removeExistingPhoto(photo)}
+                        disabled={removingPhotoId === photo.id}
+                        title={t("Устгах", "Delete", "削除", "刪除")}
+                        className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-rotary-cardinal text-white text-xs font-bold flex items-center justify-center disabled:opacity-50"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={(e) => handlePhotoPick(e.target.files)}
-              className="text-sm"
-            />
+            {existingPhotos.length < MAX_PHOTOS && (
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => handlePhotoPick(e.target.files)}
+                className="text-sm"
+              />
+            )}
             {photoFiles.length > 0 && (
               <p className="text-xs text-slate-500 mt-1">
                 {photoFiles.map((f) => f.name).join(", ")}

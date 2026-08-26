@@ -18,12 +18,13 @@ type NewsRow = {
 
 type PostMode = "facebook" | "written";
 
-const EMPTY = { title_mn: "", title_en: "", body_mn: "", body_en: "", cover_image_url: "" };
+const EMPTY = { title_mn: "", title_en: "", body_mn: "", body_en: "" };
 
 export default function AdminNewsPage() {
   const { t } = useLanguage();
   const [items, setItems] = useState<NewsRow[] | null>(null);
   const [form, setForm] = useState(EMPTY);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
   const [facebookUrl, setFacebookUrl] = useState("");
   const [mode, setMode] = useState<PostMode>("facebook");
   const [busy, setBusy] = useState(false);
@@ -44,6 +45,20 @@ export default function AdminNewsPage() {
     e.preventDefault();
     setBusy(true);
     setError(null);
+
+    let coverImageUrl = "";
+    if (mode === "written" && coverFile) {
+      const safeName = coverFile.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+      const path = `news/${Date.now()}-${safeName}`;
+      const { error: uploadError } = await supabase.storage.from("rciu-photos").upload(path, coverFile);
+      if (uploadError) {
+        setBusy(false);
+        setError(uploadError.message);
+        return;
+      }
+      coverImageUrl = supabase.storage.from("rciu-photos").getPublicUrl(path).data.publicUrl;
+    }
+
     const payload: {
       facebook_url: string | null;
       title_mn: string | null;
@@ -61,7 +76,7 @@ export default function AdminNewsPage() {
             title_en: form.title_en,
             body_mn: form.body_mn,
             body_en: form.body_en,
-            cover_image_url: form.cover_image_url || null,
+            cover_image_url: coverImageUrl || null,
             status: "draft",
           };
     const { error } = await supabase.from("news").insert(payload);
@@ -71,6 +86,7 @@ export default function AdminNewsPage() {
       return;
     }
     setForm(EMPTY);
+    setCoverFile(null);
     setFacebookUrl("");
     setShowForm(false);
     refresh();
@@ -174,7 +190,11 @@ export default function AdminNewsPage() {
               </div>
               <textarea required placeholder={t("Агуулга (MN)", "Body (MN)", "本文(MN)", "正文(MN)")} value={form.body_mn} onChange={(e) => setForm({ ...form, body_mn: e.target.value })} rows={4} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
               <textarea required placeholder={t("Агуулга (EN)", "Body (EN)", "本文(EN)", "正文(EN)")} value={form.body_en} onChange={(e) => setForm({ ...form, body_en: e.target.value })} rows={4} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
-              <input placeholder={t("Зургийн URL (заавал биш)", "Cover image URL (optional)", "カバー画像URL(任意)", "封面圖片URL(可選)")} value={form.cover_image_url} onChange={(e) => setForm({ ...form, cover_image_url: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
+              <div>
+                <p className="text-sm font-semibold text-slate-700 mb-1">{t("Зураг (заавал биш)", "Cover photo (optional)", "カバー写真(任意)", "封面照片(可選)")}</p>
+                <input type="file" accept="image/*" onChange={(e) => setCoverFile(e.target.files?.[0] ?? null)} className="text-sm" />
+                {coverFile && <p className="text-xs text-slate-500 mt-1">{coverFile.name}</p>}
+              </div>
               {error && <p className="text-sm text-rotary-cardinal">{error}</p>}
               <button type="submit" disabled={busy} className="justify-self-start bg-rotary-royal-blue text-white font-semibold rounded-md px-5 py-2 text-sm disabled:opacity-60">
                 {busy ? t("Хадгалж байна…", "Saving…", "保存中…", "保存中…") : t("Ноорог хадгалах", "Save as Draft", "下書き保存", "保存為草稿")}
