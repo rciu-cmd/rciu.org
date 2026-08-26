@@ -171,14 +171,7 @@ export default function AboutPage() {
           <h2 className="font-bold text-rotary-royal-blue mb-2">
             {t("Эрхэм зорилго", "Our Mission", "私たちの使命", "我們的使命")}
           </h2>
-          <p className="text-slate-600 text-sm">
-            {t(
-              "Service Above Self — өөрийгөө умартан бусдад үйлчлэх зарчмаар дэлхийн болон орон нутгийн хэрэгцээнд хариу үзүүлэх.",
-              "Service Above Self — responding to community and international needs through fellowship, integrity, and humanitarian service.",
-              "「奉仕は自己を超えて」— 友情、誠実さ、人道的奉仕を通じて地域社会と国際的なニーズに応えます。",
-              "超我服務 — 通過友誼、誠信與人道服務回應社區及國際需求。"
-            )}
-          </p>
+          <p className="text-slate-600 text-sm">Service Above Self</p>
         </div>
 
         <div className="rounded-xl border border-slate-200 p-6 h-full">
