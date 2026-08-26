@@ -213,9 +213,10 @@ create trigger members_protect_own_admin_level
 create or replace view public.members_public as
 select
   member_id, first_name, last_name, name_local, classification, position,
-  photo_url, city, highest_position,
+  photo_url, city,
   case when honor_roll_visible then phf_level else 'none' end as phf_level,
   case when honor_roll_visible then major_donor else false end as major_donor,
+  highest_position,
   case when honor_roll_visible then honor_roll_priority else null end as honor_roll_priority
 from public.members
 where status = 'active';

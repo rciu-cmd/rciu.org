@@ -105,12 +105,17 @@ on conflict do nothing;
 -- ------------------------------------------------------------
 -- 3. members_public — add the 2 columns the public Honor Roll needs
 -- ------------------------------------------------------------
+-- Note: new columns (highest_position, honor_roll_priority) must be
+-- appended at the END of the select list, not inserted in the middle
+-- — Postgres' CREATE OR REPLACE VIEW only allows adding trailing
+-- columns to an existing view, not reordering/renaming existing ones.
 create or replace view public.members_public as
 select
   member_id, first_name, last_name, name_local, classification, position,
-  photo_url, city, highest_position,
+  photo_url, city,
   case when honor_roll_visible then phf_level else 'none' end as phf_level,
   case when honor_roll_visible then major_donor else false end as major_donor,
+  highest_position,
   case when honor_roll_visible then honor_roll_priority else null end as honor_roll_priority
 from public.members
 where status = 'active';
