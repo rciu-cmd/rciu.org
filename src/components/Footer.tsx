@@ -15,14 +15,15 @@ export default function Footer() {
         <div>
           <div className="flex items-center gap-2 mb-3">
             <Image src={asset("/logos/rciu-emblem.jpg")} alt="Rotary Club of Ikh Urgoo" width={36} height={36} className="rounded-full" />
-            <span className="font-bold">{t("Их Өргөө Ротари Клуб", "Rotary Club of Ikh Urgoo", "イク・ウルグー・ロータリークラブ", "扶轮伊赫乌尔古俱乐部")}</span>
+            <span className="font-bold">{t("Их Өргөө Ротари Клуб", "Rotary Club of Ikh Urgoo", "イク・ウルグー・ロータリークラブ", "扶輪伊赫烏爾古俱樂部", "이흐 우르구 로타리클럽")}</span>
           </div>
           <p className="text-sm text-blue-100">
             {t(
               "Ulaanbaatar, Mongolia · District 3450",
               "Ulaanbaatar, Mongolia · District 3450",
               "モンゴル、ウランバートル · 地区3450",
-              "蒙古国乌兰巴托 · 3450区"
+              "蒙古國烏蘭巴托 · 3450區",
+              "몽골 울란바토르 · 3450지구"
             )}
           </p>
           {/* Facebook — moved here from the "Links & Partners" strip
@@ -41,20 +42,20 @@ export default function Footer() {
         </div>
 
         <div className="text-sm text-blue-100">
-          <p className="font-semibold text-white mb-2">{t("Хурлын мэдээлэл", "Meetings", "例会情報", "例会信息")}</p>
-          <p>{t("Мягмар гараг, 20:00", "Tuesdays, 20:00", "毎週火曜日 20:00", "每周二 20:00")}</p>
+          <p className="font-semibold text-white mb-2">{t("Хурлын мэдээлэл", "Meetings", "例会情報", "例會信息", "모임 안내")}</p>
+          <p>{t("Мягмар гараг, 20:00", "Tuesdays, 20:00", "毎週火曜日 20:00", "每週二 20:00", "매주 화요일 20:00")}</p>
           <p>Red Rock Castle Restaurant, Sukhbaatar District, Ulaanbaatar</p>
         </div>
 
         <div className="text-sm text-blue-100">
-          <p className="font-semibold text-white mb-2">{t("Холбоо барих", "Contact", "お問い合わせ", "联系方式")}</p>
+          <p className="font-semibold text-white mb-2">{t("Холбоо барих", "Contact", "お問い合わせ", "聯繫方式", "문의")}</p>
           <p>rciu.mng@gmail.com</p>
           <p>+976 99031147</p>
 
           {/* Language switcher lives here now — moved off the navbar
               (item request: free up top-bar space) and placed next to
               Contact, the one place every visitor eventually scrolls to. */}
-          <p className="font-semibold text-white mt-4 mb-2">{t("Хэл сонгох", "Language", "言語", "语言")}</p>
+          <p className="font-semibold text-white mt-4 mb-2">{t("Хэл сонгох", "Language", "言語", "語言", "언어")}</p>
           <div className="flex gap-1.5">
             {LANGUAGES.map((l) => (
               <button

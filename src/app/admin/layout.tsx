@@ -48,38 +48,38 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   }, [status, isSuper, pathname, router]);
 
   if (status === "checking") {
-    return <div className="container-page py-20 text-center text-slate-400">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加载中…")}</div>;
+    return <div className="container-page py-20 text-center text-slate-400">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加載中…")}</div>;
   }
 
   if (status === "denied") {
     return (
       <div className="container-page py-20 text-center">
         <p className="text-slate-500 mb-4">
-          {t("Танд админ эрх байхгүй байна.", "You don't have admin access.", "管理者権限がありません。", "您没有管理员权限。")}
+          {t("Танд админ эрх байхгүй байна.", "You don't have admin access.", "管理者権限がありません。", "您沒有管理員權限。")}
         </p>
         <Link href="/dashboard" className="text-rotary-royal-blue font-semibold underline">
-          {t("Хувийн профайл руу буцах", "Back to My Dashboard", "マイページに戻る", "返回我的主页")}
+          {t("Хувийн профайл руу буцах", "Back to My Dashboard", "マイページに戻る", "返回我的主頁")}
         </Link>
       </div>
     );
   }
 
   const allTabs = [
-    { href: "/admin", label: t("Хураангуй", "Overview", "概要", "概览") },
-    { href: "/admin/news", label: t("Мэдээ", "News", "ニュース", "新闻") },
-    { href: "/admin/projects", label: t("Төслүүд", "Projects", "プロジェクト", "项目") },
-    { href: "/admin/events", label: t("Хуанли", "Calendar", "カレンダー", "日历") },
-    { href: "/admin/travel", label: t("Аяллын зураг", "Travel Map", "旅行マップ", "旅行地图") },
-    { href: "/admin/awards", label: t("Шагнал", "Awards", "受賞", "奖项") },
-    { href: "/admin/board", label: t("Удирдлага", "Board", "役員", "理事会") },
-    { href: "/admin/affiliates", label: t("Дэмждэг клуб", "Sponsored Clubs", "スポンサークラブ", "赞助俱乐部") },
-    { href: "/admin/partners", label: t("Түншүүд", "Partners", "パートナー", "伙伴") },
-    { href: "/admin/gallery", label: t("Зургийн цомог", "Gallery", "ギャラリー", "相册") },
-    { href: "/admin/history", label: t("Түүх", "History", "歴史", "历史") },
-    { href: "/admin/join-inquiries", label: t("Элсэх хүсэлт", "Join Inquiries", "入会問合せ", "入会申请") },
-    { href: "/admin/project-inquiries", label: t("Төслийн хүсэлт", "Project Inquiries", "プロジェクト問合せ", "项目申请") },
-    { href: "/admin/members", label: t("Гишүүд", "Members", "会員", "会员") },
-    { href: "/admin/settings", label: t("Тохиргоо", "Settings", "設定", "设置") },
+    { href: "/admin", label: t("Хураангуй", "Overview", "概要", "概覽") },
+    { href: "/admin/news", label: t("Мэдээ", "News", "ニュース", "新聞") },
+    { href: "/admin/projects", label: t("Төслүүд", "Projects", "プロジェクト", "項目") },
+    { href: "/admin/events", label: t("Хуанли", "Calendar", "カレンダー", "日曆") },
+    { href: "/admin/travel", label: t("Аяллын зураг", "Travel Map", "旅行マップ", "旅行地圖") },
+    { href: "/admin/awards", label: t("Шагнал", "Awards", "受賞", "獎項") },
+    { href: "/admin/board", label: t("Удирдлага", "Board", "役員", "理事會") },
+    { href: "/admin/affiliates", label: t("Дэмждэг клуб", "Sponsored Clubs", "スポンサークラブ", "贊助俱樂部") },
+    { href: "/admin/partners", label: t("Түншүүд", "Partners", "パートナー", "夥伴") },
+    { href: "/admin/gallery", label: t("Зургийн цомог", "Gallery", "ギャラリー", "相冊") },
+    { href: "/admin/history", label: t("Түүх", "History", "歴史", "歷史") },
+    { href: "/admin/join-inquiries", label: t("Элсэх хүсэлт", "Join Inquiries", "入会問合せ", "入會申請") },
+    { href: "/admin/project-inquiries", label: t("Төслийн хүсэлт", "Project Inquiries", "プロジェクト問合せ", "項目申請") },
+    { href: "/admin/members", label: t("Гишүүд", "Members", "会員", "會員") },
+    { href: "/admin/settings", label: t("Тохиргоо", "Settings", "設定", "設置") },
   ];
   // Editors only ever see News + Projects — everything else in
   // /admin is super-admin territory (member management, appointing
@@ -91,11 +91,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       <div className="bg-slate-900 text-white">
         <div className="container-page flex items-center justify-between py-4">
           <h1 className="font-bold text-lg">
-            {t("Админ самбар", "Admin Dashboard", "管理者ダッシュボード", "管理后台")}
-            {!isSuper && <span className="ml-2 text-xs font-normal text-slate-400">({t("редактор", "editor", "編集者", "编辑")})</span>}
+            {t("Админ самбар", "Admin Dashboard", "管理者ダッシュボード", "管理後臺")}
+            {!isSuper && <span className="ml-2 text-xs font-normal text-slate-400">({t("редактор", "editor", "編集者", "編輯")})</span>}
           </h1>
           <Link href="/dashboard" className="text-xs font-semibold text-slate-300 hover:text-white">
-            {t("← Хувийн профайл руу", "← Back to My Dashboard", "← マイページへ", "← 返回我的主页")}
+            {t("← Хувийн профайл руу", "← Back to My Dashboard", "← マイページへ", "← 返回我的主頁")}
           </Link>
         </div>
         <div className="container-page flex gap-1 pb-2 overflow-x-auto text-sm font-medium">
@@ -121,11 +121,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 "Энэ хэсэг зөвхөн ерөнхий админд нээлттэй.",
                 "This section is only available to super admins.",
                 "このセクションはスーパー管理者のみ利用できます。",
-                "此部分仅限超级管理员使用。"
+                "此部分僅限超級管理員使用。"
               )}
             </p>
             <Link href="/admin/news" className="text-rotary-royal-blue font-semibold underline">
-              {t("Мэдээ рүү буцах", "Back to News", "ニュースに戻る", "返回新闻")}
+              {t("Мэдээ рүү буцах", "Back to News", "ニュースに戻る", "返回新聞")}
             </Link>
           </div>
         ) : (

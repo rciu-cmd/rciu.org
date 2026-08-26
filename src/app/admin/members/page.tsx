@@ -130,14 +130,14 @@ export default function AdminMembersPage() {
 
   return (
     <div>
-      <h2 className="text-xl font-bold text-slate-900 mb-6">{t("Гишүүд удирдах", "Manage Members", "会員管理", "会员管理")}</h2>
+      <h2 className="text-xl font-bold text-slate-900 mb-6">{t("Гишүүд удирдах", "Manage Members", "会員管理", "會員管理")}</h2>
 
       {error && <p className="text-sm text-rotary-cardinal mb-4">{error}</p>}
-      {items === null && <p className="text-slate-400 text-sm">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加载中…")}</p>}
+      {items === null && <p className="text-slate-400 text-sm">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加載中…")}</p>}
 
       {items && pending.length > 0 && (
         <div className="mb-10">
-          <h3 className="font-semibold text-rotary-gold mb-3">{t("Зөвшөөрөл хүлээж буй", "Awaiting approval", "承認待ち", "待审核")}</h3>
+          <h3 className="font-semibold text-rotary-gold mb-3">{t("Зөвшөөрөл хүлээж буй", "Awaiting approval", "承認待ち", "待審核")}</h3>
           <div className="grid gap-3">
             {pending.map((m) => (
               <div key={m.id} className="rounded-lg border border-amber-200 bg-amber-50 p-4 flex items-center justify-between">
@@ -150,7 +150,7 @@ export default function AdminMembersPage() {
                     {t("Зөвшөөрөх", "Approve", "承認", "批准")}
                   </button>
                   <button onClick={() => setStatus(m, "inactive")} className="text-xs font-semibold px-3 py-1.5 rounded-md border border-slate-300 text-slate-600">
-                    {t("Татгалзах", "Reject", "却下", "拒绝")}
+                    {t("Татгалзах", "Reject", "却下", "拒絕")}
                   </button>
                 </div>
               </div>
@@ -161,13 +161,13 @@ export default function AdminMembersPage() {
 
       {items && (
         <div>
-          <h3 className="font-semibold text-slate-700 mb-3">{t("Бүх гишүүд", "All Members", "全会員", "全部会员")}</h3>
+          <h3 className="font-semibold text-slate-700 mb-3">{t("Бүх гишүүд", "All Members", "全会員", "全部會員")}</h3>
           <p className="text-xs text-slate-400 mb-4 max-w-xl">
             {t(
               "И-мэйлийг доор шууд засварлаж болно. Утас, Rotary ID, хамгийн өндөр албан тушаалыг «Засах» дарж бөглөнө үү.",
               "Email can be edited directly below. Phone, Rotary ID, and highest position — click \"Edit\" to fill them in.",
               "メールは下で直接編集できます。電話番号、Rotary ID、最高役職は「編集」で入力してください。",
-              "邮箱可在下方直接编辑。电话、Rotary ID 和最高职位请点击「编辑」填写。"
+              "郵箱可在下方直接編輯。電話、Rotary ID 和最高職位請點擊「編輯」填寫。"
             )}
           </p>
           <div className="overflow-x-auto rounded-lg border border-slate-200">
@@ -175,9 +175,9 @@ export default function AdminMembersPage() {
               <thead>
                 <tr className="text-left text-xs font-semibold text-slate-500 uppercase bg-slate-50 border-b border-slate-200">
                   <th className="py-2.5 px-3">{t("Нэр", "Name", "氏名", "姓名")}</th>
-                  <th className="py-2.5 px-3">{t("И-мэйл", "Email", "メール", "邮箱")}</th>
-                  <th className="py-2.5 px-3 hidden sm:table-cell">{t("Утас", "Phone", "電話", "电话")}</th>
-                  <th className="py-2.5 px-3">{t("Төлөв", "Status", "状態", "状态")}</th>
+                  <th className="py-2.5 px-3">{t("И-мэйл", "Email", "メール", "郵箱")}</th>
+                  <th className="py-2.5 px-3 hidden sm:table-cell">{t("Утас", "Phone", "電話", "電話")}</th>
+                  <th className="py-2.5 px-3">{t("Төлөв", "Status", "状態", "狀態")}</th>
                   <th className="py-2.5 px-3">{t("Үйлдэл", "Actions", "操作", "操作")}</th>
                 </tr>
               </thead>
@@ -215,8 +215,8 @@ export default function AdminMembersPage() {
                           onChange={(e) => setStatus(m, e.target.value as MemberRow["status"])}
                           className="text-xs rounded-md border border-slate-300 px-2 py-1"
                         >
-                          <option value="active">{t("Идэвхтэй", "Active", "現役", "活跃")}</option>
-                          <option value="inactive">{t("Идэвхгүй", "Inactive", "非活動", "非活跃")}</option>
+                          <option value="active">{t("Идэвхтэй", "Active", "現役", "活躍")}</option>
+                          <option value="inactive">{t("Идэвхгүй", "Inactive", "非活動", "非活躍")}</option>
                           <option value="pending">{t("Хүлээгдэж буй", "Pending", "保留中", "待定")}</option>
                         </select>
                       </td>
@@ -226,18 +226,18 @@ export default function AdminMembersPage() {
                             onClick={() => (editingId === m.id ? setEditingId(null) : startEdit(m))}
                             className="text-xs font-semibold px-2.5 py-1 rounded-md border border-slate-300 text-slate-600 hover:bg-slate-50 whitespace-nowrap"
                           >
-                            {editingId === m.id ? t("Хаах", "Cancel", "キャンセル", "取消") : t("Засах", "Edit", "編集", "编辑")}
+                            {editingId === m.id ? t("Хаах", "Cancel", "キャンセル", "取消") : t("Засах", "Edit", "編集", "編輯")}
                           </button>
                           <select
                             value={m.admin_level}
                             onChange={(e) => setAdminLevel(m, e.target.value as AdminLevel)}
                             disabled={m.id === selfId || savingLevelId === m.id}
-                            title={m.id === selfId ? t("Өөрийн эрхээ энд өөрчлөх боломжгүй.", "You can't change your own level here.", "自分の権限はここでは変更できません。", "无法在此更改自己的权限。") : undefined}
+                            title={m.id === selfId ? t("Өөрийн эрхээ энд өөрчлөх боломжгүй.", "You can't change your own level here.", "自分の権限はここでは変更できません。", "無法在此更改自己的權限。") : undefined}
                             className="text-xs rounded-md border border-slate-300 px-2 py-1 disabled:opacity-50 disabled:bg-slate-50"
                           >
-                            <option value="none">{t("Админ биш", "Not admin", "管理者ではない", "非管理员")}</option>
-                            <option value="editor">{t("Editor (мэдээ, төсөл)", "Editor (news + projects)", "編集者(ニュース・プロジェクト)", "编辑(新闻+项目)")}</option>
-                            <option value="super">{t("Super (бүх эрх)", "Super (full access)", "スーパー(全権限)", "超级(全部权限)")}</option>
+                            <option value="none">{t("Админ биш", "Not admin", "管理者ではない", "非管理員")}</option>
+                            <option value="editor">{t("Editor (мэдээ, төсөл)", "Editor (news + projects)", "編集者(ニュース・プロジェクト)", "編輯(新聞+項目)")}</option>
+                            <option value="super">{t("Super (бүх эрх)", "Super (full access)", "スーパー(全権限)", "超級(全部權限)")}</option>
                           </select>
                         </div>
                       </td>
@@ -247,7 +247,7 @@ export default function AdminMembersPage() {
                         <td colSpan={5} className="p-4">
                           <div className="grid gap-3 sm:grid-cols-2">
                             <input
-                              placeholder={t("Утас", "Phone", "電話", "电话")}
+                              placeholder={t("Утас", "Phone", "電話", "電話")}
                               value={form.phone}
                               onChange={(e) => setForm({ ...form, phone: e.target.value })}
                               className="rounded-md border border-slate-300 px-3 py-2 text-sm"
@@ -259,14 +259,14 @@ export default function AdminMembersPage() {
                               className="rounded-md border border-slate-300 px-3 py-2 text-sm"
                             />
                             <input
-                              placeholder={t("Хамгийн өндөр албан тушаал (жишээ: Клубын Ерөнхийлөгч 2020-21)", "Highest position (e.g. Club President 2020-21)", "最高役職(例:クラブ会長 2020-21)", "最高职位(例:俱乐部社长 2020-21)")}
+                              placeholder={t("Хамгийн өндөр албан тушаал (жишээ: Клубын Ерөнхийлөгч 2020-21)", "Highest position (e.g. Club President 2020-21)", "最高役職(例:クラブ会長 2020-21)", "最高職位(例:俱樂部社長 2020-21)")}
                               value={form.highest_position}
                               onChange={(e) => setForm({ ...form, highest_position: e.target.value })}
                               className="rounded-md border border-slate-300 px-3 py-2 text-sm sm:col-span-2"
                             />
                             <input
                               type="number"
-                              placeholder={t("Алдрын самбарын байрлал (заавал биш — 1 = хамгийн эхэнд)", "Honor roll pin order (optional — 1 = shows first)", "名誉殿堂の順位(任意 — 1 = 最初に表示)", "荣誉榜排序(可选 — 1 = 最先显示)")}
+                              placeholder={t("Алдрын самбарын байрлал (заавал биш — 1 = хамгийн эхэнд)", "Honor roll pin order (optional — 1 = shows first)", "名誉殿堂の順位(任意 — 1 = 最初に表示)", "榮譽榜排序(可選 — 1 = 最先顯示)")}
                               value={form.honor_roll_priority}
                               onChange={(e) => setForm({ ...form, honor_roll_priority: e.target.value })}
                               className="rounded-md border border-slate-300 px-3 py-2 text-sm sm:col-span-2"

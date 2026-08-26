@@ -87,7 +87,7 @@ export default function AdminProjectsPage() {
   }
 
   async function remove(item: ProjectRow) {
-    if (!confirm(t("Устгах уу?", "Delete this project?", "削除しますか?", "确定删除吗?"))) return;
+    if (!confirm(t("Устгах уу?", "Delete this project?", "削除しますか?", "確定刪除嗎?"))) return;
     await supabase.from("projects").delete().eq("id", item.id);
     refresh();
   }
@@ -100,24 +100,24 @@ export default function AdminProjectsPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-slate-900">{t("Төсөл удирдах", "Manage Projects", "プロジェクト管理", "项目管理")}</h2>
+        <h2 className="text-xl font-bold text-slate-900">{t("Төсөл удирдах", "Manage Projects", "プロジェクト管理", "項目管理")}</h2>
         <button onClick={() => setShowForm((v) => !v)} className="text-sm font-semibold bg-rotary-azure text-white rounded-md px-4 py-2">
-          {showForm ? t("Хаах", "Cancel", "キャンセル", "取消") : t("+ Шинэ төсөл", "+ New Project", "+ 新規プロジェクト", "+ 新建项目")}
+          {showForm ? t("Хаах", "Cancel", "キャンセル", "取消") : t("+ Шинэ төсөл", "+ New Project", "+ 新規プロジェクト", "+ 新建項目")}
         </button>
       </div>
 
       {showForm && (
         <form onSubmit={createProject} className="rounded-xl border border-slate-200 p-6 mb-8 grid gap-4">
           <div className="grid gap-3 sm:grid-cols-2">
-            <input required placeholder={t("Гарчиг (MN)", "Title (MN)", "タイトル(MN)", "标题(MN)")} value={form.title_mn} onChange={(e) => setForm({ ...form, title_mn: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
-            <input required placeholder={t("Гарчиг (EN)", "Title (EN)", "タイトル(EN)", "标题(EN)")} value={form.title_en} onChange={(e) => setForm({ ...form, title_en: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
+            <input required placeholder={t("Гарчиг (MN)", "Title (MN)", "タイトル(MN)", "標題(MN)")} value={form.title_mn} onChange={(e) => setForm({ ...form, title_mn: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
+            <input required placeholder={t("Гарчиг (EN)", "Title (EN)", "タイトル(EN)", "標題(EN)")} value={form.title_en} onChange={(e) => setForm({ ...form, title_en: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
           </div>
           <textarea placeholder={t("Тайлбар (MN)", "Description (MN)", "説明(MN)", "描述(MN)")} value={form.description_mn} onChange={(e) => setForm({ ...form, description_mn: e.target.value })} rows={3} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
           <textarea placeholder={t("Тайлбар (EN)", "Description (EN)", "説明(EN)", "描述(EN)")} value={form.description_en} onChange={(e) => setForm({ ...form, description_en: e.target.value })} rows={3} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
-          <input placeholder={t("Зургийн URL (заавал биш)", "Cover photo URL (optional)", "写真URL(任意)", "封面照片URL(可选)")} value={form.cover_image_url} onChange={(e) => setForm({ ...form, cover_image_url: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
+          <input placeholder={t("Зургийн URL (заавал биш)", "Cover photo URL (optional)", "写真URL(任意)", "封面照片URL(可選)")} value={form.cover_image_url} onChange={(e) => setForm({ ...form, cover_image_url: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
 
           <div>
-            <p className="text-sm font-semibold text-slate-700 mb-2">{t("Чиглэл сонгох", "Pick a focus area", "分野を選択", "选择关注领域")}</p>
+            <p className="text-sm font-semibold text-slate-700 mb-2">{t("Чиглэл сонгох", "Pick a focus area", "分野を選択", "選擇關注領域")}</p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {CAUSES.map((c) => (
                 <button
@@ -138,17 +138,17 @@ export default function AdminProjectsPage() {
           </div>
 
           <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as ProjectRow["status"] })} className="rounded-md border border-slate-300 px-3 py-2 text-sm w-fit">
-            <option value="planned">{t("Төлөвлөж буй", "Planned", "計画中", "计划中")}</option>
-            <option value="ongoing">{t("Хэрэгжиж буй", "Ongoing", "実施中", "进行中")}</option>
+            <option value="planned">{t("Төлөвлөж буй", "Planned", "計画中", "計劃中")}</option>
+            <option value="ongoing">{t("Хэрэгжиж буй", "Ongoing", "実施中", "進行中")}</option>
             <option value="completed">{t("Дууссан", "Completed", "完了", "已完成")}</option>
           </select>
 
           <div>
-            <p className="text-sm font-semibold text-slate-700 mb-2">{t("Санхүүжилт (заавал биш)", "Funding (optional)", "資金(任意)", "资助(可选)")}</p>
+            <p className="text-sm font-semibold text-slate-700 mb-2">{t("Санхүүжилт (заавал биш)", "Funding (optional)", "資金(任意)", "資助(可選)")}</p>
             <div className="grid gap-3 sm:grid-cols-3">
-              <input type="number" min="0" step="0.01" placeholder={t("Дүн", "Amount", "金額", "金额")} value={form.funding_amount} onChange={(e) => setForm({ ...form, funding_amount: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
-              <input placeholder={t("Валют (жишээ: USD)", "Currency (e.g. USD)", "通貨(例:USD)", "货币(例:USD)")} value={form.funding_currency} onChange={(e) => setForm({ ...form, funding_currency: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
-              <input placeholder={t("Global Grant дугаар (заавал биш)", "Grant number (optional)", "グラント番号(任意)", "资助编号(可选)")} value={form.grant_number} onChange={(e) => setForm({ ...form, grant_number: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
+              <input type="number" min="0" step="0.01" placeholder={t("Дүн", "Amount", "金額", "金額")} value={form.funding_amount} onChange={(e) => setForm({ ...form, funding_amount: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
+              <input placeholder={t("Валют (жишээ: USD)", "Currency (e.g. USD)", "通貨(例:USD)", "貨幣(例:USD)")} value={form.funding_currency} onChange={(e) => setForm({ ...form, funding_currency: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
+              <input placeholder={t("Global Grant дугаар (заавал биш)", "Grant number (optional)", "グラント番号(任意)", "資助編號(可選)")} value={form.grant_number} onChange={(e) => setForm({ ...form, grant_number: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
             </div>
           </div>
 
@@ -159,8 +159,8 @@ export default function AdminProjectsPage() {
         </form>
       )}
 
-      {items === null && <p className="text-slate-400 text-sm">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加载中…")}</p>}
-      {items && items.length === 0 && <p className="text-slate-400 text-sm">{t("Төсөл алга.", "No projects yet.", "プロジェクトがありません。", "暂无项目。")}</p>}
+      {items === null && <p className="text-slate-400 text-sm">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加載中…")}</p>}
+      {items && items.length === 0 && <p className="text-slate-400 text-sm">{t("Төсөл алга.", "No projects yet.", "プロジェクトがありません。", "暫無項目。")}</p>}
 
       <div className="grid gap-4">
         {items?.map((item) => {
@@ -186,12 +186,12 @@ export default function AdminProjectsPage() {
                   onChange={(e) => setStatus(item, e.target.value as ProjectRow["status"])}
                   className="text-xs rounded-md border border-slate-300 px-2 py-1"
                 >
-                  <option value="planned">{t("Төлөвлөж буй", "Planned", "計画中", "计划中")}</option>
-                  <option value="ongoing">{t("Хэрэгжиж буй", "Ongoing", "実施中", "进行中")}</option>
+                  <option value="planned">{t("Төлөвлөж буй", "Planned", "計画中", "計劃中")}</option>
+                  <option value="ongoing">{t("Хэрэгжиж буй", "Ongoing", "実施中", "進行中")}</option>
                   <option value="completed">{t("Дууссан", "Completed", "完了", "已完成")}</option>
                 </select>
                 <button onClick={() => remove(item)} className="text-xs font-semibold px-3 py-1.5 rounded-md border border-rotary-cardinal text-rotary-cardinal hover:bg-rotary-cardinal hover:text-white">
-                  {t("Устгах", "Delete", "削除", "删除")}
+                  {t("Устгах", "Delete", "削除", "刪除")}
                 </button>
               </div>
             </div>

@@ -106,21 +106,21 @@ export default function EventsPage() {
   return (
     <div className="container-page py-14">
       <h1 className="text-3xl font-bold text-rotary-royal-blue mb-3">
-        {t("Арга хэмжээний хуанли", "Events Calendar", "イベントカレンダー", "活动日历")}
+        {t("Арга хэмжээний хуанли", "Events Calendar", "イベントカレンダー", "活動日曆")}
       </h1>
       <p className="text-slate-600 max-w-2xl mb-10">
         {t(
           "Клубын бүх арга хэмжээ, сар бүрээр.",
           "Every club event, month by month.",
           "クラブのすべてのイベントを月別に表示します。",
-          "俱乐部所有活动，按月显示。"
+          "俱樂部所有活動，按月顯示。"
         )}
       </p>
 
-      {events === null && <p className="text-slate-400 text-sm">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加载中…")}</p>}
+      {events === null && <p className="text-slate-400 text-sm">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加載中…")}</p>}
 
       {events && (
-        <div className="grid gap-8 lg:grid-cols-[1fr_380px] items-start">
+        <div className="grid gap-8 lg:grid-cols-[1fr_440px] items-start">
           {/* Month grid */}
           <div className="rounded-2xl border border-slate-200 overflow-hidden bg-white">
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
@@ -169,16 +169,19 @@ export default function EventsPage() {
           {/* This month's events */}
           <div className="rounded-2xl border border-slate-200 bg-white p-5">
             <p className="text-xs font-semibold text-rotary-azure uppercase tracking-wide mb-4">
-              {t(...MONTH_LABEL[viewMonth])} {viewYear} — {t("арга хэмжээнүүд", "events", "のイベント", "的活动")}
+              {t(...MONTH_LABEL[viewMonth])} {viewYear} — {t("арга хэмжээнүүд", "events", "のイベント", "的活動")}
             </p>
             {monthEvents.length === 0 ? (
-              <p className="text-slate-400 text-sm">{t("Энэ сард төлөвлөсөн арга хэмжээ алга.", "No events scheduled this month.", "今月予定されているイベントはありません。", "本月暂无安排的活动。")}</p>
+              <p className="text-slate-400 text-sm">{t("Энэ сард төлөвлөсөн арга хэмжээ алга.", "No events scheduled this month.", "今月予定されているイベントはありません。", "本月暫無安排的活動。")}</p>
             ) : (
               <div className="flex flex-col divide-y divide-slate-100">
                 {monthEvents.map((ev) => (
                   <div key={ev.id} className="py-4 first:pt-0 last:pb-0">
                     {ev.cover_image_url && (
-                      <div className="relative w-full aspect-video bg-slate-100 rounded-lg overflow-hidden mb-2">
+                      // 4:3, a "tablet width" ratio — wider and less
+                      // cropped than the old 16:9 box, closer to how
+                      // most club photos are actually shot.
+                      <div className="relative w-full aspect-[4/3] bg-slate-100 rounded-lg overflow-hidden mb-2">
                         <Image src={ev.cover_image_url} alt="" fill className="object-cover" />
                       </div>
                     )}

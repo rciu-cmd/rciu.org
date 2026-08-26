@@ -74,7 +74,7 @@ export default function AdminBoardPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.member_id) {
-      setError(t("Гишүүн сонгоно уу.", "Please select a member.", "会員を選択してください。", "请选择会员。"));
+      setError(t("Гишүүн сонгоно уу.", "Please select a member.", "会員を選択してください。", "請選擇會員。"));
       return;
     }
     setBusy(true);
@@ -119,7 +119,7 @@ export default function AdminBoardPage() {
   }
 
   async function remove(r: BoardRow) {
-    if (!confirm(t("Устгах уу?", "Delete this board position?", "削除しますか?", "确定删除吗?"))) return;
+    if (!confirm(t("Устгах уу?", "Delete this board position?", "削除しますか?", "確定刪除嗎?"))) return;
     await supabase.from("board_positions").delete().eq("id", r.id);
     refresh();
   }
@@ -127,7 +127,7 @@ export default function AdminBoardPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-slate-900">{t("Удирдлага удирдах", "Manage Board", "役員管理", "理事会管理")}</h2>
+        <h2 className="text-xl font-bold text-slate-900">{t("Удирдлага удирдах", "Manage Board", "役員管理", "理事會管理")}</h2>
         <button
           onClick={() => {
             setEditingId(null);
@@ -146,31 +146,31 @@ export default function AdminBoardPage() {
           "\"Эрэмбэ\" талбар нь Rotary протоколын дараалал (Тэргүүн, Дэд тэргүүн, Нарийн бичиг, гэх мэт) — жижиг тоо түрүүлж харагдана.",
           "\"Sort order\" controls the Rotary-protocol display order (President, Vice President, Secretary, etc.) — lower numbers show first.",
           "「並び順」はロータリーの慣例順(会長、副会長、書記など)を制御します — 数字が小さいほど先に表示されます。",
-          "「排序」控制罗特里协议顺序(社长、副社长、秘书等)——数字越小越靠前。"
+          "「排序」控制羅特里協議順序(社長、副社長、秘書等)——數字越小越靠前。"
         )}
       </p>
 
       {showForm && (
         <form onSubmit={submit} className="rounded-xl border border-slate-200 p-6 mb-8 grid gap-3">
           <select required value={form.member_id} onChange={(e) => setForm({ ...form, member_id: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm">
-            <option value="">{t("Гишүүн сонгох", "Select member", "会員を選択", "选择会员")}</option>
+            <option value="">{t("Гишүүн сонгох", "Select member", "会員を選択", "選擇會員")}</option>
             {members.map((m) => (
               <option key={m.id} value={m.id}>{m.first_name} {m.last_name}</option>
             ))}
           </select>
           <div className="grid gap-3 sm:grid-cols-2">
-            <input required placeholder={t("Албан тушаал (MN)", "Role (MN)", "役職(MN)", "职位(MN)")} value={form.role_mn} onChange={(e) => setForm({ ...form, role_mn: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
-            <input required placeholder={t("Албан тушаал (EN)", "Role (EN)", "役職(EN)", "职位(EN)")} value={form.role_en} onChange={(e) => setForm({ ...form, role_en: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
+            <input required placeholder={t("Албан тушаал (MN)", "Role (MN)", "役職(MN)", "職位(MN)")} value={form.role_mn} onChange={(e) => setForm({ ...form, role_mn: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
+            <input required placeholder={t("Албан тушаал (EN)", "Role (EN)", "役職(EN)", "職位(EN)")} value={form.role_en} onChange={(e) => setForm({ ...form, role_en: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
-            <input required placeholder={t("Rotary жил (жишээ: 2026-2027)", "Rotary year (e.g. 2026-2027)", "ロータリー年度(例:2026-2027)", "扶轮年度(例:2026-2027)")} value={form.rotary_year} onChange={(e) => setForm({ ...form, rotary_year: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
-            <input type="number" placeholder={t("Эрэмбэ (жишээ: Тэргүүн=1)", "Sort order (e.g. President=1)", "並び順(例:会長=1)", "排序(例:社长=1)")} value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
+            <input required placeholder={t("Rotary жил (жишээ: 2026-2027)", "Rotary year (e.g. 2026-2027)", "ロータリー年度(例:2026-2027)", "扶輪年度(例:2026-2027)")} value={form.rotary_year} onChange={(e) => setForm({ ...form, rotary_year: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
+            <input type="number" placeholder={t("Эрэмбэ (жишээ: Тэргүүн=1)", "Sort order (e.g. President=1)", "並び順(例:会長=1)", "排序(例:社長=1)")} value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
           </div>
 
           <div>
-            <p className="text-sm font-semibold text-slate-700 mb-1">{t("Зураг (заавал биш)", "Photo (optional)", "写真(任意)", "照片(可选)")}</p>
+            <p className="text-sm font-semibold text-slate-700 mb-1">{t("Зураг (заавал биш)", "Photo (optional)", "写真(任意)", "照片(可選)")}</p>
             <p className="text-xs text-slate-400 mb-2">
-              {t("Хоосон орхивол гишүүний өөрийн профайл зургийг ашиглана.", "Leave blank to fall back to the member's own profile photo.", "空欄の場合は会員自身のプロフィール写真が使用されます。", "留空则使用会员本人的头像。")}
+              {t("Хоосон орхивол гишүүний өөрийн профайл зургийг ашиглана.", "Leave blank to fall back to the member's own profile photo.", "空欄の場合は会員自身のプロフィール写真が使用されます。", "留空則使用會員本人的頭像。")}
             </p>
             {form.photo_url && !file && (
               <Image src={form.photo_url} alt="" width={48} height={48} className="rounded-full object-cover mb-2" />
@@ -185,8 +185,8 @@ export default function AdminBoardPage() {
         </form>
       )}
 
-      {rows === null && <p className="text-slate-400 text-sm">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加载中…")}</p>}
-      {rows && rows.length === 0 && <p className="text-slate-400 text-sm">{t("Удирдлага алга.", "No board positions yet.", "役員がありません。", "暂无理事会成员。")}</p>}
+      {rows === null && <p className="text-slate-400 text-sm">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加載中…")}</p>}
+      {rows && rows.length === 0 && <p className="text-slate-400 text-sm">{t("Удирдлага алга.", "No board positions yet.", "役員がありません。", "暫無理事會成員。")}</p>}
 
       <div className="grid gap-2">
         {rows?.map((r) => {
@@ -204,10 +204,10 @@ export default function AdminBoardPage() {
               </div>
               <div className="flex gap-2 shrink-0">
                 <button onClick={() => startEdit(r)} className="text-xs font-semibold px-3 py-1.5 rounded-md border border-rotary-royal-blue text-rotary-royal-blue hover:bg-rotary-royal-blue hover:text-white">
-                  {t("Засах", "Edit", "編集", "编辑")}
+                  {t("Засах", "Edit", "編集", "編輯")}
                 </button>
                 <button onClick={() => remove(r)} className="text-xs font-semibold px-3 py-1.5 rounded-md border border-rotary-cardinal text-rotary-cardinal hover:bg-rotary-cardinal hover:text-white">
-                  {t("Устгах", "Delete", "削除", "删除")}
+                  {t("Устгах", "Delete", "削除", "刪除")}
                 </button>
               </div>
             </div>

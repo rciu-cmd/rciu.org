@@ -52,27 +52,27 @@ export default function AdminSettingsPage() {
 
   return (
     <div>
-      <h2 className="text-xl font-bold text-slate-900 mb-2">{t("Тохиргоо", "Site Settings", "サイト設定", "网站设置")}</h2>
+      <h2 className="text-xl font-bold text-slate-900 mb-2">{t("Тохиргоо", "Site Settings", "サイト設定", "網站設置")}</h2>
       <p className="text-sm text-slate-500 mb-8 max-w-2xl">
         {t(
           "Энэ жилийн Rotary сэдвийн зурагт туузыг удирдана — навигацийн доор давтагдаж харагдана. Дараа жилийн шинэ сэдэвтэй солиход зөвхөн доороос зургаа сонгоно.",
           "Manage this Rotary year's theme banner — the repeating strip shown right under the navbar site-wide. Next year, just pick a new image here — no code changes needed.",
           "今年のロータリーのテーマバナーを管理します — ナビの下に繰り返し表示されます。来年は下から新しい画像を選ぶだけです。",
-          "管理本扶轮年度的主题横幅——显示在导航栏下方的重复条带。明年只需在此选择新图片即可,无需修改代码。"
+          "管理本扶輪年度的主題橫幅——顯示在導航欄下方的重複條帶。明年只需在此選擇新圖片即可,無需修改代碼。"
         )}
       </p>
 
       {!loaded ? (
-        <p className="text-slate-400 text-sm">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加载中…")}</p>
+        <p className="text-slate-400 text-sm">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加載中…")}</p>
       ) : (
         <div className="grid gap-6 max-w-2xl">
           <div>
-            <p className="text-sm font-semibold text-slate-700 mb-2">{t("Одоогийн туузны урьдчилан харах", "Current strip preview", "現在のプレビュー", "当前预览")}</p>
+            <p className="text-sm font-semibold text-slate-700 mb-2">{t("Одоогийн туузны урьдчилан харах", "Current strip preview", "現在のプレビュー", "當前預覽")}</p>
             <div className="h-9 rounded border border-slate-200 overflow-hidden" style={{ backgroundImage: `url(${previewSrc})`, backgroundRepeat: "repeat-x", backgroundSize: "auto 100%" }} />
           </div>
 
           <div>
-            <p className="text-sm font-semibold text-slate-700 mb-2">{t("Бэлэн зургуудаас сонгох", "Pick from existing banners", "既存のバナーから選択", "从现有横幅中选择")}</p>
+            <p className="text-sm font-semibold text-slate-700 mb-2">{t("Бэлэн зургуудаас сонгох", "Pick from existing banners", "既存のバナーから選択", "從現有橫幅中選擇")}</p>
             <div className="grid grid-cols-3 gap-3">
               {PRESET_BANNERS.map((b) => (
                 <button
@@ -87,7 +87,7 @@ export default function AdminSettingsPage() {
           </div>
 
           <div>
-            <p className="text-sm font-semibold text-slate-700 mb-2">{t("Эсвэл өөрийн зургийн URL оруулах", "Or paste a custom image URL", "またはカスタム画像URLを入力", "或粘贴自定义图片URL")}</p>
+            <p className="text-sm font-semibold text-slate-700 mb-2">{t("Эсвэл өөрийн зургийн URL оруулах", "Or paste a custom image URL", "またはカスタム画像URLを入力", "或粘貼自定義圖片URL")}</p>
             <div className="flex gap-2">
               <input
                 value={bannerUrl}

@@ -97,39 +97,39 @@ export default function AdminHistoryPage() {
   }
 
   async function removePresident(p: PresidentRow) {
-    if (!confirm(t("Устгах уу?", "Delete this entry?", "削除しますか?", "确定删除吗?"))) return;
+    if (!confirm(t("Устгах уу?", "Delete this entry?", "削除しますか?", "確定刪除嗎?"))) return;
     await supabase.from("club_past_presidents").delete().eq("id", p.id);
     refreshPresidents();
   }
 
   return (
     <div>
-      <h2 className="text-xl font-bold text-slate-900 mb-2">{t("Түүх", "Club History", "クラブの歴史", "俱乐部历史")}</h2>
+      <h2 className="text-xl font-bold text-slate-900 mb-2">{t("Түүх", "Club History", "クラブの歴史", "俱樂部歷史")}</h2>
       <p className="text-sm text-slate-500 mb-8 max-w-2xl">
         {t(
           "Клубын түүх, урьд өмнөх тэргүүнүүдийн жагсаалт — About хуудсанд харагдана.",
           "Your club's founding story and past-presidents list — shown on the About page.",
           "クラブの歴史と歴代会長リスト — Aboutページに表示されます。",
-          "俱乐部历史与历任社长名单 — 显示在关于页面。"
+          "俱樂部歷史與歷任社長名單 — 顯示在關於頁面。"
         )}
       </p>
 
       {/* Club history text */}
       <div className="rounded-xl border border-slate-200 p-6 mb-10 grid gap-3 max-w-2xl">
-        <h3 className="font-semibold text-slate-700">{t("Түүхийн текст", "History Text", "歴史のテキスト", "历史文字")}</h3>
+        <h3 className="font-semibold text-slate-700">{t("Түүхийн текст", "History Text", "歴史のテキスト", "歷史文字")}</h3>
         {!historyLoaded ? (
-          <p className="text-slate-400 text-sm">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加载中…")}</p>
+          <p className="text-slate-400 text-sm">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加載中…")}</p>
         ) : (
           <>
             <textarea
-              placeholder={t("Түүх (MN)", "History (MN)", "歴史(MN)", "历史(MN)")}
+              placeholder={t("Түүх (MN)", "History (MN)", "歴史(MN)", "歷史(MN)")}
               value={historyMn}
               onChange={(e) => setHistoryMn(e.target.value)}
               rows={4}
               className="rounded-md border border-slate-300 px-3 py-2 text-sm"
             />
             <textarea
-              placeholder={t("Түүх (EN)", "History (EN)", "歴史(EN)", "历史(EN)")}
+              placeholder={t("Түүх (EN)", "History (EN)", "歴史(EN)", "歷史(EN)")}
               value={historyEn}
               onChange={(e) => setHistoryEn(e.target.value)}
               rows={4}
@@ -149,11 +149,16 @@ export default function AdminHistoryPage() {
 
       {/* Past presidents */}
       <div className="flex items-center justify-between mb-6">
-        <h3 className="font-semibold text-slate-700">{t("Урьд өмнөх тэргүүнүүд", "Past Presidents", "歴代会長", "历任社长")}</h3>
+        <h3 className="font-semibold text-slate-700">{t("Урьд өмнөх тэргүүнүүд", "Past Presidents", "歴代会長", "歷任社長")}</h3>
         <button
           onClick={() => {
             setEditingId(null);
-            setForm(EMPTY_PRESIDENT);
+            // New entries default to sort_order = (current max + 1), not
+            // 0 — a hardcoded 0 always sorted the newest entry to the
+            // very top of the list, which read as "the order doesn't
+            // work". Still fully editable in the field below.
+            const nextSortOrder = (presidents ?? []).reduce((max, p) => Math.max(max, p.sort_order), 0) + 1;
+            setForm({ ...EMPTY_PRESIDENT, sort_order: String(nextSortOrder) });
             setShowForm((v) => !v);
           }}
           className="text-sm font-semibold bg-rotary-royal-blue text-white rounded-md px-4 py-2"
@@ -174,8 +179,8 @@ export default function AdminHistoryPage() {
         </form>
       )}
 
-      {presidents === null && <p className="text-slate-400 text-sm">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加载中…")}</p>}
-      {presidents && presidents.length === 0 && <p className="text-slate-400 text-sm">{t("Жагсаалт хоосон байна.", "No past presidents added yet.", "まだ登録されていません。", "暂无记录。")}</p>}
+      {presidents === null && <p className="text-slate-400 text-sm">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加載中…")}</p>}
+      {presidents && presidents.length === 0 && <p className="text-slate-400 text-sm">{t("Жагсаалт хоосон байна.", "No past presidents added yet.", "まだ登録されていません。", "暫無記錄。")}</p>}
 
       <div className="grid gap-2 max-w-2xl">
         {presidents?.map((p) => (
@@ -186,10 +191,10 @@ export default function AdminHistoryPage() {
             </div>
             <div className="flex gap-2 shrink-0">
               <button onClick={() => startEdit(p)} className="text-xs font-semibold px-3 py-1.5 rounded-md border border-rotary-royal-blue text-rotary-royal-blue hover:bg-rotary-royal-blue hover:text-white">
-                {t("Засах", "Edit", "編集", "编辑")}
+                {t("Засах", "Edit", "編集", "編輯")}
               </button>
               <button onClick={() => removePresident(p)} className="text-xs font-semibold px-3 py-1.5 rounded-md border border-rotary-cardinal text-rotary-cardinal hover:bg-rotary-cardinal hover:text-white">
-                {t("Устгах", "Delete", "削除", "删除")}
+                {t("Устгах", "Delete", "削除", "刪除")}
               </button>
             </div>
           </div>

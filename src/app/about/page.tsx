@@ -27,6 +27,7 @@ type AwardRow = {
   id: string;
   title: string;
   comment: string | null;
+  award_date: string | null;
   file_url: string | null;
   file_type: "image" | "pdf" | null;
 };
@@ -98,7 +99,7 @@ export default function AboutPage() {
 
     supabase
       .from("club_awards")
-      .select("id, title, comment, file_url, file_type")
+      .select("id, title, comment, award_date, file_url, file_type")
       .eq("status", "approved")
       .order("created_at", { ascending: false })
       .then(({ data }) => setAwards((data as AwardRow[]) ?? []));
@@ -128,14 +129,14 @@ export default function AboutPage() {
   return (
     <div className="container-page py-14">
       <h1 className="text-3xl font-bold text-rotary-royal-blue mb-3">
-        {t("Бидний тухай", "About Us", "私たちについて", "关于我们")}
+        {t("Бидний тухай", "About Us", "私たちについて", "關於我們")}
       </h1>
       <p className="text-slate-600 max-w-2xl mb-6">
         {t(
           "Rotary Club of Ikh Urgoo нь Rotary International-ийн албан ёсны гишүүн клуб бөгөөд Улаанбаатар хотод, дэлхийн Rotary гэр бүлийн нэг хэсэг болон үйлчилдэг.",
           "Rotary Club of Ikh Urgoo is an officially chartered member club of Rotary International, serving Ulaanbaatar as part of the worldwide Rotary family — District 3450.",
           "イクー・ウルグー・ロータリークラブは、ロータリー・インターナショナルの正式に認可された会員クラブであり、地区3450としてウランバートルで奉仕しています。",
-          "扶轮伊赫乌尔古俱乐部是国际扶轮正式注册的会员俱乐部,作为3450区在乌兰巴托为全球扶轮大家庭服务。"
+          "扶輪伊赫烏爾古俱樂部是國際扶輪正式註冊的會員俱樂部,作為3450區在烏蘭巴托為全球扶輪大家庭服務。"
         )}
       </p>
 
@@ -149,14 +150,14 @@ export default function AboutPage() {
           href="/board"
           className="inline-flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-full border border-rotary-royal-blue text-rotary-royal-blue hover:bg-rotary-royal-blue hover:text-white transition-colors"
         >
-          {t("Удирдлага", "Board", "役員", "理事会")} →
+          {t("Удирдлага", "Board", "役員", "理事會")} →
         </Link>
         {authed && (
           <Link
             href="/members"
             className="inline-flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-full border border-rotary-royal-blue text-rotary-royal-blue hover:bg-rotary-royal-blue hover:text-white transition-colors"
           >
-            {t("Гишүүд", "Members", "会員", "会员")} →
+            {t("Гишүүд", "Members", "会員", "會員")} →
           </Link>
         )}
       </div>
@@ -168,24 +169,24 @@ export default function AboutPage() {
       <div className="grid gap-6 lg:grid-cols-2 mb-14 items-start">
         <div className="rounded-xl border border-slate-200 p-6 h-full">
           <h2 className="font-bold text-rotary-royal-blue mb-2">
-            {t("Эрхэм зорилго", "Our Mission", "私たちの使命", "我们的使命")}
+            {t("Эрхэм зорилго", "Our Mission", "私たちの使命", "我們的使命")}
           </h2>
           <p className="text-slate-600 text-sm">
             {t(
               "Service Above Self — өөрийгөө умартан бусдад үйлчлэх зарчмаар дэлхийн болон орон нутгийн хэрэгцээнд хариу үзүүлэх.",
               "Service Above Self — responding to community and international needs through fellowship, integrity, and humanitarian service.",
               "「奉仕は自己を超えて」— 友情、誠実さ、人道的奉仕を通じて地域社会と国際的なニーズに応えます。",
-              "超我服务 — 通过友谊、诚信与人道服务回应社区及国际需求。"
+              "超我服務 — 通過友誼、誠信與人道服務回應社區及國際需求。"
             )}
           </p>
         </div>
 
         <div className="rounded-xl border border-slate-200 p-6 h-full">
           <h2 className="font-bold text-rotary-royal-blue mb-2">
-            {t("Шагнал ба алдар", "Awards & Recognition", "受賞・表彰", "奖项与荣誉")}
+            {t("Шагнал ба алдар", "Awards & Recognition", "受賞・表彰", "獎項與榮譽")}
           </h2>
           {awards.length === 0 ? (
-            <p className="text-slate-400 text-sm">{t("Удахгүй…", "Coming soon…", "近日公開…", "即将上线…")}</p>
+            <p className="text-slate-400 text-sm">{t("Удахгүй…", "Coming soon…", "近日公開…", "即將上線…")}</p>
           ) : (
             <div className="flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory">
               {awards.map((a) => (
@@ -207,6 +208,7 @@ export default function AboutPage() {
                     )}
                   </div>
                   <p className="text-xs font-semibold text-slate-800 mt-1.5 line-clamp-2">{a.title}</p>
+                  {a.award_date && <p className="text-[10px] text-slate-400">{new Date(a.award_date).toLocaleDateString()}</p>}
                 </a>
               ))}
             </div>
@@ -218,26 +220,26 @@ export default function AboutPage() {
           download link, so anyone can see it without opening a new tab. */}
       <div className="mb-14">
         <h2 className="text-2xl font-bold text-rotary-royal-blue mb-4">
-          {t("Клубын гэрчилгээ", "Charter Certificate", "認可証明書", "特许证书")}
+          {t("Клубын гэрчилгээ", "Charter Certificate", "認可証明書", "特許證書")}
         </h2>
         <div className="rounded-xl border border-slate-200 overflow-hidden bg-slate-50">
           <Image
             src={asset("/certificates/rciu-charter-certificate.png")}
-            alt={t("Клубын гэрчилгээ", "Charter Certificate", "認可証明書", "特许证书")}
+            alt={t("Клубын гэрчилгээ", "Charter Certificate", "認可証明書", "特許證書")}
             width={1600}
             height={1236}
             className="w-full h-auto"
           />
         </div>
         <a href={asset("/certificates/rciu-charter-certificate.pdf")} target="_blank" rel="noopener noreferrer" className="text-rotary-azure font-semibold hover:underline text-sm mt-2 inline-block">
-          {t("Шинэ цонхонд нээх / татах", "Open in new tab / download", "新しいタブで開く / ダウンロード", "在新标签页打开 / 下载")}
+          {t("Шинэ цонхонд нээх / татах", "Open in new tab / download", "新しいタブで開く / ダウンロード", "在新標籤頁打開 / 下載")}
         </a>
       </div>
 
       {historyEn && (
         <div className="mb-14">
           <h2 className="text-2xl font-bold text-rotary-royal-blue mb-4">
-            {t("Клубын түүх", "Our History", "クラブの歴史", "俱乐部历史")}
+            {t("Клубын түүх", "Our History", "クラブの歴史", "俱樂部歷史")}
           </h2>
           <p className="text-slate-600 max-w-2xl">{t(historyMn, historyEn)}</p>
         </div>
@@ -246,7 +248,7 @@ export default function AboutPage() {
       {presidents.length > 0 && (
         <div className="mb-14">
           <h2 className="text-2xl font-bold text-rotary-royal-blue mb-4">
-            {t("Урьд өмнөх тэргүүнүүд", "Past Presidents", "歴代会長", "历任社长")}
+            {t("Урьд өмнөх тэргүүнүүд", "Past Presidents", "歴代会長", "歷任社長")}
           </h2>
           <ol className="max-w-2xl rounded-xl overflow-hidden">
             {presidents.map((p, i) => (
@@ -265,14 +267,14 @@ export default function AboutPage() {
       {travels.length > 0 && (
         <div className="mb-14">
           <h2 className="text-2xl font-bold text-rotary-royal-blue mb-2">
-            {t("Бидний хүрсэн газрууд", "Where We've Traveled", "私たちが訪れた場所", "我们足迹所至")}
+            {t("Бидний хүрсэн газрууд", "Where We've Traveled", "私たちが訪れた場所", "我們足跡所至")}
           </h2>
           <p className="text-slate-600 max-w-2xl mb-4">
             {t(
               "Клубын гишүүд олон улсын Ротари арга хэмжээнд оролцохоор дэлхийн өнцөг булан бүрт аялсаар байна.",
               "Our members travel around the world to take part in international Rotary events.",
               "当クラブの会員は国際ロータリー行事に参加するため世界各地を訪れています。",
-              "我们的会员为参加国际扶轮活动而奔赴世界各地。"
+              "我們的會員為參加國際扶輪活動而奔赴世界各地。"
             )}
           </p>
           <WorldTravelMap travels={travels} t={t} />
@@ -287,7 +289,7 @@ export default function AboutPage() {
         <div className="flex items-center gap-3 mb-2">
           <Image src={asset("/logos/ri-gear-gold.png")} alt="" width={32} height={32} />
           <h2 className="text-2xl font-bold">
-            {t("Paul Harris Fellow алдрын самбар", "Paul Harris Fellow Honor Roll", "ポール・ハリス・フェロー 名誉殿堂", "保罗·哈里斯会员荣誉榜")}
+            {t("Paul Harris Fellow алдрын самбар", "Paul Harris Fellow Honor Roll", "ポール・ハリス・フェロー 名誉殿堂", "保羅·哈里斯會員榮譽榜")}
           </h2>
         </div>
         <p className="text-slate-500 text-sm mb-6 max-w-xl">
@@ -295,11 +297,11 @@ export default function AboutPage() {
             "The Rotary Foundation-д хувь нэмэр оруулсныг нь хүлээн зөвшөөрсөн клубын гишүүд, өндөр зэрэглэлээс бага руу эрэмбэлэгдсэн. Мөнгөн дүн энд харагдахгүй.",
             "Club members recognized for their contributions to The Rotary Foundation, ranked highest to lowest. Dollar amounts are kept private — only recognition tier is shown.",
             "ロータリー財団への貢献が認められた会員を、階級の高い順に表示しています。金額は非公開です。",
-            "表彰对扶轮基金会做出贡献的会员,按级别从高到低排列。捐款金额不公开显示。"
+            "表彰對扶輪基金會做出貢獻的會員,按級別從高到低排列。捐款金額不公開顯示。"
           )}
         </p>
         {rankedHonorRoll.length === 0 ? (
-          <p className="text-slate-400 text-sm">{t("Удахгүй…", "Coming soon…", "近日公開…", "即将上线…")}</p>
+          <p className="text-slate-400 text-sm">{t("Удахгүй…", "Coming soon…", "近日公開…", "即將上線…")}</p>
         ) : (
           <ol className="flex flex-col divide-y divide-slate-100">
             {rankedHonorRoll.map((m, i) => (
@@ -310,7 +312,7 @@ export default function AboutPage() {
                   <p className="font-semibold text-slate-900">
                     {m.first_name} {m.last_name}
                     {m.major_donor && (
-                      <span className="ml-2 text-rotary-gold text-xs font-bold align-middle">★ {t("Их хандивлагч", "Major Donor", "メジャードナー", "重要捐赠人")}</span>
+                      <span className="ml-2 text-rotary-gold text-xs font-bold align-middle">★ {t("Их хандивлагч", "Major Donor", "メジャードナー", "重要捐贈人")}</span>
                     )}
                   </p>
                   {m.highest_position && <p className="text-xs text-rotary-azure">{m.highest_position}</p>}

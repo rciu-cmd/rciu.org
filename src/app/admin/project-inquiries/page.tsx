@@ -42,25 +42,25 @@ export default function AdminProjectInquiriesPage() {
   }
 
   async function remove(item: InquiryRow) {
-    if (!confirm(t("Устгах уу?", "Delete this inquiry?", "削除しますか?", "确定删除吗?"))) return;
+    if (!confirm(t("Устгах уу?", "Delete this inquiry?", "削除しますか?", "確定刪除嗎?"))) return;
     await supabase.from("project_inquiries").delete().eq("id", item.id);
     refresh();
   }
 
   return (
     <div>
-      <h2 className="text-xl font-bold text-slate-900 mb-2">{t("Төслийн хүсэлтүүд", "Project Inquiries", "プロジェクト問合せ", "项目合作申请")}</h2>
+      <h2 className="text-xl font-bold text-slate-900 mb-2">{t("Төслийн хүсэлтүүд", "Project Inquiries", "プロジェクト問合せ", "項目合作申請")}</h2>
       <p className="text-sm text-slate-500 mb-6 max-w-2xl">
         {t(
           "\"/projects\" хуудасны \"Төсөлд нэгдэх\" маягтаас ирсэн хүсэлтүүд — өөр клуб, байгууллага, хувь хүмүүсээс.",
           "Submissions from the \"Join a Project\" form on the public Projects page — other clubs, organizations, or individuals.",
           "公開プロジェクトページの「プロジェクトに参加」フォームからの問い合わせです。",
-          "来自公开项目页面「加入项目」表单的申请——来自其他俱乐部、机构或个人。"
+          "來自公開項目頁面「加入項目」表單的申請——來自其他俱樂部、機構或個人。"
         )}
       </p>
       {error && <p className="text-sm text-rotary-cardinal mb-4">{error}</p>}
-      {items === null && <p className="text-slate-400 text-sm">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加载中…")}</p>}
-      {items && items.length === 0 && <p className="text-slate-400 text-sm">{t("Одоогоор хүсэлт алга.", "No inquiries yet.", "お問い合わせはまだありません。", "暂无申请。")}</p>}
+      {items === null && <p className="text-slate-400 text-sm">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加載中…")}</p>}
+      {items && items.length === 0 && <p className="text-slate-400 text-sm">{t("Одоогоор хүсэлт алга.", "No inquiries yet.", "お問い合わせはまだありません。", "暫無申請。")}</p>}
 
       <div className="grid gap-3">
         {items?.map((item) => (
@@ -85,11 +85,11 @@ export default function AdminProjectInquiriesPage() {
                 className="text-xs rounded-md border border-slate-300 px-2 py-1"
               >
                 <option value="new">{t("Шинэ", "New", "新規", "新")}</option>
-                <option value="contacted">{t("Холбогдсон", "Contacted", "連絡済み", "已联系")}</option>
-                <option value="closed">{t("Хаагдсан", "Closed", "終了", "已关闭")}</option>
+                <option value="contacted">{t("Холбогдсон", "Contacted", "連絡済み", "已聯繫")}</option>
+                <option value="closed">{t("Хаагдсан", "Closed", "終了", "已關閉")}</option>
               </select>
               <button onClick={() => remove(item)} className="text-xs font-semibold px-3 py-1.5 rounded-md border border-rotary-cardinal text-rotary-cardinal hover:bg-rotary-cardinal hover:text-white">
-                {t("Устгах", "Delete", "削除", "删除")}
+                {t("Устгах", "Delete", "削除", "刪除")}
               </button>
             </div>
           </div>

@@ -177,20 +177,20 @@ export default function Home() {
                 same width, so the 3 tiles below line up with the text
                 above instead of stretching the full column. */}
             <h1 className="text-3xl sm:text-5xl font-extrabold leading-tight mb-6 max-w-md">
-              {t("Их Өргөө Ротари Клуб", "Rotary Club of Ikh Urgoo", "イク・ウルグー・ロータリークラブ", "扶轮伊赫乌尔古俱乐部")}
+              {t("Их Өргөө Ротари Клуб", "Rotary Club of Ikh Urgoo", "イク・ウルグー・ロータリークラブ", "扶輪伊赫烏爾古俱樂部")}
             </h1>
             <div className="grid grid-cols-3 gap-3 max-w-md">
               <HeroStat
                 value={stats.phfPercent === null ? "—" : `${stats.phfPercent}%`}
-                label={t("Paul Harris Fellow", "Paul Harris Fellows", "ポール・ハリス・フェロー", "保罗·哈里斯会员")}
+                label={t("Paul Harris Fellow", "Paul Harris Fellows", "ポール・ハリス・フェロー", "保羅·哈里斯會員")}
               />
               <HeroStat
                 value={stats.affiliateCount === null ? "—" : String(stats.affiliateCount)}
-                label={t("Дэмждэг клуб", "Sponsored Clubs", "スポンサークラブ", "赞助俱乐部")}
+                label={t("Дэмждэг клуб", "Sponsored Clubs", "スポンサークラブ", "贊助俱樂部")}
               />
               <HeroStat
                 value={stats.projectCount === null ? "—" : String(stats.projectCount)}
-                label={t("Хэрэгжүүлсэн төсөл", "Community Projects", "コミュニティ・プロジェクト", "社区项目")}
+                label={t("Хэрэгжүүлсэн төсөл", "Community Projects", "コミュニティ・プロジェクト", "社區項目")}
               />
             </div>
           </div>
@@ -224,7 +224,7 @@ export default function Home() {
         <div className="container-page">
           <div className="flex items-end justify-between mb-8">
             <h2 className="text-3xl font-bold text-rotary-royal-blue">
-              {t("Мэдээ", "Latest News", "最新ニュース", "最新新闻")}
+              {t("Мэдээ", "Latest News", "最新ニュース", "最新新聞")}
             </h2>
             <Link href="/news" className="text-rotary-royal-blue font-semibold hover:underline shrink-0">
               {t("Бүх мэдээ →", "View All News →", "すべて見る →", "查看全部 →")}
@@ -233,7 +233,7 @@ export default function Home() {
 
           {news.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-16 text-center text-slate-400">
-              {t("Мэдээ удахгүй нэмэгдэнэ.", "News posts will appear here once published.", "ニュースは公開され次第表示されます。", "新闻发布后将显示在此处。")}
+              {t("Мэдээ удахгүй нэмэгдэнэ.", "News posts will appear here once published.", "ニュースは公開され次第表示されます。", "新聞發佈後將顯示在此處。")}
             </div>
           ) : (
             <div className="grid gap-6 lg:grid-cols-2">
@@ -274,14 +274,14 @@ export default function Home() {
         <div className="flex items-end justify-between mb-8">
           <div>
             <h2 className="text-3xl font-bold text-rotary-royal-blue mb-2">
-              {t("Манай төслүүд", "Our Projects", "私たちのプロジェクト", "我们的项目")}
+              {t("Манай төслүүд", "Our Projects", "私たちのプロジェクト", "我們的項目")}
             </h2>
             <p className="text-slate-500 max-w-xl">
               {t(
                 "Боловсрол, эх хүүхдийн эрүүл мэнд, өвчнөөс сэргийлэх чиглэлээр хэрэгжүүлж буй бодит ажлууд.",
                 "Real work in progress — education, maternal and child health, and disease prevention.",
                 "教育、母子保健、疾病予防の分野での実際の活動。",
-                "在教育、母婴健康和疾病预防领域开展的实际工作。"
+                "在教育、母嬰健康和疾病預防領域開展的實際工作。"
               )}
             </p>
           </div>
@@ -292,7 +292,7 @@ export default function Home() {
 
         {projects.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-slate-300 p-12 text-center text-slate-400">
-            {t("Төслийн мэдээлэл удахгүй нэмэгдэнэ.", "Project details will appear here once added by an admin.", "プロジェクト情報は追加され次第表示されます。", "项目信息将在添加后显示。")}
+            {t("Төслийн мэдээлэл удахгүй нэмэгдэнэ.", "Project details will appear here once added by an admin.", "プロジェクト情報は追加され次第表示されます。", "項目信息將在添加後顯示。")}
           </div>
         ) : (
           <div className="grid gap-8 lg:grid-cols-2">
@@ -306,7 +306,7 @@ export default function Home() {
                       <Image src={asset(CAUSE_ICONS[p.cause_icon])} alt="" width={72} height={72} />
                     </div>
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-slate-300 text-sm">{t("Зураг алга", "No photo yet", "写真なし", "暂无照片")}</div>
+                    <div className="w-full h-full flex items-center justify-center text-slate-300 text-sm">{t("Зураг алга", "No photo yet", "写真なし", "暫無照片")}</div>
                   )}
                   <span className="absolute top-3 left-3 text-xs font-semibold uppercase tracking-wide bg-white/90 text-rotary-azure px-3 py-1 rounded-full">
                     {t(STATUS_LABEL[p.status].mn, STATUS_LABEL[p.status].en)}
@@ -369,7 +369,7 @@ export default function Home() {
             {affiliates.length > 0 && (
               <div className="mb-6">
                 <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3">
-                  {t("Дэмждэг клубууд", "Sponsored Clubs", "スポンサークラブ", "赞助俱乐部")}
+                  {t("Дэмждэг клубууд", "Sponsored Clubs", "スポンサークラブ", "贊助俱樂部")}
                 </h2>
                 <div className="flex flex-wrap items-center gap-8">
                   {affiliates.map((a) => {
@@ -386,7 +386,7 @@ export default function Home() {
 
             <div>
               <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3">
-                {t("Холбоос ба түншүүд", "Links & Partners", "リンクとパートナー", "链接与伙伴")}
+                {t("Холбоос ба түншүүд", "Links & Partners", "リンクとパートナー", "鏈接與夥伴")}
               </h2>
               <div className="flex flex-wrap items-center gap-8">
                 {links.map((l) => {

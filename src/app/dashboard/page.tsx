@@ -73,11 +73,11 @@ export default function DashboardPage() {
   }
 
   if (loading) {
-    return <div className="container-page py-20 text-center text-slate-400">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加载中…")}</div>;
+    return <div className="container-page py-20 text-center text-slate-400">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加載中…")}</div>;
   }
 
   if (!member) {
-    return <div className="container-page py-20 text-center text-slate-500">{t("Профайл олдсонгүй.", "Profile not found.", "プロフィールが見つかりません。", "未找到个人资料。")}</div>;
+    return <div className="container-page py-20 text-center text-slate-500">{t("Профайл олдсонгүй.", "Profile not found.", "プロフィールが見つかりません。", "未找到個人資料。")}</div>;
   }
 
   const theme = phfTheme(member.phf_level);
@@ -90,7 +90,7 @@ export default function DashboardPage() {
         <div className="container-page py-14">
           <div className="flex items-start justify-between gap-4 mb-2">
             <p className="text-sm font-semibold uppercase tracking-wide text-white/70">
-              {t("Хувийн профайл", "Member Dashboard", "会員ダッシュボード", "会员仪表盘")}
+              {t("Хувийн профайл", "Member Dashboard", "会員ダッシュボード", "會員儀表盤")}
             </p>
             <div className="flex flex-col items-end gap-2 shrink-0">
               <button
@@ -100,14 +100,14 @@ export default function DashboardPage() {
                 }}
                 className="text-xs font-semibold bg-white/15 hover:bg-white/25 rounded-full px-4 py-1.5"
               >
-                {t("Гарах", "Log Out", "ログアウト", "退出登录")}
+                {t("Гарах", "Log Out", "ログアウト", "退出登錄")}
               </button>
               {member.is_admin && (
                 <Link
                   href="/admin"
                   className="inline-flex items-center gap-2 bg-white text-rotary-royal-blue font-semibold rounded-full px-4 py-1.5 text-xs hover:bg-white/90"
                 >
-                  {t("Админ самбар руу очих", "Go to Admin Dashboard", "管理者ダッシュボードへ", "前往管理后台")} →
+                  {t("Админ самбар руу очих", "Go to Admin Dashboard", "管理者ダッシュボードへ", "前往管理後臺")} →
                 </Link>
               )}
             </div>
@@ -117,7 +117,7 @@ export default function DashboardPage() {
             <div className="inline-flex items-center gap-2 bg-white/15 rounded-full px-4 py-1.5 text-sm font-semibold">
               <PhfPinBadge level={member.phf_level} size={24} majorDonor={member.major_donor} />
               {theme.label}
-              {member.major_donor && <span className="text-rotary-gold">★ {t("Их хандивлагч", "Major Donor", "メジャードナー", "重要捐赠人")}</span>}
+              {member.major_donor && <span className="text-rotary-gold">★ {t("Их хандивлагч", "Major Donor", "メジャードナー", "重要捐贈人")}</span>}
             </div>
           ) : (
             <div className="inline-flex items-center gap-2 bg-white/15 rounded-full px-4 py-1.5 text-sm">
@@ -125,7 +125,7 @@ export default function DashboardPage() {
                 "Та одоогоор Paul Harris Fellow биш байна",
                 "You're not a Paul Harris Fellow yet",
                 "まだポール・ハリス・フェローではありません",
-                "您尚未成为保罗·哈里斯会员"
+                "您尚未成為保羅·哈里斯會員"
               )}
             </div>
           )}
@@ -139,7 +139,7 @@ export default function DashboardPage() {
               "The Rotary Foundation-д $1,000 хандив өргөснөөр Paul Harris Fellow болох боломжтой. Дэлгэрэнгүйг клубын хандивын зохицуулагчаас асууна уу.",
               "Contributing $1,000 to The Rotary Foundation makes you a Paul Harris Fellow. Ask your club's Foundation chair for details.",
               "ロータリー財団に$1,000寄付すると、ポール・ハリス・フェローになれます。詳細はクラブの財団委員長にお尋ねください。",
-              "向扶轮基金会捐款 $1,000 即可成为保罗·哈里斯会员。详情请咨询俱乐部基金会主席。"
+              "向扶輪基金會捐款 $1,000 即可成為保羅·哈里斯會員。詳情請諮詢俱樂部基金會主席。"
             )}
           </div>
         </div>
@@ -153,10 +153,10 @@ export default function DashboardPage() {
 
       <div className="container-page pt-12">
         <div className="rounded-xl border border-slate-200 p-6">
-          <h2 className="font-bold text-slate-900 mb-4">{t("Удахгүй болох арга хэмжээ", "Upcoming Events", "今後の予定", "即将举行的活动")}</h2>
-          {events === null && <p className="text-sm text-slate-400">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加载中…")}</p>}
+          <h2 className="font-bold text-slate-900 mb-4">{t("Удахгүй болох арга хэмжээ", "Upcoming Events", "今後の予定", "即將舉行的活動")}</h2>
+          {events === null && <p className="text-sm text-slate-400">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加載中…")}</p>}
           {events && events.length === 0 && (
-            <p className="text-sm text-slate-400">{t("Одоогоор төлөвлөсөн арга хэмжээ алга.", "No upcoming events scheduled right now.", "現在予定されているイベントはありません。", "目前没有安排的活动。")}</p>
+            <p className="text-sm text-slate-400">{t("Одоогоор төлөвлөсөн арга хэмжээ алга.", "No upcoming events scheduled right now.", "現在予定されているイベントはありません。", "目前沒有安排的活動。")}</p>
           )}
           {events && events.length > 0 && (
             <ul className="grid gap-3 sm:grid-cols-2">
@@ -305,7 +305,7 @@ function PhotoUploadCard({ t }: { t: (mn: string, en: string, ja?: string, zh?: 
     } = await supabase.auth.getSession();
     if (!session) {
       setBusy(false);
-      setError(t("Дахин нэвтэрнэ үү.", "Please log in again.", "再度ログインしてください。", "请重新登录。"));
+      setError(t("Дахин нэвтэрнэ үү.", "Please log in again.", "再度ログインしてください。", "請重新登錄。"));
       return;
     }
     // Rebind to a variable TypeScript can prove is non-null inside the
@@ -343,9 +343,9 @@ function PhotoUploadCard({ t }: { t: (mn: string, en: string, ja?: string, zh?: 
   return (
     <div className="rounded-xl border border-slate-200 p-6">
       <div className="flex items-center justify-between mb-4 gap-3">
-        <h2 className="font-bold text-slate-900">{t("Зураг байршуулах", "Photo Uploads", "写真アップロード", "照片上传")}</h2>
+        <h2 className="font-bold text-slate-900">{t("Зураг байршуулах", "Photo Uploads", "写真アップロード", "照片上傳")}</h2>
         <Link href="/gallery" className="text-xs font-semibold text-rotary-royal-blue hover:underline whitespace-nowrap">
-          {t("Зургийн сан үзэх", "View Photo Library", "写真ライブラリを見る", "查看照片库")} →
+          {t("Зургийн сан үзэх", "View Photo Library", "写真ライブラリを見る", "查看照片庫")} →
         </Link>
       </div>
       <form onSubmit={upload} className="grid gap-3">
@@ -364,7 +364,7 @@ function PhotoUploadCard({ t }: { t: (mn: string, en: string, ja?: string, zh?: 
 
         {category === "projects" && (
           <select value={projectId} onChange={(e) => setProjectId(e.target.value)} className="rounded-md border border-slate-300 px-3 py-2 text-sm">
-            <option value="">{t("Төсөл сонгох", "Select a project", "プロジェクトを選択", "选择项目")}</option>
+            <option value="">{t("Төсөл сонгох", "Select a project", "プロジェクトを選択", "選擇項目")}</option>
             {projects.map((p) => (
               <option key={p.id} value={p.id}>{p.title_en}</option>
             ))}
@@ -373,7 +373,7 @@ function PhotoUploadCard({ t }: { t: (mn: string, en: string, ja?: string, zh?: 
 
         <div>
           <p className="text-xs text-slate-500 mb-1">
-            {t("Дэд хавтас (заавал биш)", "Subfolder (optional)", "サブフォルダ(任意)", "子文件夹(可选)")}
+            {t("Дэд хавтас (заавал биш)", "Subfolder (optional)", "サブフォルダ(任意)", "子文件夾(可選)")}
           </p>
           {folderMode === "select" ? (
             <select
@@ -388,17 +388,17 @@ function PhotoUploadCard({ t }: { t: (mn: string, en: string, ja?: string, zh?: 
               }}
               className="rounded-md border border-slate-300 px-3 py-2 text-sm w-full"
             >
-              <option value="">{t("— Дэд хавтасгүй —", "— No subfolder —", "— サブフォルダなし —", "— 无子文件夹 —")}</option>
+              <option value="">{t("— Дэд хавтасгүй —", "— No subfolder —", "— サブフォルダなし —", "— 無子文件夾 —")}</option>
               {existingFolders.map((f) => (
                 <option key={f} value={f}>{f}</option>
               ))}
-              <option value="__new__">{t("+ Шинэ хавтас үүсгэх", "+ Create new folder", "+ 新しいフォルダを作成", "+ 新建文件夹")}</option>
+              <option value="__new__">{t("+ Шинэ хавтас үүсгэх", "+ Create new folder", "+ 新しいフォルダを作成", "+ 新建文件夾")}</option>
             </select>
           ) : (
             <div className="flex gap-2">
               <input
                 autoFocus
-                placeholder={t("Шинэ хавтасны нэр (жишээ: gala-2026)", "New folder name (e.g. gala-2026)", "新しいフォルダ名(例:gala-2026)", "新文件夹名称(例如 gala-2026)")}
+                placeholder={t("Шинэ хавтасны нэр (жишээ: gala-2026)", "New folder name (e.g. gala-2026)", "新しいフォルダ名(例:gala-2026)", "新文件夾名稱(例如 gala-2026)")}
                 value={subfolder}
                 onChange={(e) => setSubfolder(e.target.value)}
                 className="rounded-md border border-slate-300 px-3 py-2 text-sm w-full"
@@ -412,7 +412,7 @@ function PhotoUploadCard({ t }: { t: (mn: string, en: string, ja?: string, zh?: 
                   }}
                   className="shrink-0 text-xs font-semibold px-3 py-2 rounded-md border border-slate-300 text-slate-600 hover:bg-slate-50"
                 >
-                  {t("Жагсаалтаас сонгох", "Choose existing", "既存から選択", "从列表选择")}
+                  {t("Жагсаалтаас сонгох", "Choose existing", "既存から選択", "從列表選擇")}
                 </button>
               )}
             </div>
@@ -422,7 +422,7 @@ function PhotoUploadCard({ t }: { t: (mn: string, en: string, ja?: string, zh?: 
               "Дурын нэр өгч болно — жишээ нь тодорхой арга хэмжээ бүрийг тусад нь эмхэлж болно.",
               "Type any name to group photos further — e.g. a specific event within the category.",
               "任意の名前を入力してさらに整理できます(例:カテゴリー内の特定のイベント)。",
-              "可输入任意名称进一步分类,例如某分类下的具体活动。"
+              "可輸入任意名稱進一步分類,例如某分類下的具體活動。"
             )}
           </p>
         </div>
@@ -446,7 +446,7 @@ function PhotoUploadCard({ t }: { t: (mn: string, en: string, ja?: string, zh?: 
               "Хэдэн ч зураг зэрэг сонгож болно — бүгд ижил хавтас, тайлбартай орно.",
               "Select as many photos as you like at once — they'll all use the same folder and caption.",
               "何枚でも一度に選択できます — すべて同じフォルダとキャプションで保存されます。",
-              "可一次选择任意数量的照片 — 均使用相同的文件夹和说明。"
+              "可一次選擇任意數量的照片 — 均使用相同的文件夾和說明。"
             )}
           </p>
           {files.length > 0 && (
@@ -456,7 +456,7 @@ function PhotoUploadCard({ t }: { t: (mn: string, en: string, ja?: string, zh?: 
           )}
         </div>
         <input
-          placeholder={t("Тайлбар (заавал биш, бүх зурагт хэрэглэгдэнэ)", "Caption (optional, applied to all)", "キャプション(任意、全写真に適用)", "说明(可选,适用于所有照片)")}
+          placeholder={t("Тайлбар (заавал биш, бүх зурагт хэрэглэгдэнэ)", "Caption (optional, applied to all)", "キャプション(任意、全写真に適用)", "說明(可選,適用於所有照片)")}
           value={caption}
           onChange={(e) => setCaption(e.target.value)}
           className="rounded-md border border-slate-300 px-3 py-2 text-sm"
@@ -494,10 +494,10 @@ function PhotoUploadCard({ t }: { t: (mn: string, en: string, ja?: string, zh?: 
           className="justify-self-start bg-rotary-royal-blue text-white font-semibold rounded-md px-5 py-2 text-sm disabled:opacity-60"
         >
           {busy
-            ? t("Байршуулж байна…", "Uploading…", "アップロード中…", "上传中…")
+            ? t("Байршуулж байна…", "Uploading…", "アップロード中…", "上傳中…")
             : files.length > 1
               ? t(`${files.length} зураг байршуулах`, `Upload ${files.length} photos`, `${files.length}枚アップロード`, `上传 ${files.length} 张照片`)
-              : t("Байршуулах", "Upload", "アップロード", "上传")}
+              : t("Байршуулах", "Upload", "アップロード", "上傳")}
         </button>
       </form>
     </div>
@@ -509,6 +509,7 @@ type AwardSubmission = {
   id: string;
   title: string;
   comment: string | null;
+  award_date: string | null;
   file_url: string | null;
   file_type: "image" | "pdf" | null;
   status: AwardStatus;
@@ -527,6 +528,7 @@ const AWARD_STATUS_STYLE: Record<AwardStatus, string> = {
 // submissions and where each one stands.
 function AwardSubmissionCard({ t, memberId }: { t: (mn: string, en: string, ja?: string, zh?: string) => string; memberId: string }) {
   const [title, setTitle] = useState("");
+  const [awardDate, setAwardDate] = useState("");
   const [comment, setComment] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
@@ -536,7 +538,7 @@ function AwardSubmissionCard({ t, memberId }: { t: (mn: string, en: string, ja?:
   async function refresh() {
     const { data } = await supabase
       .from("club_awards")
-      .select("id, title, comment, file_url, file_type, status, created_at")
+      .select("id, title, comment, award_date, file_url, file_type, status, created_at")
       .eq("submitted_by", memberId)
       .order("created_at", { ascending: false });
     setMine((data as AwardSubmission[]) ?? []);
@@ -559,7 +561,7 @@ function AwardSubmissionCard({ t, memberId }: { t: (mn: string, en: string, ja?:
       else if (file.type === "application/pdf") fileType = "pdf";
       else {
         setBusy(false);
-        setError(t("Зөвхөн зураг эсвэл PDF файл байршуулна уу.", "Only image or PDF files are allowed.", "画像またはPDFファイルのみアップロードできます。", "仅支持上传图片或 PDF 文件。"));
+        setError(t("Зөвхөн зураг эсвэл PDF файл байршуулна уу.", "Only image or PDF files are allowed.", "画像またはPDFファイルのみアップロードできます。", "僅支持上傳圖片或 PDF 文件。"));
         return;
       }
       const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
@@ -576,6 +578,7 @@ function AwardSubmissionCard({ t, memberId }: { t: (mn: string, en: string, ja?:
     const { error: insertError } = await supabase.from("club_awards").insert({
       submitted_by: memberId,
       title,
+      award_date: awardDate || null,
       comment: comment || null,
       file_url: fileUrl,
       file_type: fileType,
@@ -586,38 +589,48 @@ function AwardSubmissionCard({ t, memberId }: { t: (mn: string, en: string, ja?:
       return;
     }
     setTitle("");
+    setAwardDate("");
     setComment("");
     setFile(null);
     refresh();
   }
 
   async function remove(a: AwardSubmission) {
-    if (!confirm(t("Устгах уу?", "Delete this submission?", "削除しますか?", "确定删除吗?"))) return;
+    if (!confirm(t("Устгах уу?", "Delete this submission?", "削除しますか?", "確定刪除嗎?"))) return;
     await supabase.from("club_awards").delete().eq("id", a.id);
     refresh();
   }
 
   return (
     <div className="rounded-xl border border-slate-200 p-6">
-      <h2 className="font-bold text-slate-900 mb-1">{t("Шагнал нэмэх", "Submit an Award", "受賞情報を投稿", "提交奖项")}</h2>
+      <h2 className="font-bold text-slate-900 mb-1">{t("Шагнал нэмэх", "Submit an Award", "受賞情報を投稿", "提交獎項")}</h2>
       <p className="text-xs text-slate-400 mb-4 max-w-xl">
         {t(
           "Админ хянаад зөвшөөрсний дараа \"Бидний тухай\" хуудсанд харагдана.",
           "Shown on the About page once an admin reviews and approves it.",
           "管理者が確認・承認した後、「私たちについて」ページに表示されます。",
-          "经管理员审核批准后,将显示在「关于我们」页面。"
+          "經管理員審核批准後,將顯示在「關於我們」頁面。"
         )}
       </p>
       <form onSubmit={submit} className="grid gap-3 mb-6">
-        <input
-          required
-          placeholder={t("Гарчиг", "Title", "タイトル", "标题")}
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="rounded-md border border-slate-300 px-3 py-2 text-sm"
-        />
+        <div className="grid gap-3 sm:grid-cols-2">
+          <input
+            required
+            placeholder={t("Гарчиг", "Title", "タイトル", "標題")}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+          />
+          <input
+            type="date"
+            aria-label={t("Шагнал авсан огноо (заавал биш)", "Award date (optional)", "受賞日(任意)", "獲獎日期(可選)")}
+            value={awardDate}
+            onChange={(e) => setAwardDate(e.target.value)}
+            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+          />
+        </div>
         <textarea
-          placeholder={t("Тайлбар (заавал биш)", "Comment (optional)", "コメント(任意)", "说明(可选)")}
+          placeholder={t("Тайлбар (заавал биш)", "Comment (optional)", "コメント(任意)", "說明(可選)")}
           value={comment}
           onChange={(e) => setComment(e.target.value)}
           rows={2}
@@ -626,7 +639,7 @@ function AwardSubmissionCard({ t, memberId }: { t: (mn: string, en: string, ja?:
         <div>
           <input type="file" accept="image/*,application/pdf" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="text-sm" />
           <p className="text-xs text-slate-400 mt-1">
-            {t("Зураг эсвэл PDF (заавал биш)", "Photo or PDF (optional)", "写真またはPDF(任意)", "照片或 PDF(可选)")}
+            {t("Зураг эсвэл PDF (заавал биш)", "Photo or PDF (optional)", "写真またはPDF(任意)", "照片或 PDF(可選)")}
           </p>
         </div>
         {error && <p className="text-sm text-rotary-cardinal">{error}</p>}
@@ -650,15 +663,16 @@ function AwardSubmissionCard({ t, memberId }: { t: (mn: string, en: string, ja?:
               </div>
               <div className="min-w-0 flex-1">
                 <p className="font-semibold text-slate-900 text-sm truncate">{a.title}</p>
+                {a.award_date && <p className="text-xs text-slate-400">{new Date(a.award_date).toLocaleDateString()}</p>}
                 <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full mt-0.5 ${AWARD_STATUS_STYLE[a.status]}`}>
-                  {a.status === "pending" && t("Хянагдаж байна", "Pending review", "審査中", "审核中")}
+                  {a.status === "pending" && t("Хянагдаж байна", "Pending review", "審査中", "審核中")}
                   {a.status === "approved" && t("Батлагдсан", "Approved", "承認済み", "已批准")}
-                  {a.status === "rejected" && t("Татгалзсан", "Rejected", "却下", "已拒绝")}
+                  {a.status === "rejected" && t("Татгалзсан", "Rejected", "却下", "已拒絕")}
                 </span>
               </div>
               {a.status === "pending" && (
                 <button onClick={() => remove(a)} className="shrink-0 text-xs font-semibold px-2 py-1.5 rounded-md border border-rotary-cardinal text-rotary-cardinal hover:bg-rotary-cardinal hover:text-white">
-                  {t("Устгах", "Delete", "削除", "删除")}
+                  {t("Устгах", "Delete", "削除", "刪除")}
                 </button>
               )}
             </div>
@@ -714,25 +728,25 @@ function MyInfoCard({
   return (
     <div className="rounded-xl border border-slate-200 p-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="font-bold text-slate-900">{t("Миний мэдээлэл", "My Info", "私の情報", "我的资料")}</h2>
+        <h2 className="font-bold text-slate-900">{t("Миний мэдээлэл", "My Info", "私の情報", "我的資料")}</h2>
         {!editing && (
           <button onClick={startEdit} className="text-xs font-semibold px-3 py-1.5 rounded-md border border-slate-300 text-slate-600 hover:bg-slate-50">
-            {t("Засах", "Edit", "編集", "编辑")}
+            {t("Засах", "Edit", "編集", "編輯")}
           </button>
         )}
       </div>
 
       {!editing ? (
         <dl className="text-sm text-slate-600 space-y-2">
-          <Row label={t("И-мэйл", "Email", "メール", "邮箱")} value={member.email} />
-          <Row label={t("Утас", "Phone", "電話", "电话")} value={member.phone ?? "—"} />
+          <Row label={t("И-мэйл", "Email", "メール", "郵箱")} value={member.email} />
+          <Row label={t("Утас", "Phone", "電話", "電話")} value={member.phone ?? "—"} />
           <Row label={t("Хот", "City", "都市", "城市")} value={member.city ?? "—"} />
-          <Row label={t("Мэргэжил", "Classification", "職業", "职业")} value={member.classification ?? "—"} />
+          <Row label={t("Мэргэжил", "Classification", "職業", "職業")} value={member.classification ?? "—"} />
         </dl>
       ) : (
         <div className="grid gap-3">
           <input
-            placeholder={t("Утас", "Phone", "電話", "电话")}
+            placeholder={t("Утас", "Phone", "電話", "電話")}
             value={form.phone}
             onChange={(e) => setForm({ ...form, phone: e.target.value })}
             className="rounded-md border border-slate-300 px-3 py-2 text-sm"
@@ -744,7 +758,7 @@ function MyInfoCard({
             className="rounded-md border border-slate-300 px-3 py-2 text-sm"
           />
           <input
-            placeholder={t("Мэргэжил", "Classification", "職業", "职业")}
+            placeholder={t("Мэргэжил", "Classification", "職業", "職業")}
             value={form.classification}
             onChange={(e) => setForm({ ...form, classification: e.target.value })}
             className="rounded-md border border-slate-300 px-3 py-2 text-sm"
@@ -766,7 +780,7 @@ function MyInfoCard({
           "И-мэйл хаягийг өөрчлөх бол клубын админтай холбогдоно уу.",
           "To change your email address, contact a club admin.",
           "メールアドレスの変更はクラブ管理者にご連絡ください。",
-          "如需更改邮箱,请联系俱乐部管理员。"
+          "如需更改郵箱,請聯繫俱樂部管理員。"
         )}
       </p>
     </div>
@@ -804,11 +818,11 @@ function SetPasswordCard({
     e.preventDefault();
     setError(null);
     if (password.length < 8) {
-      setError(t("Нууц үг дор хаяж 8 тэмдэгт байх ёстой.", "Password must be at least 8 characters.", "パスワードは8文字以上にしてください。", "密码至少需要8个字符。"));
+      setError(t("Нууц үг дор хаяж 8 тэмдэгт байх ёстой.", "Password must be at least 8 characters.", "パスワードは8文字以上にしてください。", "密碼至少需要8個字符。"));
       return;
     }
     if (password !== confirm) {
-      setError(t("Нууц үг таарахгүй байна.", "Passwords don't match.", "パスワードが一致しません。", "两次输入的密码不一致。"));
+      setError(t("Нууц үг таарахгүй байна.", "Passwords don't match.", "パスワードが一致しません。", "兩次輸入的密碼不一致。"));
       return;
     }
     setBusy(true);
@@ -834,7 +848,7 @@ function SetPasswordCard({
           "Нууц үг тохирогдлоо! Дараагийн удаа шууд нууц үгээрээ нэвтэрч болно.",
           "Password set! Next time you can log in directly with your password.",
           "パスワードを設定しました!次回からパスワードで直接ログインできます。",
-          "密码已设置!下次可直接使用密码登录。"
+          "密碼已設置!下次可直接使用密碼登錄。"
         )}
       </div>
     );
@@ -843,14 +857,14 @@ function SetPasswordCard({
   return (
     <div className="rounded-xl border-2 border-rotary-gold bg-amber-50 p-6">
       <h2 className="font-bold text-slate-900 mb-1">
-        {t("Нууц үгээ тохируулаарай", "Set a password", "パスワードを設定してください", "设置密码")}
+        {t("Нууц үгээ тохируулаарай", "Set a password", "パスワードを設定してください", "設置密碼")}
       </h2>
       <p className="text-sm text-slate-600 mb-4">
         {t(
           "Та и-мэйл холбоосоор нэвтэрлээ. Нууц үг тохируулбал дараа бүр холбоос хүлээхгүйгээр шууд нэвтэрч болно.",
           "You signed in with an email link. Set a password now so future logins don't need a new emailed link.",
           "メールリンクでログインしました。パスワードを設定すると、次回から新しいリンクを待たずにログインできます。",
-          "您通过邮件链接登录。现在设置密码,以后登录无需再等待新链接。"
+          "您通過郵件鏈接登錄。現在設置密碼,以後登錄無需再等待新鏈接。"
         )}
       </p>
       <form onSubmit={submit} className="grid gap-3 sm:grid-cols-3 sm:items-start">
@@ -859,7 +873,7 @@ function SetPasswordCard({
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder={t("Шинэ нууц үг", "New password", "新しいパスワード", "新密码")}
+          placeholder={t("Шинэ нууц үг", "New password", "新しいパスワード", "新密碼")}
           className="rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-rotary-royal-blue"
         />
         <input
@@ -867,7 +881,7 @@ function SetPasswordCard({
           required
           value={confirm}
           onChange={(e) => setConfirm(e.target.value)}
-          placeholder={t("Дахин оруулах", "Confirm password", "確認用パスワード", "确认密码")}
+          placeholder={t("Дахин оруулах", "Confirm password", "確認用パスワード", "確認密碼")}
           className="rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-rotary-royal-blue"
         />
         <button

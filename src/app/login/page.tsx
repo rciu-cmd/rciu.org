@@ -49,14 +49,14 @@ export default function LoginPage() {
               "Энэ и-мэйл бүртгэлд байхгүй байна. Клубын админтай холбогдоно уу.",
               "This email isn't registered as a member. Contact the club admin.",
               "このメールアドレスは会員登録されていません。管理者にご連絡ください。",
-              "该邮箱未注册为会员。请联系俱乐部管理员。"
+              "該郵箱未註冊為會員。請聯繫俱樂部管理員。"
             )
           : /rate limit/i.test(error.message)
           ? t(
               "И-мэйлийн хязгаарт хүрсэн байна — түр хүлээгээд дахин оролдоно уу.",
               "Email rate limit reached — please wait a bit and try again.",
               "メール送信の上限に達しました。しばらくしてから再度お試しください。",
-              "邮件发送已达上限,请稍后再试。"
+              "郵件發送已達上限,請稍後再試。"
             )
           : error.message
       );
@@ -77,7 +77,7 @@ export default function LoginPage() {
           "И-мэйл эсвэл нууц үг буруу байна. Нууц үг тохируулаагүй бол «И-мэйл холбоос» ашиглана уу.",
           "Incorrect email or password. If you haven't set a password yet, use the \"Email link\" option.",
           "メールアドレスまたはパスワードが正しくありません。まだパスワードを設定していない場合は「メールリンク」をご利用ください。",
-          "邮箱或密码不正确。如果您还未设置密码,请使用「邮件链接」选项。"
+          "郵箱或密碼不正確。如果您還未設置密碼,請使用「郵件鏈接」選項。"
         )
       );
       return;
@@ -89,14 +89,14 @@ export default function LoginPage() {
     <div className="container-page py-16">
       <div className="mx-auto max-w-md">
         <h1 className="text-2xl font-bold text-rotary-royal-blue mb-2">
-          {t("Гишүүн нэвтрэх", "Member Login", "会員ログイン", "会员登录")}
+          {t("Гишүүн нэвтрэх", "Member Login", "会員ログイン", "會員登錄")}
         </h1>
         <p className="text-slate-600 text-sm mb-6">
           {t(
             "Анх удаа нэвтэрч байгаа бол «И-мэйл холбоос»-г ашиглана уу — дараа нь нэвтрэх бүрд нууц үгээ ашиглаж болно.",
             "First time logging in? Use \"Email link\" — after that, you can set a password and use it every time.",
             "初めてログインする場合は「メールリンク」をご利用ください。その後、パスワードを設定すれば毎回それを使えます。",
-            "首次登录请使用「邮件链接」— 之后您可以设置密码,每次登录都可使用。"
+            "首次登錄請使用「郵件鏈接」— 之後您可以設置密碼,每次登錄都可使用。"
           )}
         </p>
 
@@ -105,37 +105,37 @@ export default function LoginPage() {
             onClick={() => { setMode("password"); setError(null); }}
             className={`rounded-md px-3 py-2 transition-colors ${mode === "password" ? "bg-rotary-royal-blue text-white" : "text-slate-600"}`}
           >
-            {t("Нууц үг", "Password", "パスワード", "密码")}
+            {t("Нууц үг", "Password", "パスワード", "密碼")}
           </button>
           <button
             onClick={() => { setMode("link"); setError(null); }}
             className={`rounded-md px-3 py-2 transition-colors ${mode === "link" ? "bg-rotary-royal-blue text-white" : "text-slate-600"}`}
           >
-            {t("И-мэйл холбоос", "Email link", "メールリンク", "邮件链接")}
+            {t("И-мэйл холбоос", "Email link", "メールリンク", "郵件鏈接")}
           </button>
         </div>
 
         {mode === "link" ? (
           linkSent ? (
             <div className="rounded-xl bg-green-50 border border-green-200 p-6 text-green-800 text-sm">
-              {t("Холбоос илгээгдлээ! И-мэйлээ шалгана уу.", "Link sent! Check your email.", "リンクを送信しました!メールをご確認ください。", "链接已发送!请查收邮箱。")}
+              {t("Холбоос илгээгдлээ! И-мэйлээ шалгана уу.", "Link sent! Check your email.", "リンクを送信しました!メールをご確認ください。", "鏈接已發送!請查收郵箱。")}
             </div>
           ) : (
             <form onSubmit={sendLink} className="space-y-4">
               <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className={inputClass} />
               {error && <p className="text-sm text-rotary-cardinal">{error}</p>}
               <button type="submit" disabled={busy} className="w-full bg-rotary-royal-blue text-white font-semibold rounded-md py-2.5 disabled:opacity-60">
-                {busy ? t("Илгээж байна…", "Sending…", "送信中…", "发送中…") : t("Холбоос авах", "Send Link", "リンクを送信", "发送链接")}
+                {busy ? t("Илгээж байна…", "Sending…", "送信中…", "發送中…") : t("Холбоос авах", "Send Link", "リンクを送信", "發送鏈接")}
               </button>
             </form>
           )
         ) : (
           <form onSubmit={loginPassword} className="space-y-4">
             <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className={inputClass} />
-            <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t("Нууц үг", "Password", "パスワード", "密码")} className={inputClass} />
+            <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t("Нууц үг", "Password", "パスワード", "密碼")} className={inputClass} />
             {error && <p className="text-sm text-rotary-cardinal">{error}</p>}
             <button type="submit" disabled={busy} className="w-full bg-rotary-royal-blue text-white font-semibold rounded-md py-2.5 disabled:opacity-60">
-              {busy ? t("Нэвтэрч байна…", "Signing in…", "ログイン中…", "登录中…") : t("Нэвтрэх", "Log In", "ログイン", "登录")}
+              {busy ? t("Нэвтэрч байна…", "Signing in…", "ログイン中…", "登錄中…") : t("Нэвтрэх", "Log In", "ログイン", "登錄")}
             </button>
           </form>
         )}

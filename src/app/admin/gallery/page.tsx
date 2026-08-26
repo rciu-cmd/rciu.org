@@ -68,7 +68,7 @@ export default function AdminGalleryPage() {
   }
 
   async function deletePhoto(row: PhotoRow) {
-    if (!confirm(t("Энэ зургийг устгах уу? Буцаах боломжгүй.", "Delete this photo? This can't be undone.", "この写真を削除しますか?元に戻せません。", "确定删除这张照片吗?此操作无法撤销。"))) return;
+    if (!confirm(t("Энэ зургийг устгах уу? Буцаах боломжгүй.", "Delete this photo? This can't be undone.", "この写真を削除しますか?元に戻せません。", "確定刪除這張照片嗎?此操作無法撤銷。"))) return;
     setDeletingId(row.id);
     setError(null);
     // Remove the file from Storage first, then the DB row — if the
@@ -144,14 +144,14 @@ export default function AdminGalleryPage() {
   return (
     <div className="container-page py-10">
       <h1 className="text-2xl font-bold text-rotary-royal-blue mb-2">
-        {t("Зургийн цомог", "Home Page Gallery", "フォトギャラリー", "首页照片集")}
+        {t("Зургийн цомог", "Home Page Gallery", "フォトギャラリー", "首頁照片集")}
       </h1>
       <p className="text-slate-500 mb-6 max-w-2xl">
         {t(
           "Энд сонгосон зургууд л нүүр хуудасны зургийн цомогт харагдана. Бусад зургууд системд хадгалагдсан хэвээр байна.",
           "Only photos switched on here appear in the home page gallery strip. Everything else stays uploaded but hidden from the home page.",
           "ここでオンにした写真だけがホームページのギャラリーに表示されます。他の写真はアップロードされたまま非表示になります。",
-          "只有在此处开启的照片才会显示在首页照片集中。其他照片仍会保存，但不会显示在首页。"
+          "只有在此處開啟的照片才會顯示在首頁照片集中。其他照片仍會保存，但不會顯示在首頁。"
         )}
       </p>
 
@@ -168,7 +168,7 @@ export default function AdminGalleryPage() {
           onClick={() => setView("folders")}
           className={`rounded-md px-4 py-1.5 transition-colors ${view === "folders" ? "bg-rotary-royal-blue text-white" : "text-slate-600"}`}
         >
-          {t("Хавтаснууд", "Folders", "フォルダ", "文件夹")}
+          {t("Хавтаснууд", "Folders", "フォルダ", "文件夾")}
         </button>
       </div>
 
@@ -185,12 +185,12 @@ export default function AdminGalleryPage() {
                 onClick={() => setFolderFilter(null)}
                 className="text-xs font-semibold px-3 py-1 rounded-full bg-rotary-royal-blue/10 text-rotary-royal-blue"
               >
-                {folderFilter} × {t("Шүүлтүүр цуцлах", "Clear filter", "フィルター解除", "清除筛选")}
+                {folderFilter} × {t("Шүүлтүүр цуцлах", "Clear filter", "フィルター解除", "清除篩選")}
               </button>
             )}
           </div>
 
-          {items === null && <p className="text-slate-400 text-sm">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加载中…")}</p>}
+          {items === null && <p className="text-slate-400 text-sm">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加載中…")}</p>}
 
           {items && items.length === 0 && (
             <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center text-slate-500">
@@ -198,7 +198,7 @@ export default function AdminGalleryPage() {
                 "Гишүүд дашбоардаас зураг байршуулмагц энд харагдана.",
                 "Photos will show up here once members upload them from their dashboard.",
                 "会員がダッシュボードから写真をアップロードすると、ここに表示されます。",
-                "会员从个人主页上传照片后，将显示在此处。"
+                "會員從個人主頁上傳照片後，將顯示在此處。"
               )}
             </div>
           )}
@@ -212,28 +212,28 @@ export default function AdminGalleryPage() {
                     <div className="relative w-full aspect-video bg-slate-100">
                       <Image src={url} alt={p.caption ?? ""} fill className="object-cover" />
                       <span className="absolute top-2 left-2 text-[10px] font-semibold uppercase tracking-wide bg-white/90 px-2 py-0.5 rounded-full text-slate-600">
-                        {p.source === "club" ? t("Ерөнхий", "Club photo", "一般", "俱乐部照片") : t("Төслийн", "Project photo", "プロジェクト", "项目照片")}
+                        {p.source === "club" ? t("Ерөнхий", "Club photo", "一般", "俱樂部照片") : t("Төслийн", "Project photo", "プロジェクト", "項目照片")}
                       </span>
                     </div>
                     <div className="p-3 flex items-center justify-between gap-3">
-                      <span className="text-xs text-slate-500 line-clamp-1">{p.caption || t("Тайлбаргүй", "No caption", "説明なし", "无说明")}</span>
+                      <span className="text-xs text-slate-500 line-clamp-1">{p.caption || t("Тайлбаргүй", "No caption", "説明なし", "無說明")}</span>
                       <div className="flex items-center gap-2 shrink-0">
                         <button
                           onClick={() => toggle(p)}
                           disabled={savingId === p.id}
                           aria-pressed={p.featured_home}
                           className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${p.featured_home ? "bg-rotary-gold" : "bg-slate-300"} disabled:opacity-50`}
-                          title={t("Нүүр хуудсанд харуулах", "Show on home page", "ホームページに表示", "在首页显示")}
+                          title={t("Нүүр хуудсанд харуулах", "Show on home page", "ホームページに表示", "在首頁顯示")}
                         >
                           <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${p.featured_home ? "translate-x-6" : "translate-x-1"}`} />
                         </button>
                         <button
                           onClick={() => deletePhoto(p)}
                           disabled={deletingId === p.id}
-                          title={t("Устгах", "Delete", "削除", "删除")}
+                          title={t("Устгах", "Delete", "削除", "刪除")}
                           className="text-xs font-semibold px-2 py-1.5 rounded-md border border-rotary-cardinal text-rotary-cardinal hover:bg-rotary-cardinal hover:text-white disabled:opacity-50"
                         >
-                          {deletingId === p.id ? "…" : t("Устгах", "Delete", "削除", "删除")}
+                          {deletingId === p.id ? "…" : t("Устгах", "Delete", "削除", "刪除")}
                         </button>
                       </div>
                     </div>
@@ -252,23 +252,23 @@ export default function AdminGalleryPage() {
               "Хавтасны нэрийг өөрчлөх эсвэл хоёр хавтасыг нэгтгэх боломжтой. Энэ нь доторх бүх зургийг физикээр шилжүүлнэ.",
               "Rename a folder, or merge one folder into another — both physically move every photo inside it.",
               "フォルダ名の変更、または2つのフォルダを統合できます — どちらも中の写真を物理的に移動します。",
-              "可以重命名文件夹，或将一个文件夹合并到另一个——两者都会实际移动其中的所有照片。"
+              "可以重命名文件夾，或將一個文件夾合併到另一個——兩者都會實際移動其中的所有照片。"
             )}
           </p>
 
           {folders.length > 0 && (
             <div className="rounded-xl border border-slate-200 p-5 mb-8">
-              <h3 className="font-semibold text-slate-900 mb-3">{t("Хавтас нэгтгэх", "Merge Folders", "フォルダ統合", "合并文件夹")}</h3>
+              <h3 className="font-semibold text-slate-900 mb-3">{t("Хавтас нэгтгэх", "Merge Folders", "フォルダ統合", "合併文件夾")}</h3>
               <div className="flex flex-wrap items-center gap-3">
                 <select value={mergeFrom} onChange={(e) => setMergeFrom(e.target.value)} className="rounded-md border border-slate-300 px-3 py-2 text-sm">
-                  <option value="">{t("Эх хавтас", "From folder", "移動元", "源文件夹")}</option>
+                  <option value="">{t("Эх хавтас", "From folder", "移動元", "源文件夾")}</option>
                   {folders.map((f) => (
                     <option key={f.folder} value={f.folder}>{f.folder} ({f.photos.length})</option>
                   ))}
                 </select>
                 <span className="text-slate-400 text-sm">→</span>
                 <select value={mergeTo} onChange={(e) => setMergeTo(e.target.value)} className="rounded-md border border-slate-300 px-3 py-2 text-sm">
-                  <option value="">{t("Хүлээн авах хавтас", "Into folder", "移動先", "目标文件夹")}</option>
+                  <option value="">{t("Хүлээн авах хавтас", "Into folder", "移動先", "目標文件夾")}</option>
                   {folders.filter((f) => f.folder !== mergeFrom).map((f) => (
                     <option key={f.folder} value={f.folder}>{f.folder} ({f.photos.length})</option>
                   ))}
@@ -278,14 +278,14 @@ export default function AdminGalleryPage() {
                   onClick={() => moveFolder(mergeFrom, mergeTo)}
                   className="text-sm font-semibold bg-rotary-royal-blue text-white rounded-md px-4 py-2 disabled:opacity-50"
                 >
-                  {busyFolder === mergeFrom ? t("Нэгтгэж байна…", "Merging…", "統合中…", "合并中…") : t("Нэгтгэх", "Merge", "統合", "合并")}
+                  {busyFolder === mergeFrom ? t("Нэгтгэж байна…", "Merging…", "統合中…", "合併中…") : t("Нэгтгэх", "Merge", "統合", "合併")}
                 </button>
               </div>
             </div>
           )}
 
           {folders.length === 0 && (
-            <p className="text-slate-400 text-sm">{t("Хавтас алга.", "No folders yet.", "フォルダがありません。", "暂无文件夹。")}</p>
+            <p className="text-slate-400 text-sm">{t("Хавтас алга.", "No folders yet.", "フォルダがありません。", "暫無文件夾。")}</p>
           )}
 
           <div className="grid gap-2">
@@ -317,7 +317,7 @@ export default function AdminGalleryPage() {
                       <p className="text-xs text-slate-400">
                         {t(`${f.photos.length} зураг`, `${f.photos.length} photo${f.photos.length === 1 ? "" : "s"}`, `${f.photos.length}枚`, `${f.photos.length} 张`)}
                         {" · "}
-                        {f.photos.filter((p) => p.featured_home).length} {t("нүүрт", "featured", "ホーム掲載", "首页显示")}
+                        {f.photos.filter((p) => p.featured_home).length} {t("нүүрт", "featured", "ホーム掲載", "首頁顯示")}
                       </p>
                     </div>
                     <div className="flex gap-2 shrink-0">

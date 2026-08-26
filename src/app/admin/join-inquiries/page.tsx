@@ -37,17 +37,17 @@ export default function AdminJoinInquiriesPage() {
   }
 
   async function remove(item: InquiryRow) {
-    if (!confirm(t("Устгах уу?", "Delete this inquiry?", "削除しますか?", "确定删除吗?"))) return;
+    if (!confirm(t("Устгах уу?", "Delete this inquiry?", "削除しますか?", "確定刪除嗎?"))) return;
     await supabase.from("join_inquiries").delete().eq("id", item.id);
     refresh();
   }
 
   return (
     <div>
-      <h2 className="text-xl font-bold text-slate-900 mb-6">{t("Элсэх хүсэлтүүд", "Join Inquiries", "入会お問い合わせ", "入会申请")}</h2>
+      <h2 className="text-xl font-bold text-slate-900 mb-6">{t("Элсэх хүсэлтүүд", "Join Inquiries", "入会お問い合わせ", "入會申請")}</h2>
       {error && <p className="text-sm text-rotary-cardinal mb-4">{error}</p>}
-      {items === null && <p className="text-slate-400 text-sm">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加载中…")}</p>}
-      {items && items.length === 0 && <p className="text-slate-400 text-sm">{t("Одоогоор хүсэлт алга.", "No inquiries yet.", "お問い合わせはまだありません。", "暂无申请。")}</p>}
+      {items === null && <p className="text-slate-400 text-sm">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加載中…")}</p>}
+      {items && items.length === 0 && <p className="text-slate-400 text-sm">{t("Одоогоор хүсэлт алга.", "No inquiries yet.", "お問い合わせはまだありません。", "暫無申請。")}</p>}
 
       <div className="grid gap-3">
         {items?.map((item) => (
@@ -65,11 +65,11 @@ export default function AdminJoinInquiriesPage() {
                 className="text-xs rounded-md border border-slate-300 px-2 py-1"
               >
                 <option value="new">{t("Шинэ", "New", "新規", "新")}</option>
-                <option value="contacted">{t("Холбогдсон", "Contacted", "連絡済み", "已联系")}</option>
-                <option value="closed">{t("Хаагдсан", "Closed", "終了", "已关闭")}</option>
+                <option value="contacted">{t("Холбогдсон", "Contacted", "連絡済み", "已聯繫")}</option>
+                <option value="closed">{t("Хаагдсан", "Closed", "終了", "已關閉")}</option>
               </select>
               <button onClick={() => remove(item)} className="text-xs font-semibold px-3 py-1.5 rounded-md border border-rotary-cardinal text-rotary-cardinal hover:bg-rotary-cardinal hover:text-white">
-                {t("Устгах", "Delete", "削除", "删除")}
+                {t("Устгах", "Delete", "削除", "刪除")}
               </button>
             </div>
           </div>

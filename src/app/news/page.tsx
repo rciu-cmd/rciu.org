@@ -60,13 +60,13 @@ export default function NewsPage() {
   return (
     <div className="container-page py-14">
       <h1 className="text-3xl font-bold text-rotary-royal-blue mb-3">
-        {t("Мэдээ", "News", "ニュース", "新闻")}
+        {t("Мэдээ", "News", "ニュース", "新聞")}
       </h1>
       <p className="text-slate-600 max-w-2xl mb-10">
-        {t("Клубын сүүлийн үеийн мэдээ, үйл явдал.", "The latest news and updates from the club.", "クラブの最新ニュースと活動報告。", "俱乐部最新新闻与动态。")}
+        {t("Клубын сүүлийн үеийн мэдээ, үйл явдал.", "The latest news and updates from the club.", "クラブの最新ニュースと活動報告。", "俱樂部最新新聞與動態。")}
       </p>
 
-      {items === null && <p className="text-slate-400 text-sm">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加载中…")}</p>}
+      {items === null && <p className="text-slate-400 text-sm">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加載中…")}</p>}
 
       {items && items.length === 0 && (
         <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center text-slate-500">
@@ -74,7 +74,7 @@ export default function NewsPage() {
             "Мэдээ удахгүй нэмэгдэнэ. Admin самбараас нийтэлж болно.",
             "No news posted yet — admins can publish updates from the admin dashboard.",
             "まだニュースはありません。管理者ダッシュボードから投稿できます。",
-            "暂无新闻。管理员可从后台发布动态。"
+            "暫無新聞。管理員可從後臺發佈動態。"
           )}
         </div>
       )}

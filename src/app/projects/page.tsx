@@ -37,7 +37,7 @@ export default function ProjectsPage() {
     <div className="container-page py-14">
       <div className="flex flex-wrap items-start justify-between gap-4 mb-3">
         <h1 className="text-3xl font-bold text-rotary-royal-blue">
-          {t("Төслүүд", "Projects", "プロジェクト", "项目")}
+          {t("Төслүүд", "Projects", "プロジェクト", "項目")}
         </h1>
         <div className="flex gap-3">
           <button
@@ -50,18 +50,18 @@ export default function ProjectsPage() {
             onClick={() => setShowJoinForm(true)}
             className="text-sm font-semibold border-2 border-rotary-royal-blue text-rotary-royal-blue rounded-full px-5 py-2 hover:bg-rotary-royal-blue hover:text-white transition"
           >
-            {t("Төсөлд нэгдэх", "Join a Project", "プロジェクトに参加", "加入项目")}
+            {t("Төсөлд нэгдэх", "Join a Project", "プロジェクトに参加", "加入項目")}
           </button>
         </div>
       </div>
       <p className="text-slate-600 max-w-2xl mb-10">
-        {t("Клубын хэрэгжүүлж буй болон дуусгасан төслүүд.", "Ongoing and completed community service projects.", "実施中および完了したコミュニティ・サービス・プロジェクト。", "正在进行和已完成的社区服务项目。")}
+        {t("Клубын хэрэгжүүлж буй болон дуусгасан төслүүд.", "Ongoing and completed community service projects.", "実施中および完了したコミュニティ・サービス・プロジェクト。", "正在進行和已完成的社區服務項目。")}
       </p>
 
       {showJoinForm && <JoinProjectModal t={t} projects={items ?? []} onClose={() => setShowJoinForm(false)} />}
       {showDonate && <DonateModal t={t} onClose={() => setShowDonate(false)} />}
 
-      {items === null && <p className="text-slate-400 text-sm">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加载中…")}</p>}
+      {items === null && <p className="text-slate-400 text-sm">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加載中…")}</p>}
 
       {items && items.length === 0 && (
         <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center text-slate-500">
@@ -69,7 +69,7 @@ export default function ProjectsPage() {
             "Төслийн мэдээлэл удахгүй нэмэгдэнэ.",
             "Project details will appear here once added by an admin.",
             "プロジェクト情報は管理者が追加次第、表示されます。",
-            "项目信息将在管理员添加后显示。"
+            "項目信息將在管理員添加後顯示。"
           )}
         </div>
       )}
@@ -109,10 +109,10 @@ const DONATE_ACCOUNT = {
 
 function DonateModal({ t, onClose }: { t: (mn: string, en: string, ja?: string, zh?: string) => string; onClose: () => void }) {
   const rows: [string, string][] = [
-    [t("Дансны нэр", "Account Name", "口座名義", "账户名称"), DONATE_ACCOUNT.accountName],
-    [t("Дансны дугаар", "Account Number", "口座番号", "账号"), DONATE_ACCOUNT.accountNumber],
+    [t("Дансны нэр", "Account Name", "口座名義", "賬戶名稱"), DONATE_ACCOUNT.accountName],
+    [t("Дансны дугаар", "Account Number", "口座番号", "賬號"), DONATE_ACCOUNT.accountNumber],
     [t("IBAN дугаар", "IBAN", "IBAN", "IBAN"), DONATE_ACCOUNT.iban],
-    [t("Валют", "Currency", "通貨", "币种"), DONATE_ACCOUNT.currency],
+    [t("Валют", "Currency", "通貨", "幣種"), DONATE_ACCOUNT.currency],
   ];
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4" onClick={onClose}>
@@ -121,7 +121,7 @@ function DonateModal({ t, onClose }: { t: (mn: string, en: string, ja?: string, 
           <Image src={asset("/logos/rciu-emblem.jpg")} alt="RCIU" width={40} height={40} className="rounded-full shrink-0" />
           <div>
             <p className="font-bold text-rotary-royal-blue leading-tight">Rotary Club of Ikh Urgoo</p>
-            <p className="text-xs text-slate-400">{t("Дансны мэдээлэл", "Bank Account Information", "口座情報", "银行账户信息")}</p>
+            <p className="text-xs text-slate-400">{t("Дансны мэдээлэл", "Bank Account Information", "口座情報", "銀行賬戶信息")}</p>
           </div>
         </div>
         <div className="p-6">
@@ -130,7 +130,7 @@ function DonateModal({ t, onClose }: { t: (mn: string, en: string, ja?: string, 
               "Клубын дансаар шууд шилжүүлэг хийж хандив өргөх боломжтой.",
               "You can donate directly by bank transfer to the club's account below.",
               "以下のクラブ口座へ直接お振込みいただけます。",
-              "您可以直接向以下俱乐部账户转账捐款。"
+              "您可以直接向以下俱樂部賬戶轉賬捐款。"
             )}
           </p>
           <dl className="rounded-xl border border-slate-200 divide-y divide-slate-100 overflow-hidden">
@@ -142,7 +142,7 @@ function DonateModal({ t, onClose }: { t: (mn: string, en: string, ja?: string, 
             ))}
           </dl>
           <button onClick={onClose} className="mt-6 w-full text-sm font-semibold bg-rotary-royal-blue text-white rounded-md py-2.5">
-            {t("Хаах", "Close", "閉じる", "关闭")}
+            {t("Хаах", "Close", "閉じる", "關閉")}
           </button>
         </div>
       </div>
@@ -196,24 +196,24 @@ function JoinProjectModal({
           <Image src={asset("/logos/rciu-emblem.jpg")} alt="RCIU" width={40} height={40} className="rounded-full shrink-0" />
           <div>
             <p className="font-bold text-rotary-royal-blue leading-tight">Rotary Club of Ikh Urgoo</p>
-            <p className="text-xs text-slate-400">{t("Төсөлд нэгдэх хүсэлт", "Project Partnership Request", "プロジェクト参加依頼", "项目合作申请")}</p>
+            <p className="text-xs text-slate-400">{t("Төсөлд нэгдэх хүсэлт", "Project Partnership Request", "プロジェクト参加依頼", "項目合作申請")}</p>
           </div>
         </div>
 
         <div className="p-6">
           {done ? (
             <div className="text-center py-6">
-              <p className="text-xl font-bold text-rotary-royal-blue mb-2">{t("Баярлалаа!", "Thank you!", "ありがとうございます!", "谢谢!")}</p>
+              <p className="text-xl font-bold text-rotary-royal-blue mb-2">{t("Баярлалаа!", "Thank you!", "ありがとうございます!", "謝謝!")}</p>
               <p className="text-slate-600 text-sm mb-6">
                 {t(
                   "Таны хүсэлтийг хүлээн авлаа. Бид удахгүй тантай холбогдоно.",
                   "We've received your request and will be in touch soon.",
                   "お問い合わせを受け付けました。まもなくご連絡いたします。",
-                  "我们已收到您的申请，会尽快与您联系。"
+                  "我們已收到您的申請，會盡快與您聯繫。"
                 )}
               </p>
               <button onClick={onClose} className="text-sm font-semibold bg-rotary-royal-blue text-white rounded-md px-5 py-2">
-                {t("Хаах", "Close", "閉じる", "关闭")}
+                {t("Хаах", "Close", "閉じる", "關閉")}
               </button>
             </div>
           ) : (
@@ -223,18 +223,18 @@ function JoinProjectModal({
                   "Өөр клуб, байгууллага эсвэл хувь хүнээр манай төсөлд хамтран ажиллахыг хүсвэл доорх маягтыг бөглөнө үү.",
                   "Interested in partnering on one of our projects — as another club (including from abroad), organization, or individual? Fill out the form below.",
                   "他のクラブ(海外含む)、団体、個人としてプロジェクトへの参加をご希望の方は、以下のフォームにご記入ください。",
-                  "无论您来自其他俱乐部（包括国外）、机构还是个人，如有意合作，请填写以下表格。"
+                  "無論您來自其他俱樂部（包括國外）、機構還是個人，如有意合作，請填寫以下表格。"
                 )}
               </p>
               <input
                 required
-                placeholder={t("Клуб/байгууллагын нэр", "Club / organization name", "クラブ・団体名", "俱乐部/机构名称")}
+                placeholder={t("Клуб/байгууллагын нэр", "Club / organization name", "クラブ・団体名", "俱樂部/機構名稱")}
                 value={form.club_name}
                 onChange={(e) => setForm({ ...form, club_name: e.target.value })}
                 className="rounded-md border border-slate-300 px-3 py-2.5 text-sm"
               />
               <input
-                placeholder={t("Холбогдох хүн (заавал биш)", "Contact person (optional)", "担当者名(任意)", "联系人(可选)")}
+                placeholder={t("Холбогдох хүн (заавал биш)", "Contact person (optional)", "担當者名(任意)", "聯繫人(可選)")}
                 value={form.contact_name}
                 onChange={(e) => setForm({ ...form, contact_name: e.target.value })}
                 className="rounded-md border border-slate-300 px-3 py-2.5 text-sm"
@@ -242,7 +242,7 @@ function JoinProjectModal({
               <input
                 required
                 type="email"
-                placeholder={t("И-мэйл", "Email", "メール", "邮箱")}
+                placeholder={t("И-мэйл", "Email", "メール", "郵箱")}
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 className="rounded-md border border-slate-300 px-3 py-2.5 text-sm"
@@ -253,14 +253,14 @@ function JoinProjectModal({
                   onChange={(e) => setForm({ ...form, project_id: e.target.value })}
                   className="rounded-md border border-slate-300 px-3 py-2.5 text-sm"
                 >
-                  <option value="">{t("Ерөнхий сонирхол (тодорхой төсөлгүй)", "General interest (no specific project)", "特定のプロジェクトなし", "一般兴趣（不限项目）")}</option>
+                  <option value="">{t("Ерөнхий сонирхол (тодорхой төсөлгүй)", "General interest (no specific project)", "特定のプロジェクトなし", "一般興趣（不限項目）")}</option>
                   {projects.map((p) => (
                     <option key={p.id} value={p.id}>{p.title_en}</option>
                   ))}
                 </select>
               )}
               <textarea
-                placeholder={t("Мессеж (заавал биш)", "Message (optional)", "メッセージ(任意)", "留言(可选)")}
+                placeholder={t("Мессеж (заавал биш)", "Message (optional)", "メッセージ(任意)", "留言(可選)")}
                 value={form.message}
                 onChange={(e) => setForm({ ...form, message: e.target.value })}
                 rows={3}
@@ -269,7 +269,7 @@ function JoinProjectModal({
               {error && <p className="text-sm text-rotary-cardinal">{error}</p>}
               <div className="flex gap-2 mt-1">
                 <button type="submit" disabled={busy} className="flex-1 bg-rotary-royal-blue text-white font-semibold rounded-md py-2.5 text-sm disabled:opacity-60">
-                  {busy ? t("Илгээж байна…", "Sending…", "送信中…", "发送中…") : t("Илгээх", "Send", "送信", "提交")}
+                  {busy ? t("Илгээж байна…", "Sending…", "送信中…", "發送中…") : t("Илгээх", "Send", "送信", "提交")}
                 </button>
                 <button type="button" onClick={onClose} className="text-sm font-semibold px-4 rounded-md border border-slate-300 text-slate-600">
                   {t("Цуцлах", "Cancel", "キャンセル", "取消")}

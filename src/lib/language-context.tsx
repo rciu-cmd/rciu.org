@@ -2,17 +2,21 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 
-export type Lang = "mn" | "en" | "ja" | "zh";
+export type Lang = "mn" | "en" | "ja" | "zh" | "ko";
 
 // Flags, not text labels — a text label's width varies a lot between
 // languages ("EN" vs "日本語"), which shifted every button next to it
 // in the navbar each time the language changed. A flag glyph is a
 // fixed visual size in every language, so the layout stays put.
+// EN uses the UK flag (not the US flag) and ZH uses the Taiwan flag
+// (not the PRC flag) — the club's own choice of flag per language,
+// not a claim about which country's dialect the text follows.
 export const LANGUAGES: { code: Lang; label: string; flag: string; name: string }[] = [
   { code: "mn", label: "MN", flag: "🇲🇳", name: "Монгол" },
-  { code: "en", label: "EN", flag: "🇺🇸", name: "English" },
+  { code: "en", label: "EN", flag: "🇬🇧", name: "English" },
   { code: "ja", label: "JA", flag: "🇯🇵", name: "日本語" },
-  { code: "zh", label: "ZH", flag: "🇨🇳", name: "中文" },
+  { code: "zh", label: "ZH", flag: "🇹🇼", name: "中文" },
+  { code: "ko", label: "KO", flag: "🇰🇷", name: "한국어" },
 ];
 
 interface LanguageContextValue {
@@ -20,11 +24,12 @@ interface LanguageContextValue {
   setLang: (l: Lang) => void;
   /**
    * Translate a string. Pass Mongolian and English always (the site's
-   * two fully-written languages); ja/zh are optional — until the club
-   * supplies real Japanese/Mandarin copy, those fall back to English
-   * rather than showing blank or Mongolian text to a ja/zh reader.
+   * two fully-written languages); ja/zh/ko are optional — until the
+   * club supplies real Japanese/Mandarin/Korean copy for a given
+   * string, those fall back to English rather than showing blank or
+   * Mongolian text to a reader in that language.
    */
-  t: (mn: string, en: string, ja?: string, zh?: string) => string;
+  t: (mn: string, en: string, ja?: string, zh?: string, ko?: string) => string;
 }
 
 const LanguageContext = createContext<LanguageContextValue | undefined>(undefined);
@@ -43,7 +48,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (stored === "mn" || stored === "en" || stored === "ja" || stored === "zh") {
+    if (stored === "mn" || stored === "en" || stored === "ja" || stored === "zh" || stored === "ko") {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time sync from localStorage on mount, see comment above
       setLangState(stored);
     }
@@ -54,7 +59,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     window.localStorage.setItem(STORAGE_KEY, l);
   };
 
-  const t = (mn: string, en: string, ja?: string, zh?: string) => {
+  const t = (mn: string, en: string, ja?: string, zh?: string, ko?: string) => {
     switch (lang) {
       case "mn":
         return mn;
@@ -62,6 +67,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         return ja || en;
       case "zh":
         return zh || en;
+      case "ko":
+        return ko || en;
       default:
         return en;
     }

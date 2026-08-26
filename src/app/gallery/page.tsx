@@ -83,7 +83,7 @@ export default function GalleryPage() {
       a.remove();
       URL.revokeObjectURL(blobUrl);
     } catch {
-      setError(t("Татаж авахад алдаа гарлаа.", "Couldn't download the photo.", "ダウンロードに失敗しました。", "下载失败。"));
+      setError(t("Татаж авахад алдаа гарлаа.", "Couldn't download the photo.", "ダウンロードに失敗しました。", "下載失敗。"));
     }
     setDownloadingId(null);
   }
@@ -151,36 +151,36 @@ export default function GalleryPage() {
   const openGroup = folders.find((f) => f.key === openFolder) ?? null;
 
   if (!checkedAuth) {
-    return <div className="container-page py-20 text-center text-slate-400">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加载中…")}</div>;
+    return <div className="container-page py-20 text-center text-slate-400">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加載中…")}</div>;
   }
 
   return (
     <div className="container-page py-14">
       <h1 className="text-3xl font-bold text-rotary-royal-blue mb-3">
-        {t("Зургийн сан", "Photo Library", "写真ライブラリ", "照片库")}
+        {t("Зургийн сан", "Photo Library", "写真ライブラリ", "照片庫")}
       </h1>
       <p className="text-slate-600 max-w-2xl mb-10">
         {t(
           "Гишүүдийн байршуулсан бүх зураг, хавтасаар эрэмбэлэгдсэн.",
           "Every photo members have uploaded, organized by folder.",
           "会員がアップロードしたすべての写真をフォルダ別に整理しています。",
-          "会员上传的所有照片，按文件夹整理。"
+          "會員上傳的所有照片，按文件夾整理。"
         )}
       </p>
 
       {error && (
         <p className="text-sm text-rotary-cardinal mb-6">
-          {t("Зураг ачаалахад алдаа гарлаа.", "Couldn't load photos.", "写真を読み込めませんでした。", "无法加载照片。")} ({error})
+          {t("Зураг ачаалахад алдаа гарлаа.", "Couldn't load photos.", "写真を読み込めませんでした。", "無法加載照片。")} ({error})
         </p>
       )}
 
       {items === null && !error && (
-        <p className="text-slate-400 text-sm">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加载中…")}</p>
+        <p className="text-slate-400 text-sm">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加載中…")}</p>
       )}
 
       {items && items.length === 0 && (
         <p className="text-slate-400 text-sm">
-          {t("Одоогоор зураг алга.", "No photos uploaded yet.", "アップロードされた写真はまだありません。", "暂无上传的照片。")}
+          {t("Одоогоор зураг алга.", "No photos uploaded yet.", "アップロードされた写真はまだありません。", "暫無上傳的照片。")}
         </p>
       )}
 
@@ -190,7 +190,7 @@ export default function GalleryPage() {
             onClick={() => setOpenFolder(null)}
             className="text-sm font-semibold text-rotary-royal-blue hover:underline mb-4 inline-flex items-center gap-1"
           >
-            ← {t("Хавтас руу буцах", "Back to folders", "フォルダに戻る", "返回文件夹")}
+            ← {t("Хавтас руу буцах", "Back to folders", "フォルダに戻る", "返回文件夾")}
           </button>
           <h2 className="font-bold text-lg text-slate-900 mb-4">{openGroup.label}</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -213,10 +213,10 @@ export default function GalleryPage() {
                       <button
                         onClick={() => downloadPhoto(p)}
                         disabled={downloadingId === p.id}
-                        title={t("Эх чанараар татах", "Download original quality", "元の画質でダウンロード", "下载原始画质")}
+                        title={t("Эх чанараар татах", "Download original quality", "元の画質でダウンロード", "下載原始畫質")}
                         className="shrink-0 text-xs font-semibold px-2 py-1 rounded-md border border-rotary-royal-blue text-rotary-royal-blue hover:bg-rotary-royal-blue hover:text-white disabled:opacity-50"
                       >
-                        {downloadingId === p.id ? "…" : `⭳ ${t("Татах", "Download", "ダウンロード", "下载")}`}
+                        {downloadingId === p.id ? "…" : `⭳ ${t("Татах", "Download", "ダウンロード", "下載")}`}
                       </button>
                     )}
                   </div>

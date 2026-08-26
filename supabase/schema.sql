@@ -842,6 +842,7 @@ create table if not exists public.club_awards (
   submitted_by uuid references public.members(id) on delete set null,
   title text not null,
   comment text,
+  award_date date,
   file_url text,
   file_type text check (file_type in ('image', 'pdf')),
   status text not null default 'pending' check (status in ('pending', 'approved', 'rejected')),

@@ -59,7 +59,7 @@ export default function MembersPage() {
   }, [checkedAuth]);
 
   if (!checkedAuth) {
-    return <div className="container-page py-20 text-center text-slate-400">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加载中…")}</div>;
+    return <div className="container-page py-20 text-center text-slate-400">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加載中…")}</div>;
   }
 
   // Alphabetical, by first name then last name (matches how names are
@@ -72,26 +72,26 @@ export default function MembersPage() {
   return (
     <div className="container-page py-14">
       <h1 className="text-3xl font-bold text-rotary-royal-blue mb-3">
-        {t("Гишүүд", "Our Members", "会員紹介", "我们的会员")}
+        {t("Гишүүд", "Our Members", "会員紹介", "我們的會員")}
       </h1>
       <p className="text-slate-600 max-w-2xl mb-10">
         {t(
           "Rotary Club of Ikh Urgoo-ийн идэвхтэй гишүүдийн жагсаалт.",
           "The active members of Rotary Club of Ikh Urgoo.",
           "イクー・ウルグー・ロータリークラブの現役会員です。",
-          "扶轮伊赫乌尔古俱乐部的活跃会员。"
+          "扶輪伊赫烏爾古俱樂部的活躍會員。"
         )}
       </p>
 
       {error && (
         <p className="text-sm text-rotary-cardinal mb-6">
-          {t("Гишүүдийн мэдээлэл ачаалахад алдаа гарлаа.", "Couldn't load member data.", "会員データを読み込めませんでした。", "无法加载会员数据。")}
+          {t("Гишүүдийн мэдээлэл ачаалахад алдаа гарлаа.", "Couldn't load member data.", "会員データを読み込めませんでした。", "無法加載會員數據。")}
           {" "}({error})
         </p>
       )}
 
       {!members && !error && (
-        <p className="text-slate-400 text-sm">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加载中…")}</p>
+        <p className="text-slate-400 text-sm">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加載中…")}</p>
       )}
 
       {members && members.length === 0 && (
@@ -100,7 +100,7 @@ export default function MembersPage() {
             "Гишүүдийн мэдээлэл удахгүй нэмэгдэнэ.",
             "Member profiles will appear here once the database is populated.",
             "データベースが登録され次第、会員プロフィールが表示されます。",
-            "数据库填充完成后,会员资料将显示在此处。"
+            "數據庫填充完成後,會員資料將顯示在此處。"
           )}
         </p>
       )}

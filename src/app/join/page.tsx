@@ -49,14 +49,14 @@ export default function JoinPage() {
       <div className="grid gap-12 lg:grid-cols-2">
         <div>
           <h1 className="text-3xl font-bold text-rotary-royal-blue mb-4">
-            {t("Бидэнтэй нэгдээрэй", "Join Our Club", "私たちに加わりませんか", "加入我们")}
+            {t("Бидэнтэй нэгдээрэй", "Join Our Club", "私たちに加わりませんか", "加入我們")}
           </h1>
           <p className="text-slate-600 mb-8 max-w-md">
             {t(
               "Rotary Club of Ikh Urgoo нь орон нутгаа хөгжүүлэхийг хүсдэг хэн бүхэнд нээлттэй. Хэрхэн нэгдэх талаар:",
               "Rotary Club of Ikh Urgoo is open to anyone who wants to make a difference in their community. Here's how to join:",
               "イク・ウルグー・ロータリークラブは、地域社会に貢献したいと願うすべての方に開かれています。入会方法:",
-              "扶轮伊赫乌尔古俱乐部欢迎所有希望为社区做出贡献的人。加入方式:"
+              "扶輪伊赫烏爾古俱樂部歡迎所有希望為社區做出貢獻的人。加入方式:"
             )}
           </p>
           <ol className="space-y-4 mb-10">
@@ -75,21 +75,21 @@ export default function JoinPage() {
           {done ? (
             <div className="text-center py-10">
               <p className="text-xl font-bold text-rotary-royal-blue mb-2">
-                {t("Баярлалаа!", "Thank you!", "ありがとうございます!", "谢谢!")}
+                {t("Баярлалаа!", "Thank you!", "ありがとうございます!", "謝謝!")}
               </p>
               <p className="text-slate-600">
                 {t(
                   "Таны хүсэлтийг хүлээн авлаа. Бид удахгүй тантай холбогдох болно.",
                   "We've received your inquiry and will be in touch soon.",
                   "お問い合わせを受け付けました。まもなくご連絡いたします。",
-                  "我们已收到您的申请,会尽快与您联系。"
+                  "我們已收到您的申請,會盡快與您聯繫。"
                 )}
               </p>
             </div>
           ) : (
             <form onSubmit={submit} className="grid gap-4">
               <h2 className="font-bold text-slate-900 mb-1">
-                {t("Сонирхож буй хүсэлт илгээх", "Send an Interest Form", "お問い合わせフォーム", "提交入会申请")}
+                {t("Сонирхож буй хүсэлт илгээх", "Send an Interest Form", "お問い合わせフォーム", "提交入會申請")}
               </h2>
               <input
                 required
@@ -101,19 +101,19 @@ export default function JoinPage() {
               <input
                 required
                 type="email"
-                placeholder={t("И-мэйл", "Email", "メール", "邮箱")}
+                placeholder={t("И-мэйл", "Email", "メール", "郵箱")}
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 className="rounded-md border border-slate-300 px-3 py-2.5 text-sm"
               />
               <input
-                placeholder={t("Утас (заавал биш)", "Phone (optional)", "電話(任意)", "电话(可选)")}
+                placeholder={t("Утас (заавал биш)", "Phone (optional)", "電話(任意)", "電話(可選)")}
                 value={form.phone}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
                 className="rounded-md border border-slate-300 px-3 py-2.5 text-sm"
               />
               <textarea
-                placeholder={t("Бидэнд юу хэлэхийг хүсэж байна вэ? (заавал биш)", "Anything you'd like us to know? (optional)", "お伝えしたいこと(任意)", "有什么想告诉我们的吗?(可选)")}
+                placeholder={t("Бидэнд юу хэлэхийг хүсэж байна вэ? (заавал биш)", "Anything you'd like us to know? (optional)", "お伝えしたいこと(任意)", "有什麼想告訴我們的嗎?(可選)")}
                 value={form.message}
                 onChange={(e) => setForm({ ...form, message: e.target.value })}
                 rows={4}
@@ -125,7 +125,7 @@ export default function JoinPage() {
                 disabled={busy}
                 className="bg-rotary-royal-blue text-white font-semibold rounded-md py-2.5 text-sm disabled:opacity-60"
               >
-                {busy ? t("Илгээж байна…", "Sending…", "送信中…", "发送中…") : t("Илгээх", "Send", "送信", "提交")}
+                {busy ? t("Илгээж байна…", "Sending…", "送信中…", "發送中…") : t("Илгээх", "Send", "送信", "提交")}
               </button>
             </form>
           )}
