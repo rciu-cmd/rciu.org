@@ -6,6 +6,10 @@ import { useLanguage } from "@/lib/language-context";
 
 type AdminLevel = "none" | "editor" | "super";
 
+type PhfLevel = "none" | "PHF" | "PHF+1" | "PHF+2" | "PHF+3" | "PHF+4" | "PHF+5" | "PHF+6" | "PHF+7" | "PHF+8";
+
+const PHF_LEVELS: PhfLevel[] = ["none", "PHF", "PHF+1", "PHF+2", "PHF+3", "PHF+4", "PHF+5", "PHF+6", "PHF+7", "PHF+8"];
+
 type MemberRow = {
   id: string;
   member_id: string;
@@ -19,16 +23,25 @@ type MemberRow = {
   status: "pending" | "active" | "inactive";
   is_admin: boolean;
   admin_level: AdminLevel;
+  phf_level: PhfLevel;
+  phf_date: string | null;
 };
 
-type EditForm = { phone: string; rotary_id: string; highest_position: string; honor_roll_priority: string };
+type EditForm = {
+  phone: string;
+  rotary_id: string;
+  highest_position: string;
+  honor_roll_priority: string;
+  phf_level: PhfLevel;
+  phf_date: string;
+};
 
 export default function AdminMembersPage() {
   const { t } = useLanguage();
   const [items, setItems] = useState<MemberRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState<EditForm>({ phone: "", rotary_id: "", highest_position: "", honor_roll_priority: "" });
+  const [form, setForm] = useState<EditForm>({ phone: "", rotary_id: "", highest_position: "", honor_roll_priority: "", phf_level: "none", phf_date: "" });
   const [busy, setBusy] = useState(false);
 
   // Email is edited directly in its own table column now (not the
@@ -47,7 +60,7 @@ export default function AdminMembersPage() {
   async function refresh() {
     const { data, error } = await supabase
       .from("members")
-      .select("id, member_id, first_name, last_name, email, phone, rotary_id, highest_position, honor_roll_priority, status, is_admin, admin_level")
+      .select("id, member_id, first_name, last_name, email, phone, rotary_id, highest_position, honor_roll_priority, status, is_admin, admin_level, phf_level, phf_date")
       .order("status", { ascending: true })
       .order("last_name", { ascending: true });
     if (error) setError(error.message);
@@ -102,6 +115,8 @@ export default function AdminMembersPage() {
       rotary_id: m.rotary_id ?? "",
       highest_position: m.highest_position ?? "",
       honor_roll_priority: m.honor_roll_priority != null ? String(m.honor_roll_priority) : "",
+      phf_level: m.phf_level,
+      phf_date: m.phf_date ?? "",
     });
   }
 
@@ -114,6 +129,8 @@ export default function AdminMembersPage() {
         rotary_id: form.rotary_id || null,
         highest_position: form.highest_position || null,
         honor_roll_priority: form.honor_roll_priority.trim() === "" ? null : Number(form.honor_roll_priority),
+        phf_level: form.phf_level,
+        phf_date: form.phf_date || null,
       })
       .eq("id", id);
     setBusy(false);
@@ -164,10 +181,10 @@ export default function AdminMembersPage() {
           <h3 className="font-semibold text-slate-700 mb-3">{t("Бүх гишүүд", "All Members", "全会員", "全部會員")}</h3>
           <p className="text-xs text-slate-400 mb-4 max-w-xl">
             {t(
-              "И-мэйлийг доор шууд засварлаж болно. Утас, Rotary ID, хамгийн өндөр албан тушаалыг «Засах» дарж бөглөнө үү.",
-              "Email can be edited directly below. Phone, Rotary ID, and highest position — click \"Edit\" to fill them in.",
-              "メールは下で直接編集できます。電話番号、Rotary ID、最高役職は「編集」で入力してください。",
-              "郵箱可在下方直接編輯。電話、Rotary ID 和最高職位請點擊「編輯」填寫。"
+              "И-мэйлийг доор шууд засварлаж болно. Утас, Rotary ID, хамгийн өндөр албан тушаал, PHF түвшинг «Засах» дарж бөглөнө үү. PHF түвшин энд өөрчлөгдвөл л «Бидний тухай» хуудасны Алдрын самбарт харагдана — гишүүд өөрсдийн PHF-ээ өөрчлөх боломжгүй.",
+              "Email can be edited directly below. Phone, Rotary ID, highest position, and PHF level — click \"Edit\" to fill them in. PHF level only changes on the public Honor Roll (\"About Us\" page) when set here — members can't edit their own PHF level.",
+              "メールは下で直接編集できます。電話番号、Rotary ID、最高役職、PHF段階は「編集」で入力してください。PHF段階はここで設定した場合のみ「私たちについて」ページの名誉殿堂に反映されます — 会員は自分のPHF段階を編集できません。",
+              "郵箱可在下方直接編輯。電話、Rotary ID、最高職位和PHF等級請點擊「編輯」填寫。PHF等級只有在此設置後才會顯示在「關於我們」頁面的榮譽榜上——會員無法自行編輯自己的PHF等級。"
             )}
           </p>
           <div className="overflow-x-auto rounded-lg border border-slate-200">
@@ -271,6 +288,31 @@ export default function AdminMembersPage() {
                               onChange={(e) => setForm({ ...form, honor_roll_priority: e.target.value })}
                               className="rounded-md border border-slate-300 px-3 py-2 text-sm sm:col-span-2"
                             />
+                            <div>
+                              <label className="block text-xs font-semibold text-slate-500 mb-1">
+                                {t("Paul Harris Fellow түвшин", "Paul Harris Fellow level", "ポール・ハリス・フェロー段階", "保羅·哈里斯會員等級")}
+                              </label>
+                              <select
+                                value={form.phf_level}
+                                onChange={(e) => setForm({ ...form, phf_level: e.target.value as PhfLevel })}
+                                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                              >
+                                {PHF_LEVELS.map((lvl) => (
+                                  <option key={lvl} value={lvl}>{lvl === "none" ? t("Байхгүй", "None", "なし", "無") : lvl}</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-xs font-semibold text-slate-500 mb-1">
+                                {t("PHF огноо (заавал биш)", "PHF date (optional)", "PHF授与日(任意)", "PHF授予日期(可選)")}
+                              </label>
+                              <input
+                                type="date"
+                                value={form.phf_date}
+                                onChange={(e) => setForm({ ...form, phf_date: e.target.value })}
+                                className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                              />
+                            </div>
                             <button
                               onClick={() => saveEdit(m.id)}
                               disabled={busy}
