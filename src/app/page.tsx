@@ -319,28 +319,30 @@ export default function Home() {
             {projects.map((p) => {
               const photos = projectPhotos[p.id] ?? (p.cover_image_url ? [p.cover_image_url] : []);
               return (
-                <article key={p.id} className="rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition overflow-hidden bg-white flex flex-col">
-                  <div className="relative">
-                    {photos.length > 0 ? (
-                      <ProjectPhotoCollage photos={photos} />
-                    ) : p.cause_icon && CAUSE_ICONS[p.cause_icon] ? (
-                      <div className="w-full aspect-video flex items-center justify-center bg-blue-50">
-                        <Image src={asset(CAUSE_ICONS[p.cause_icon])} alt="" width={72} height={72} />
-                      </div>
-                    ) : (
-                      <div className="w-full aspect-video flex items-center justify-center text-slate-300 text-sm bg-slate-100">{t("Зураг алга", "No photo yet", "写真なし", "暫無照片")}</div>
-                    )}
-                    <span className="absolute top-3 left-3 text-xs font-semibold uppercase tracking-wide bg-white/90 text-rotary-azure px-3 py-1 rounded-full">
-                      {t(STATUS_LABEL[p.status].mn, STATUS_LABEL[p.status].en)}
-                    </span>
-                  </div>
-                  <div className="p-6 flex-1 flex flex-col">
-                    <h3 className="text-xl font-bold text-slate-900 mb-2">{t(p.title_mn, p.title_en)}</h3>
-                    {(p.description_mn || p.description_en) && (
-                      <p className="text-slate-600 text-sm line-clamp-3">{t(p.description_mn ?? "", p.description_en ?? "")}</p>
-                    )}
-                  </div>
-                </article>
+                <Link key={p.id} href={`/projects/view/?id=${p.id}`} className="block h-full">
+                  <article className="h-full rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition overflow-hidden bg-white flex flex-col">
+                    <div className="relative">
+                      {photos.length > 0 ? (
+                        <ProjectPhotoCollage photos={photos} />
+                      ) : p.cause_icon && CAUSE_ICONS[p.cause_icon] ? (
+                        <div className="w-full aspect-video flex items-center justify-center bg-blue-50">
+                          <Image src={asset(CAUSE_ICONS[p.cause_icon])} alt="" width={72} height={72} />
+                        </div>
+                      ) : (
+                        <div className="w-full aspect-video flex items-center justify-center text-slate-300 text-sm bg-slate-100">{t("Зураг алга", "No photo yet", "写真なし", "暫無照片")}</div>
+                      )}
+                      <span className="absolute top-3 left-3 text-xs font-semibold uppercase tracking-wide bg-white/90 text-rotary-azure px-3 py-1 rounded-full">
+                        {t(STATUS_LABEL[p.status].mn, STATUS_LABEL[p.status].en)}
+                      </span>
+                    </div>
+                    <div className="p-6 flex-1 flex flex-col">
+                      <h3 className="text-xl font-bold text-slate-900 mb-2">{t(p.title_mn, p.title_en)}</h3>
+                      {(p.description_mn || p.description_en) && (
+                        <p className="text-slate-600 text-sm line-clamp-3">{t(p.description_mn ?? "", p.description_en ?? "")}</p>
+                      )}
+                    </div>
+                  </article>
+                </Link>
               );
             })}
           </div>

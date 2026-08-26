@@ -2,10 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { asset } from "@/lib/asset";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
 import ProjectPhotoCollage from "@/components/ProjectPhotoCollage";
+
+type ProjectStatus = "ongoing" | "completed" | "planned";
 
 type ProjectRow = {
   id: string;
@@ -13,12 +16,18 @@ type ProjectRow = {
   title_en: string;
   description_mn: string | null;
   description_en: string | null;
-  status: string;
+  status: ProjectStatus;
   cover_image_url: string | null;
   project_type: "local_project" | "district_grant" | "global_grant";
   funding_amount: number | null;
   funding_currency: string;
   grant_number: string | null;
+};
+
+const STATUS_LABEL: Record<ProjectStatus, { mn: string; en: string; ja: string; zh: string }> = {
+  ongoing: { mn: "Хэрэгжиж буй", en: "Ongoing", ja: "実施中", zh: "進行中" },
+  completed: { mn: "Дууссан", en: "Completed", ja: "完了", zh: "已完成" },
+  planned: { mn: "Төлөвлөж буй", en: "Planned", ja: "計画中", zh: "計劃中" },
 };
 
 export default function ProjectsPage() {
@@ -99,29 +108,31 @@ export default function ProjectsPage() {
           {items.map((p) => {
             const photos = photosByProject[p.id] ?? (p.cover_image_url ? [p.cover_image_url] : []);
             return (
-              <article key={p.id} className="rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition">
-                {photos.length > 0 && <ProjectPhotoCollage photos={photos} />}
-                <div className="p-6">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="inline-block text-xs font-semibold uppercase tracking-wide text-rotary-azure">
-                      {p.status}
-                    </span>
-                    {p.project_type !== "local_project" && (
-                      <span className="inline-block text-[10px] font-bold text-white bg-rotary-gold rounded-full px-2 py-0.5">
-                        {p.project_type === "global_grant" ? "GG" : "DG"}
+              <Link key={p.id} href={`/projects/view/?id=${p.id}`} className="block">
+                <article className="h-full rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition">
+                  {photos.length > 0 && <ProjectPhotoCollage photos={photos} />}
+                  <div className="p-6">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="inline-block text-xs font-semibold uppercase tracking-wide text-rotary-azure">
+                        {t(STATUS_LABEL[p.status].mn, STATUS_LABEL[p.status].en, STATUS_LABEL[p.status].ja, STATUS_LABEL[p.status].zh)}
                       </span>
+                      {p.project_type !== "local_project" && (
+                        <span className="inline-block text-[10px] font-bold text-white bg-rotary-gold rounded-full px-2 py-0.5">
+                          {p.project_type === "global_grant" ? "GG" : "DG"}
+                        </span>
+                      )}
+                    </div>
+                    <h2 className="font-bold text-slate-900 mb-2">{t(p.title_mn, p.title_en)}</h2>
+                    {p.description_en && <p className="text-slate-600 text-sm line-clamp-3">{t(p.description_mn ?? "", p.description_en)}</p>}
+                    {p.funding_amount != null && (
+                      <p className="text-sm text-rotary-azure font-semibold mt-3">
+                        {p.funding_currency} {p.funding_amount.toLocaleString()}
+                        {p.grant_number && ` · ${p.grant_number}`}
+                      </p>
                     )}
                   </div>
-                  <h2 className="font-bold text-slate-900 mb-2">{t(p.title_mn, p.title_en)}</h2>
-                  {p.description_en && <p className="text-slate-600 text-sm line-clamp-3">{t(p.description_mn ?? "", p.description_en)}</p>}
-                  {p.funding_amount != null && (
-                    <p className="text-sm text-rotary-azure font-semibold mt-3">
-                      {p.funding_currency} {p.funding_amount.toLocaleString()}
-                      {p.grant_number && ` · ${p.grant_number}`}
-                    </p>
-                  )}
-                </div>
-              </article>
+                </article>
+              </Link>
             );
           })}
         </div>
