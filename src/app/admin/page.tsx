@@ -7,24 +7,41 @@ import { useLanguage } from "@/lib/language-context";
 
 export default function AdminOverviewPage() {
   const { t } = useLanguage();
-  const [counts, setCounts] = useState<{ pending: number; active: number; draftNews: number; projects: number } | null>(null);
+  const [counts, setCounts] = useState<{
+    pending: number;
+    active: number;
+    draftNews: number;
+    projects: number;
+    newJoinInquiries: number;
+    newProjectInquiries: number;
+  } | null>(null);
 
   useEffect(() => {
     async function load() {
-      const [pending, active, draftNews, projects] = await Promise.all([
+      const [pending, active, draftNews, projects, newJoinInquiries, newProjectInquiries] = await Promise.all([
         supabase.from("members").select("id", { count: "exact", head: true }).eq("status", "pending"),
         supabase.from("members").select("id", { count: "exact", head: true }).eq("status", "active"),
         supabase.from("news").select("id", { count: "exact", head: true }).eq("status", "draft"),
         supabase.from("projects").select("id", { count: "exact", head: true }),
+        supabase.from("join_inquiries").select("id", { count: "exact", head: true }).eq("status", "new"),
+        supabase.from("project_inquiries").select("id", { count: "exact", head: true }).eq("status", "new"),
       ]);
       setCounts({
         pending: pending.count ?? 0,
         active: active.count ?? 0,
         draftNews: draftNews.count ?? 0,
         projects: projects.count ?? 0,
+        newJoinInquiries: newJoinInquiries.count ?? 0,
+        newProjectInquiries: newProjectInquiries.count ?? 0,
       });
     }
     load();
+    // Inquiries don't email anyone (no notification system is wired
+    // up), so this Overview page is the only place an admin finds out
+    // about a new one — refresh periodically while the tab stays open,
+    // not just once on page load.
+    const interval = setInterval(load, 60_000);
+    return () => clearInterval(interval);
   }, []);
 
   const cards = [
@@ -51,6 +68,18 @@ export default function AdminOverviewPage() {
       label: t("Нийт төсөл", "Total projects", "プロジェクト総数", "項目總數"),
       value: counts?.projects,
       accent: "border-slate-200",
+    },
+    {
+      href: "/admin/join-inquiries",
+      label: t("Шинэ элсэх хүсэлт", "New join inquiries", "新規入会問合せ", "新入會申請"),
+      value: counts?.newJoinInquiries,
+      accent: counts && counts.newJoinInquiries > 0 ? "border-rotary-gold" : "border-slate-200",
+    },
+    {
+      href: "/admin/project-inquiries",
+      label: t("Шинэ төслийн хүсэлт", "New project inquiries", "新規プロジェクト問合せ", "新項目申請"),
+      value: counts?.newProjectInquiries,
+      accent: counts && counts.newProjectInquiries > 0 ? "border-rotary-gold" : "border-slate-200",
     },
   ];
 
