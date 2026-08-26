@@ -75,6 +75,15 @@ export default function AdminPartnersPage() {
     setBusy(true);
     setError(null);
 
+    // This URL gets rendered straight into an href for every visitor —
+    // reject anything that isn't a plain http(s) link (e.g. a
+    // "javascript:" URI) before it's ever saved.
+    if (form.url && !/^https?:\/\//i.test(form.url.trim())) {
+      setBusy(false);
+      setError(t("Холбоос http:// эсвэл https://-ээр эхлэх ёстой.", "The link must start with http:// or https://.", "リンクは http:// または https:// で始まる必要があります。", "連結必須以 http:// 或 https:// 開頭。"));
+      return;
+    }
+
     let logoUrl = form.logo_url || null;
     if (logoFile) {
       const safeName = logoFile.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");

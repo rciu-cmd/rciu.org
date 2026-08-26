@@ -63,8 +63,15 @@ Deno.serve(async (req) => {
     const { data: userData, error: userError } = await admin.auth.getUser(token);
     if (userError || !userData?.user) return json({ error: "Not signed in" }, 401);
 
-    const { data: caller } = await admin.from("members").select("is_admin").eq("id", userData.user.id).single();
-    if (!caller?.is_admin) return json({ error: "Admin access required" }, 403);
+    // Events management (see admin/layout.tsx's EDITOR_ALLOWED_PATHS,
+    // and events_write_admin's use of is_super_admin() in schema.sql)
+    // is super-admin-only site-wide — this check has to match that,
+    // not the broader is_admin flag (true for editors too), or an
+    // editor-level admin could call this function directly and
+    // mass-email every active member even though they can't reach
+    // /admin/events or write to the events table at all.
+    const { data: caller } = await admin.from("members").select("admin_level").eq("id", userData.user.id).single();
+    if (caller?.admin_level !== "super") return json({ error: "Super admin access required" }, 403);
 
     const { event_id } = await req.json();
     if (!event_id) return json({ error: "event_id is required" }, 400);

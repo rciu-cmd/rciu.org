@@ -190,20 +190,52 @@ create policy members_update_admin on public.members
     public.is_super_admin()
   );
 
-create or replace function public.protect_own_admin_level()
+-- members_update_self (above) deliberately doesn't restrict which
+-- columns a member can touch on their own row — RLS can't do
+-- column-level checks the way you'd want here. This trigger is what
+-- actually closes that off: it blocks a member from changing a fixed
+-- list of "admin-only" columns on their OWN row, even though the RLS
+-- policy alone would otherwise allow it. Originally this only covered
+-- admin_level (migration01); security review (migration20) found the
+-- same gap open on status, phf_level, phf_date, major_donor,
+-- major_donor_level, honor_roll_priority, member_no, and rotary_id —
+-- meaning a member could, with nothing more than their own browser's
+-- dev console and their own logged-in session, self-approve a
+-- 'pending' account straight to 'active', or self-grant a fake Paul
+-- Harris Fellow tier that would then show up on the public Honor
+-- Roll. Every one of these is intentionally admin-only, and none of
+-- them are in the Dashboard's own self-edit form (phone/city/
+-- classification/name_local/bio/photo_url stay freely self-editable).
+-- Uses to_jsonb() so the check is one generic loop instead of one
+-- hand-written `if` per column — new protected columns just get added
+-- to the array, not a new branch.
+create or replace function public.protect_member_self_service_columns()
 returns trigger language plpgsql as $$
+declare
+  protected_cols text[] := array[
+    'admin_level', 'status', 'phf_level', 'phf_date', 'major_donor',
+    'major_donor_level', 'honor_roll_priority', 'member_no', 'rotary_id'
+  ];
+  col text;
+  old_json jsonb := to_jsonb(old);
+  new_json jsonb := to_jsonb(new);
 begin
-  if auth.uid() = old.id and new.admin_level is distinct from old.admin_level then
-    raise exception 'cannot change your own admin level — ask another super admin, or use the SQL Editor';
+  if auth.uid() = old.id then
+    foreach col in array protected_cols loop
+      if new_json -> col is distinct from old_json -> col then
+        raise exception 'cannot change your own % — ask another super admin, or use the SQL Editor', col;
+      end if;
+    end loop;
   end if;
   return new;
 end;
 $$;
 
 drop trigger if exists members_protect_own_admin_level on public.members;
-create trigger members_protect_own_admin_level
+drop trigger if exists members_protect_self_service_columns on public.members;
+create trigger members_protect_self_service_columns
   before update on public.members
-  for each row execute function public.protect_own_admin_level();
+  for each row execute function public.protect_member_self_service_columns();
 
 -- Public-safe view: name, role, photo, PHF tier, major-donor flag —
 -- no email, phone, address, or exact dollar amounts, ever. Respects
