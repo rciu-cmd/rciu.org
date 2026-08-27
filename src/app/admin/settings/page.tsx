@@ -15,6 +15,7 @@ const PRESET_BANNERS = [
 export default function AdminSettingsPage() {
   const { t } = useLanguage();
   const [bannerUrl, setBannerUrl] = useState("");
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -58,6 +59,27 @@ export default function AdminSettingsPage() {
     }
     setBannerUrl(url);
     setSaved(true);
+  }
+
+  // Uploads the picked file to the same rciu-photos bucket every other
+  // admin upload uses (theme/ prefix), then saves its public URL the
+  // same way the preset-banner buttons and the old URL box did.
+  async function uploadBanner() {
+    if (!bannerFile) return;
+    setError(null);
+    setSaved(false);
+    setBusy(true);
+    const safeName = bannerFile.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+    const path = `theme/${Date.now()}-${safeName}`;
+    const { error: uploadError } = await supabase.storage.from("rciu-photos").upload(path, bannerFile);
+    if (uploadError) {
+      setBusy(false);
+      setError(uploadError.message);
+      return;
+    }
+    const url = supabase.storage.from("rciu-photos").getPublicUrl(path).data.publicUrl;
+    await save(url);
+    setBannerFile(null);
   }
 
   async function savePhone(e: React.FormEvent) {
@@ -153,21 +175,23 @@ export default function AdminSettingsPage() {
           </div>
 
           <div>
-            <p className="text-sm font-semibold text-slate-700 mb-2">{t("Эсвэл өөрийн зургийн URL оруулах", "Or paste a custom image URL", "またはカスタム画像URLを入力", "或粘貼自定義圖片URL")}</p>
-            <div className="flex gap-2">
+            <p className="text-sm font-semibold text-slate-700 mb-2">{t("Эсвэл өөрийн зураг байршуулах", "Or upload your own image", "またはカスタム画像をアップロード", "或上傳自定義圖片")}</p>
+            <div className="flex flex-wrap items-center gap-2">
               <input
-                value={bannerUrl}
-                onChange={(e) => setBannerUrl(e.target.value)}
-                className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm"
+                type="file"
+                accept="image/*"
+                onChange={(e) => setBannerFile(e.target.files?.[0] ?? null)}
+                className="text-sm"
               />
               <button
-                onClick={() => save(bannerUrl)}
-                disabled={busy}
+                onClick={uploadBanner}
+                disabled={busy || !bannerFile}
                 className="bg-rotary-royal-blue text-white font-semibold rounded-md px-4 py-2 text-sm disabled:opacity-60"
               >
-                {busy ? t("Хадгалж байна…", "Saving…", "保存中…", "保存中…") : t("Хадгалах", "Save", "保存", "保存")}
+                {busy ? t("Байршуулж байна…", "Uploading…", "アップロード中…", "上傳中…") : t("Байршуулах", "Upload", "アップロード", "上傳")}
               </button>
             </div>
+            {bannerFile && <p className="text-xs text-slate-400 mt-1">{bannerFile.name}</p>}
           </div>
 
           {saved && <p className="text-sm text-green-700">{t("Хадгалагдлаа!", "Saved!", "保存しました!", "已保存!")}</p>}
