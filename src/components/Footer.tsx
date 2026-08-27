@@ -1,13 +1,30 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { asset } from "@/lib/asset";
+import { supabase } from "@/lib/supabase";
 import { useLanguage, LANGUAGES } from "@/lib/language-context";
 
 const CLUB_FACEBOOK_URL = "https://www.facebook.com/profile.php?id=100086308363177";
 
 export default function Footer() {
   const { lang, setLang, t } = useLanguage();
+  // Editable from Admin → Settings ("Contact Phone Number") — same
+  // live value shown on the Contact page, so the two never drift out
+  // of sync with each other.
+  const [phone, setPhone] = useState("+976 99031147");
+
+  useEffect(() => {
+    supabase
+      .from("site_settings")
+      .select("value_en")
+      .eq("key", "contact_phone")
+      .single()
+      .then(({ data }) => {
+        if (data?.value_en) setPhone(data.value_en);
+      });
+  }, []);
 
   return (
     <footer className="bg-gradient-to-br from-rotary-royal-blue to-[#0d2c5c] text-white">
@@ -50,7 +67,7 @@ export default function Footer() {
         <div className="text-sm text-blue-100">
           <p className="font-semibold text-white mb-2">{t("Холбоо барих", "Contact", "お問い合わせ", "聯繫方式", "문의")}</p>
           <p>contact@rciu.org</p>
-          <p>+976 99031147</p>
+          <p>{phone}</p>
 
           {/* Language switcher lives here now — moved off the navbar
               (item request: free up top-bar space) and placed next to

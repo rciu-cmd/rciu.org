@@ -1,10 +1,27 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
 
 export default function ContactPage() {
   const { t } = useLanguage();
+  // Editable from Admin → Settings ("Contact Phone Number") rather
+  // than hardcoded — falls back to the current published number while
+  // the live value is loading, so there's no flash of empty text.
+  const [phone, setPhone] = useState("+976 99031147");
+
+  useEffect(() => {
+    supabase
+      .from("site_settings")
+      .select("value_en")
+      .eq("key", "contact_phone")
+      .single()
+      .then(({ data }) => {
+        if (data?.value_en) setPhone(data.value_en);
+      });
+  }, []);
 
   return (
     <div className="container-page py-14">
@@ -59,7 +76,7 @@ export default function ContactPage() {
               secretary@rciu.org
             </p>
           </div>
-          <p className="text-slate-700">+976 99031147</p>
+          <p className="text-slate-700">{phone}</p>
         </div>
 
         <div className="rounded-xl border border-slate-200 p-6 shadow-sm">
