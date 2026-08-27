@@ -22,35 +22,18 @@ const RUBY = "#9B111E";
 // Major Donor recognition sits above the regular PHF gem scale (it's
 // awarded independently of PHF level, per the Rotary Foundation), so
 // it gets its own theme rather than reusing whichever PHF+N color the
-// member happens to also hold — a rich black with a scattered field of
-// tiny white + gold "stars", like a night sky. Built as a stack of
-// small radial-gradient dots layered over a black-to-charcoal
-// linear-gradient; every usage of `accent`/`gradient` assigns it
-// straight to a CSS `background` (never `background-color` or
-// `border-color`), so the star field renders correctly wherever this
-// theme is used — the avatar circle, the badge pill, and the dashboard
-// header alike.
-const MAJOR_DONOR_STARFIELD =
-  "radial-gradient(circle at 12% 22%, rgba(255,255,255,0.95) 0.5px, transparent 1.6px)," +
-  "radial-gradient(circle at 78% 15%, rgba(255,255,255,0.85) 0.6px, transparent 1.7px)," +
-  "radial-gradient(circle at 45% 35%, rgba(247,168,27,0.9) 0.5px, transparent 1.6px)," +
-  "radial-gradient(circle at 88% 55%, rgba(255,255,255,0.75) 0.5px, transparent 1.6px)," +
-  "radial-gradient(circle at 25% 60%, rgba(255,255,255,0.9) 0.6px, transparent 1.7px)," +
-  "radial-gradient(circle at 60% 78%, rgba(247,168,27,0.75) 0.5px, transparent 1.6px)," +
-  "radial-gradient(circle at 15% 88%, rgba(255,255,255,0.65) 0.5px, transparent 1.5px)," +
-  "radial-gradient(circle at 92% 88%, rgba(255,255,255,0.8) 0.5px, transparent 1.6px)," +
-  "radial-gradient(circle at 35% 10%, rgba(255,255,255,0.55) 0.4px, transparent 1.4px)," +
-  "radial-gradient(circle at 68% 95%, rgba(255,255,255,0.55) 0.4px, transparent 1.4px)," +
-  "radial-gradient(circle at 5% 45%, rgba(255,255,255,0.5) 0.4px, transparent 1.4px)," +
-  "radial-gradient(circle at 55% 50%, rgba(255,255,255,0.4) 0.4px, transparent 1.4px)," +
-  "linear-gradient(135deg,#1c1c1f,#000000)";
+// member happens to also hold — deep burgundy/wine. Kept noticeably
+// darker and more muted (brownish-wine) than PHF+6..+8's brighter
+// crimson ruby (#9B111E) so the two still read as different colors at
+// a glance rather than "two shades of red".
+const MAJOR_DONOR_BURGUNDY = "#5C0923";
 
 export const MAJOR_DONOR_THEME: PhfTheme = {
   label: "Major Donor",
   gem: "none",
   gemCount: 0,
-  accent: MAJOR_DONOR_STARFIELD,
-  gradient: MAJOR_DONOR_STARFIELD,
+  accent: MAJOR_DONOR_BURGUNDY,
+  gradient: "linear-gradient(135deg,#7B1E3D,#33040F)",
 };
 
 export const PHF_THEMES: Record<PhfLevel, PhfTheme> = {
