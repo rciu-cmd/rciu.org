@@ -5,7 +5,7 @@ import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
 
-type Category = "installation_ceremony" | "district_events" | "projects" | "other";
+type Category = "installation_ceremony" | "district_events" | "projects" | "other" | "public_holiday";
 
 type EventRow = {
   id: string;
@@ -18,6 +18,7 @@ type EventRow = {
   event_time: string | null;
   category: Category | null;
   cover_image_url: string | null;
+  registration_url: string | null;
 };
 
 const CATEGORY_LABELS: Record<Category, { mn: string; en: string }> = {
@@ -25,6 +26,7 @@ const CATEGORY_LABELS: Record<Category, { mn: string; en: string }> = {
   district_events: { mn: "Дүүргийн арга хэмжээ", en: "District Event" },
   projects: { mn: "Төслийн арга хэмжээ", en: "Project Event" },
   other: { mn: "Бусад", en: "Other" },
+  public_holiday: { mn: "Улсын баяр", en: "Public Holiday" },
 };
 
 const MONTH_LABEL: [string, string, string, string][] = [
@@ -55,7 +57,7 @@ export default function EventsPage() {
   useEffect(() => {
     supabase
       .from("events")
-      .select("id, title_mn, title_en, description_mn, description_en, location, event_date, event_time, category, cover_image_url")
+      .select("id, title_mn, title_en, description_mn, description_en, location, event_date, event_time, category, cover_image_url, registration_url")
       .order("event_date", { ascending: true })
       .then(({ data }) => setEvents((data as EventRow[]) ?? []));
   }, []);
@@ -156,7 +158,11 @@ export default function EventsPage() {
                     {dayEvents.length > 0 && (
                       <div className="flex gap-0.5 flex-wrap justify-center">
                         {dayEvents.slice(0, 3).map((ev) => (
-                          <span key={ev.id} className="w-1.5 h-1.5 rounded-full bg-rotary-gold" title={t(ev.title_mn, ev.title_en)} />
+                          <span
+                            key={ev.id}
+                            className={`w-1.5 h-1.5 rounded-full ${ev.category === "public_holiday" ? "bg-slate-400" : "bg-rotary-gold"}`}
+                            title={t(ev.title_mn, ev.title_en)}
+                          />
                         ))}
                       </div>
                     )}
@@ -198,6 +204,16 @@ export default function EventsPage() {
                     {ev.location && <p className="text-sm text-slate-500 mt-1">{ev.location}</p>}
                     {(ev.description_mn || ev.description_en) && (
                       <p className="text-sm text-slate-600 mt-1 line-clamp-3">{t(ev.description_mn ?? "", ev.description_en ?? "")}</p>
+                    )}
+                    {ev.registration_url && (
+                      <a
+                        href={ev.registration_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block mt-2 text-xs font-semibold px-3 py-1.5 rounded-full bg-rotary-gold text-[#5a3d0a] hover:brightness-95 transition"
+                      >
+                        {t("Бүртгүүлэх →", "Register →", "登録 →", "報名 →")}
+                      </a>
                     )}
                   </div>
                 ))}

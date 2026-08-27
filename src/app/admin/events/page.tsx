@@ -5,7 +5,7 @@ import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
 
-type Category = "installation_ceremony" | "district_events" | "projects" | "other";
+type Category = "installation_ceremony" | "district_events" | "projects" | "other" | "public_holiday";
 
 type EventRow = {
   id: string;
@@ -18,6 +18,7 @@ type EventRow = {
   event_time: string | null;
   category: Category | null;
   cover_image_url: string | null;
+  registration_url: string | null;
 };
 
 const CATEGORY_LABELS: Record<Category, { mn: string; en: string }> = {
@@ -25,6 +26,7 @@ const CATEGORY_LABELS: Record<Category, { mn: string; en: string }> = {
   district_events: { mn: "Дүүргийн арга хэмжээ", en: "District Event" },
   projects: { mn: "Төслийн арга хэмжээ", en: "Project Event" },
   other: { mn: "Бусад", en: "Other" },
+  public_holiday: { mn: "Улсын баяр", en: "Public Holiday" },
 };
 
 const EMPTY = {
@@ -36,6 +38,7 @@ const EMPTY = {
   event_date: "",
   event_time: "",
   category: "other" as Category,
+  registration_url: "",
 };
 
 export default function AdminEventsPage() {
@@ -74,6 +77,7 @@ export default function AdminEventsPage() {
       event_date: item.event_date,
       event_time: item.event_time ?? "",
       category: item.category ?? "other",
+      registration_url: item.registration_url ?? "",
     });
     setExistingCoverUrl(item.cover_image_url);
     setFile(null);
@@ -118,6 +122,7 @@ export default function AdminEventsPage() {
       event_time: form.event_time || null,
       category: form.category,
       cover_image_url: coverImageUrl,
+      registration_url: form.registration_url.trim() || null,
     };
 
     const { error } = editingId
@@ -188,6 +193,23 @@ export default function AdminEventsPage() {
             </select>
           </div>
           <input placeholder={t("Байршил", "Location", "場所", "地點")} value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
+          <div>
+            <input
+              type="url"
+              placeholder={t("Бүртгүүлэх холбоос (заавал биш)", "Registration URL (optional)", "登録リンク(任意)", "報名連結(可選)")}
+              value={form.registration_url}
+              onChange={(e) => setForm({ ...form, registration_url: e.target.value })}
+              className="rounded-md border border-slate-300 px-3 py-2 text-sm w-full"
+            />
+            <p className="text-xs text-slate-400 mt-1">
+              {t(
+                "Google Form, Eventbrite гэх мэт. Оруулбал нийтийн хуудсанд шинэ цонхонд нээгдэх \"Бүртгүүлэх\" товч гарч ирнэ.",
+                "e.g. a Google Form or Eventbrite link. If set, a \"Register\" button appears on the public page and opens it in a new tab.",
+                "Googleフォームなど。設定すると公開ページに新しいタブで開く「登録」ボタンが表示されます。",
+                "例如 Google 表單或 Eventbrite 連結。設定後，公開頁面會顯示「報名」按鈕，並在新分頁開啟。"
+              )}
+            </p>
+          </div>
           <textarea placeholder={t("Тайлбар (MN)", "Description (MN)", "説明(MN)", "描述(MN)")} value={form.description_mn} onChange={(e) => setForm({ ...form, description_mn: e.target.value })} rows={2} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
           <textarea placeholder={t("Тайлбар (EN)", "Description (EN)", "説明(EN)", "描述(EN)")} value={form.description_en} onChange={(e) => setForm({ ...form, description_en: e.target.value })} rows={2} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
           <div>

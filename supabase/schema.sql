@@ -687,12 +687,18 @@ create table if not exists public.events (
   location text,
   event_date date not null,
   event_time text,               -- free text, e.g. "18:00" — no timezone math needed for a single-city club
-  category text check (category in ('installation_ceremony','district_events','projects','other')),
+  category text check (category in ('installation_ceremony','district_events','projects','other','public_holiday')),
   project_id uuid references public.projects(id) on delete set null,
   cover_image_url text,          -- optional photo, shown in the home page "next event" widget (migration16)
+  registration_url text,         -- optional external signup/RSVP link (migration22) — shown as a "Register" button that opens in a new tab
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+-- Mongolia's official public holidays, seeded so they show on the
+-- calendar automatically (migration22) — see that file for the actual
+-- insert statements and sourcing notes. Kept as category
+-- 'public_holiday' so they're visually distinct from club-run events.
 
 drop trigger if exists events_touch_updated_at on public.events;
 create trigger events_touch_updated_at

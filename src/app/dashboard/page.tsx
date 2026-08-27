@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { asset } from "@/lib/asset";
 import { useLanguage } from "@/lib/language-context";
 import { effectiveTheme } from "@/lib/phf";
 import PhfPinBadge from "@/components/PhfPinBadge";
@@ -35,6 +36,7 @@ type EventRow = {
   location: string | null;
   event_date: string;
   event_time: string | null;
+  registration_url: string | null;
 };
 
 export default function DashboardPage() {
@@ -60,7 +62,7 @@ export default function DashboardPage() {
       const today = new Date().toISOString().slice(0, 10);
       const { data: upcoming } = await supabase
         .from("events")
-        .select("id, title_mn, title_en, location, event_date, event_time")
+        .select("id, title_mn, title_en, location, event_date, event_time, registration_url")
         .gte("event_date", today)
         .order("event_date", { ascending: true })
         .limit(5);
@@ -153,7 +155,10 @@ export default function DashboardPage() {
 
       <div className="container-page pt-12">
         <div className="rounded-xl border border-slate-200 p-6">
-          <h2 className="font-bold text-slate-900 mb-4">{t("Удахгүй болох арга хэмжээ", "Upcoming Events", "今後の予定", "即將舉行的活動")}</h2>
+          <h2 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
+            <Image src={asset("/logos/rciu-emblem.jpg")} alt="" width={24} height={24} className="rounded-full shrink-0" />
+            {t("Удахгүй болох арга хэмжээ", "Upcoming Events", "今後の予定", "即將舉行的活動")}
+          </h2>
           {events === null && <p className="text-sm text-slate-400">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加載中…")}</p>}
           {events && events.length === 0 && (
             <p className="text-sm text-slate-400">{t("Одоогоор төлөвлөсөн арга хэмжээ алга.", "No upcoming events scheduled right now.", "現在予定されているイベントはありません。", "目前沒有安排的活動。")}</p>
@@ -167,6 +172,16 @@ export default function DashboardPage() {
                   </p>
                   <p className="font-medium text-slate-800">{t(ev.title_mn, ev.title_en)}</p>
                   {ev.location && <p className="text-xs text-slate-500">{ev.location}</p>}
+                  {ev.registration_url && (
+                    <a
+                      href={ev.registration_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block mt-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-rotary-gold text-[#5a3d0a] hover:brightness-95 transition"
+                    >
+                      {t("Бүртгүүлэх →", "Register →", "登録 →", "報名 →")}
+                    </a>
+                  )}
                 </li>
               ))}
             </ul>
@@ -180,9 +195,13 @@ export default function DashboardPage() {
         <PhotoUploadCard t={t} />
       </div>
 
-      <div className="container-page pb-12">
-        <AwardSubmissionCard t={t} memberId={member.id} />
-      </div>
+      {/* Admin-only — regular members shouldn't see a submission form
+          for something only an admin can review/approve anyway. */}
+      {member.is_admin && (
+        <div className="container-page pb-12">
+          <AwardSubmissionCard t={t} memberId={member.id} />
+        </div>
+      )}
     </div>
   );
 }

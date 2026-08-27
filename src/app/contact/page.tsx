@@ -39,7 +39,7 @@ export default function ContactPage() {
           </h2>
           <p className="text-slate-700 font-medium">{t("Мягмар гараг бүр, 20:00 цагт", "Every Tuesday at 20:00", "毎週火曜日 20:00", "每週二 20:00")}</p>
           <p className="text-slate-600 text-sm mt-1">
-            Red Rock Castle Restaurant<br />
+            Park Castle Restaurant<br />
             1 khoroo, Sukhbaatar District<br />
             Ulaanbaatar, 46, Mongolia
           </p>
@@ -58,10 +58,6 @@ export default function ContactPage() {
               <span className="text-xs text-slate-400 mr-1.5">{t("Нарийн бичиг", "Secretary", "書記", "秘書")}:</span>
               secretary@rciu.org
             </p>
-            <p className="text-slate-700">
-              <span className="text-xs text-slate-400 mr-1.5">{t("Ерөнхийлөгч", "President", "会長", "社長")}:</span>
-              president@rciu.org
-            </p>
           </div>
           <p className="text-slate-700">+976 99031147</p>
         </div>
@@ -71,9 +67,11 @@ export default function ContactPage() {
             {t("Шуудангийн хаяг", "Mailing Address", "郵送先住所", "郵寄地址")}
           </h2>
           <p className="text-slate-600 text-sm">
-            Rotary Club of Ikh Urgoo<br />
-            100-5, 15 khoroo, Bayanzurkh District<br />
-            Ulaanbaatar, 13370, Mongolia
+            Rotary Club of Ikh Urgoo – Secretary General<br />
+            Apartment 70, Building 35<br />
+            1st Khoroo, Chingeltei District<br />
+            Ulaanbaatar 15170<br />
+            MONGOLIA
           </p>
         </div>
       </div>

@@ -44,7 +44,7 @@ export default function Footer() {
         <div className="text-sm text-blue-100">
           <p className="font-semibold text-white mb-2">{t("Хурлын мэдээлэл", "Meetings", "例会情報", "例會信息", "모임 안내")}</p>
           <p>{t("Мягмар гараг, 20:00", "Tuesdays, 20:00", "毎週火曜日 20:00", "每週二 20:00", "매주 화요일 20:00")}</p>
-          <p>Red Rock Castle Restaurant, Sukhbaatar District, Ulaanbaatar</p>
+          <p>Park Castle Restaurant, Sukhbaatar District, Ulaanbaatar</p>
         </div>
 
         <div className="text-sm text-blue-100">
