@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
+import { localYmd } from "@/lib/date";
 
 type Category = "installation_ceremony" | "district_events" | "projects" | "other" | "public_holiday";
 
@@ -155,7 +156,7 @@ export default function AdminEventsPage() {
     setReminderStatus((s) => ({ ...s, [item.id]: `sent: ${data?.sent ?? "?"}` }));
   }
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = localYmd(new Date());
   const upcoming = items?.filter((e) => e.event_date >= today) ?? [];
   const past = items?.filter((e) => e.event_date < today) ?? [];
 

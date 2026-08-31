@@ -8,6 +8,7 @@ import { supabase } from "@/lib/supabase";
 import { asset } from "@/lib/asset";
 import { useLanguage } from "@/lib/language-context";
 import { effectiveTheme } from "@/lib/phf";
+import { localYmd } from "@/lib/date";
 import PhfPinBadge from "@/components/PhfPinBadge";
 
 type Member = {
@@ -70,7 +71,7 @@ export default function DashboardPage() {
       // Rotary calendar with upcoming events — read-only here, managed
       // from /admin/events. Reminder emails go out manually (a button
       // in the admin calendar), not automatically.
-      const today = new Date().toISOString().slice(0, 10);
+      const today = localYmd(new Date());
       const { data: upcoming } = await supabase
         .from("events")
         .select("id, title_mn, title_en, location, event_date, event_time, registration_url")

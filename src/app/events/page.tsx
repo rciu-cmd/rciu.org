@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
+import { localYmd } from "@/lib/date";
 
 type Category = "installation_ceremony" | "district_events" | "projects" | "other" | "public_holiday";
 
@@ -42,10 +43,6 @@ const WEEKDAY_LABEL: [string, string, string, string][] = [
   ["Да", "Mo", "月", "一"], ["Мя", "Tu", "火", "二"], ["Лх", "We", "水", "三"],
   ["Пү", "Th", "木", "四"], ["Ба", "Fr", "金", "五"], ["Бя", "Sa", "土", "六"], ["Ня", "Su", "日", "日"],
 ];
-
-function ymd(d: Date): string {
-  return d.toISOString().slice(0, 10);
-}
 
 export default function EventsPage() {
   const { t } = useLanguage();
@@ -103,7 +100,7 @@ export default function EventsPage() {
     }
   }
 
-  const todayStr = ymd(today);
+  const todayStr = localYmd(today);
 
   return (
     <div className="container-page py-14">
@@ -144,7 +141,7 @@ export default function EventsPage() {
             <div className="grid grid-cols-7 gap-1 p-2">
               {cells.map((d, i) => {
                 if (!d) return <div key={i} />;
-                const key = ymd(d);
+                const key = localYmd(d);
                 const dayEvents = eventsByDate.get(key) ?? [];
                 const isToday = key === todayStr;
                 return (
