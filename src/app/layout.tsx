@@ -29,8 +29,15 @@ export const metadata: Metadata = {
   },
   description: SITE_DESCRIPTION,
   icons: {
+    // Transparent PNG (the corners of the original .jpg are opaque
+    // white, which shows as a white/dark square card behind the round
+    // emblem on browser tabs, bookmarks, and home-screen icons) —
+    // same emblem, just with its background removed.
     icon: [
-      { url: `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/logos/rciu-emblem.jpg`, type: "image/jpeg" },
+      { url: `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/logos/rciu-emblem-transparent.png`, type: "image/png" },
+    ],
+    apple: [
+      { url: `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/logos/rciu-emblem-transparent.png`, type: "image/png" },
     ],
   },
   openGraph: {

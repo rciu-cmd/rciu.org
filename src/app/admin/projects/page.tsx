@@ -385,7 +385,7 @@ export default function AdminProjectsPage() {
           <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as ProjectRow["status"] })} className="rounded-md border border-slate-300 px-3 py-2 text-sm w-fit">
             <option value="planned">{t("Төлөвлөж буй", "Planned", "計画中", "計劃中")}</option>
             <option value="ongoing">{t("Хэрэгжиж буй", "Ongoing", "実施中", "進行中")}</option>
-            <option value="completed">{t("Дууссан", "Completed", "完了", "已完成")}</option>
+            <option value="completed">{t("Хаагдсан", "Completed", "完了", "已完成")}</option>
           </select>
 
           <div>
@@ -472,7 +472,7 @@ export default function AdminProjectsPage() {
                 >
                   <option value="planned">{t("Төлөвлөж буй", "Planned", "計画中", "計劃中")}</option>
                   <option value="ongoing">{t("Хэрэгжиж буй", "Ongoing", "実施中", "進行中")}</option>
-                  <option value="completed">{t("Дууссан", "Completed", "完了", "已完成")}</option>
+                  <option value="completed">{t("Хаагдсан", "Completed", "完了", "已完成")}</option>
                 </select>
                 <div className="flex gap-2">
                   <button

@@ -63,7 +63,7 @@ const CAUSE_ICONS: Record<string, string> = {
 
 const STATUS_LABEL: Record<ProjectRow["status"], { mn: string; en: string }> = {
   ongoing: { mn: "Хэрэгжиж буй", en: "Ongoing" },
-  completed: { mn: "Дууссан", en: "Completed" },
+  completed: { mn: "Хаагдсан", en: "Completed" },
   planned: { mn: "Төлөвлөж буй", en: "Planned" },
 };
 
@@ -284,15 +284,15 @@ export default function Home() {
                 n.facebook_url ? (
                   // Real embedded post (photo/video/full text) via
                   // Facebook's Post Plugin — not just a link to it.
-                  <article key={n.id} className="shrink-0 w-80 snap-start rounded-2xl border border-slate-200 p-3 shadow-sm hover:shadow-lg transition overflow-hidden bg-white flex justify-center">
-                    <div className="fb-post" data-href={fbHref(n.facebook_url)} data-width="280" data-show-text="true" />
+                  <article key={n.id} className="shrink-0 w-96 snap-start rounded-2xl border border-slate-200 p-3 shadow-sm hover:shadow-lg transition overflow-hidden bg-white flex justify-center">
+                    <div className="fb-post" data-href={fbHref(n.facebook_url)} data-width="340" data-show-text="true" />
                   </article>
                 ) : (
                   // Written posts open the full detail page (item: cards
                   // weren't clickable before, and only showed a partial
                   // preview here) — /news/view/?id= mirrors the
                   // /projects/view/ query-string pattern.
-                  <Link key={n.id} href={`/news/view/?id=${n.id}`} className="shrink-0 w-80 snap-start">
+                  <Link key={n.id} href={`/news/view/?id=${n.id}`} className="shrink-0 w-96 snap-start">
                     <article className="h-full rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition overflow-hidden bg-white flex flex-col">
                       <div className="relative aspect-video bg-slate-100">
                         {n.cover_image_url ? (

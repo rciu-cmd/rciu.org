@@ -26,7 +26,7 @@ type ProjectRow = {
 
 const STATUS_LABEL: Record<ProjectStatus, { mn: string; en: string; ja: string; zh: string }> = {
   ongoing: { mn: "Хэрэгжиж буй", en: "Ongoing", ja: "実施中", zh: "進行中" },
-  completed: { mn: "Дууссан", en: "Completed", ja: "完了", zh: "已完成" },
+  completed: { mn: "Хаагдсан", en: "Completed", ja: "完了", zh: "已完成" },
   planned: { mn: "Төлөвлөж буй", en: "Planned", ja: "計画中", zh: "計劃中" },
 };
 
