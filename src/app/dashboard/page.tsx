@@ -39,11 +39,22 @@ type EventRow = {
   registration_url: string | null;
 };
 
+// One row per "Send Reminder" click in Admin → Events (event_reminders,
+// migration23) — the in-app half of the reminder, alongside the email
+// that button already sends. Supabase returns the joined event as an
+// object here since event_id is a to-one foreign key.
+type ReminderRow = {
+  id: string;
+  sent_at: string;
+  event: { id: string; title_mn: string; title_en: string; event_date: string } | null;
+};
+
 export default function DashboardPage() {
   const { t } = useLanguage();
   const router = useRouter();
   const [member, setMember] = useState<Member | null>(null);
   const [events, setEvents] = useState<EventRow[] | null>(null);
+  const [reminders, setReminders] = useState<ReminderRow[] | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -67,6 +78,16 @@ export default function DashboardPage() {
         .order("event_date", { ascending: true })
         .limit(5);
       setEvents((upcoming as EventRow[]) ?? []);
+
+      // In-app half of "Send Reminder" (Admin → Events) — the row in
+      // event_reminders is only ever written by the send-event-reminder
+      // Edge Function, so anything shown here really was sent.
+      const { data: reminderRows } = await supabase
+        .from("event_reminders")
+        .select("id, sent_at, event:events(id, title_mn, title_en, event_date)")
+        .order("sent_at", { ascending: false })
+        .limit(5);
+      setReminders((reminderRows as unknown as ReminderRow[]) ?? []);
     });
   }, [router]);
 
@@ -188,6 +209,27 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+
+      {reminders && reminders.length > 0 && (
+        <div className="container-page pt-6">
+          <div className="rounded-xl border border-rotary-gold/50 bg-amber-50 p-6">
+            <h2 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
+              <span aria-hidden="true">🔔</span>
+              {t("Сануулга", "Reminders", "リマインダー", "提醒")}
+            </h2>
+            <ul className="grid gap-2">
+              {reminders.map((r) =>
+                r.event ? (
+                  <li key={r.id} className="text-sm text-slate-700">
+                    <span className="font-medium">{t(r.event.title_mn, r.event.title_en)}</span>
+                    <span className="text-slate-500"> — {r.event.event_date}</span>
+                  </li>
+                ) : null
+              )}
+            </ul>
+          </div>
+        </div>
+      )}
 
       <div className="container-page py-12 grid gap-6 sm:grid-cols-2">
         <MyInfoCard member={member} setMember={setMember} t={t} />

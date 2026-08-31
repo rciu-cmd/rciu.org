@@ -356,8 +356,10 @@ create table if not exists public.news (
   body_ja text,
   body_zh text,
   cover_image_url text,
+  link_url text,              -- optional external link (donation page, registration form, etc.) shown as a button on the post's detail page (migration23)
   facebook_url text unique,   -- lets the Facebook auto-sync workflow upsert without duplicating a post it's already synced (NULL is fine — a plain UNIQUE constraint allows any number of NULL rows, i.e. written posts)
   status text not null default 'draft' check (status in ('draft','published')),
+  featured_home boolean not null default false, -- admin-selected: show in the home page News strip (migration23); home page falls back to newest-first if none are picked yet
   author_id uuid references public.members(id),
   published_at timestamptz,
   created_at timestamptz not null default now(),
@@ -404,6 +406,7 @@ create table if not exists public.projects (
   cover_image_url text,
   cause_icon text check (cause_icon in ('basic_education_literacy','maternal_child_health','disease_prevention','other')),
   status text not null default 'ongoing' check (status in ('ongoing','completed','planned')),
+  featured_home boolean not null default false, -- admin-selected: show in the home page Projects strip (migration23); home page falls back to newest-first if none are picked yet
   start_date date,
   end_date date,
   -- How the project is funded: a club-run Local Project has no outside
@@ -447,13 +450,27 @@ create table if not exists public.project_media (
   storage_path text not null,            -- path within the storage bucket (Supabase or R2)
   caption text,
   featured_home boolean not null default false, -- admin-selected: show in the home page gallery
+  visible_to_members boolean not null default false, -- admin-selected: show in every member's Photo Library (/gallery), not just the uploader's own (migration23)
   created_at timestamptz not null default now()
 );
 
 alter table public.project_media enable row level security;
 
+-- A photo is visible if: it's featured on the home page (public), an
+-- admin has explicitly opened it up to every member, the viewer
+-- uploaded it themselves, or the viewer is a super admin (who sees
+-- everything from /admin/gallery). Otherwise a member's own Photo
+-- Library only ever shows their own uploads (migration23) — previously
+-- this was `using (true)`, i.e. every signed-in member (and even the
+-- public) could see every photo anyone had ever uploaded.
 drop policy if exists project_media_select_public on public.project_media;
-create policy project_media_select_public on public.project_media for select using (true);
+create policy project_media_select_public on public.project_media
+  for select using (
+    featured_home = true
+    or (visible_to_members = true and exists (select 1 from public.members m where m.id = auth.uid() and m.status = 'active'))
+    or uploaded_by = auth.uid()
+    or public.is_super_admin()
+  );
 
 drop policy if exists project_media_insert_member on public.project_media;
 create policy project_media_insert_member on public.project_media
@@ -719,6 +736,26 @@ create policy events_write_admin on public.events
   for all using (public.is_super_admin())
   with check (public.is_super_admin());
 
+-- A row is inserted here every time an admin uses the "Send Reminder"
+-- button, alongside the email that button already sends (migration23) —
+-- the member Dashboard reads this table to also show the reminder
+-- in-app. No insert/update/delete policy is defined on purpose: only the
+-- send-event-reminder Edge Function (service-role key, bypasses RLS) is
+-- meant to write rows here.
+create table if not exists public.event_reminders (
+  id uuid primary key default gen_random_uuid(),
+  event_id uuid not null references public.events(id) on delete cascade,
+  sent_at timestamptz not null default now()
+);
+
+alter table public.event_reminders enable row level security;
+
+drop policy if exists event_reminders_select_member on public.event_reminders;
+create policy event_reminders_select_member on public.event_reminders
+  for select using (
+    exists (select 1 from public.members m where m.id = auth.uid() and m.status = 'active')
+  );
+
 -- ------------------------------------------------------------
 -- club_photos — general (non-project) photo library, organized by
 -- the club's requested folder convention: year > category, e.g.
@@ -734,14 +771,27 @@ create table if not exists public.club_photos (
   storage_path text not null,     -- path within the Storage bucket
   caption text,
   featured_home boolean not null default false, -- admin-selected: show in the home page gallery
+  visible_to_members boolean not null default false, -- admin-selected: show in every member's Photo Library (/gallery), not just the uploader's own (migration23)
   uploaded_by uuid references public.members(id),
   created_at timestamptz not null default now()
 );
 
 alter table public.club_photos enable row level security;
 
+-- A photo is visible if: it's featured on the home page (public), OR an
+-- admin has explicitly opened it up to all members, OR the viewer is the
+-- member who uploaded it, OR the viewer is a super admin (who still sees
+-- everything from /admin/gallery). This replaces the old fully-public
+-- `using (true)` policy (migration23) — previously every signed-in
+-- member's Photo Library could see every photo anyone had ever uploaded.
 drop policy if exists club_photos_select_public on public.club_photos;
-create policy club_photos_select_public on public.club_photos for select using (true);
+create policy club_photos_select_public on public.club_photos
+  for select using (
+    featured_home = true
+    or (visible_to_members = true and exists (select 1 from public.members m where m.id = auth.uid() and m.status = 'active'))
+    or uploaded_by = auth.uid()
+    or public.is_super_admin()
+  );
 
 drop policy if exists club_photos_insert_member on public.club_photos;
 create policy club_photos_insert_member on public.club_photos

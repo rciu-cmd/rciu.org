@@ -131,6 +131,17 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Record that a reminder went out for this event so the member
+    // Dashboard can also show it in-app (event_reminders, migration23)
+    // — not just the email. Uses the same service-role client, since
+    // there's deliberately no insert policy for regular clients. Best
+    // effort: a failure here shouldn't turn an otherwise-successful
+    // email send into an error response.
+    const { error: reminderError } = await admin.from("event_reminders").insert({ event_id });
+    if (reminderError) {
+      return json({ sent, total: recipients.length, failures: failures.length > 0 ? failures : undefined, reminder_row_error: reminderError.message });
+    }
+
     return json({ sent, total: recipients.length, failures: failures.length > 0 ? failures : undefined });
   } catch (err) {
     return json({ error: err instanceof Error ? err.message : String(err) }, 500);

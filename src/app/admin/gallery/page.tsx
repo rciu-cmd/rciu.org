@@ -24,6 +24,7 @@ type PhotoRow = {
   storage_path: string;
   caption: string | null;
   featured_home: boolean;
+  visible_to_members: boolean;
   created_at: string;
 };
 
@@ -43,8 +44,8 @@ export default function AdminGalleryPage() {
 
   async function refresh() {
     const [clubRes, projectRes] = await Promise.all([
-      supabase.from("club_photos").select("id,storage_path,caption,featured_home,created_at").order("created_at", { ascending: false }),
-      supabase.from("project_media").select("id,storage_path,caption,featured_home,created_at").order("created_at", { ascending: false }),
+      supabase.from("club_photos").select("id,storage_path,caption,featured_home,visible_to_members,created_at").order("created_at", { ascending: false }),
+      supabase.from("project_media").select("id,storage_path,caption,featured_home,visible_to_members,created_at").order("created_at", { ascending: false }),
     ]);
     if (clubRes.error) setError(clubRes.error.message);
     if (projectRes.error) setError(projectRes.error.message);
@@ -64,6 +65,23 @@ export default function AdminGalleryPage() {
     const { error } = await supabase.from(table).update({ featured_home: !row.featured_home }).eq("id", row.id);
     if (error) setError(error.message);
     else setItems((prev) => prev && prev.map((p) => (p.id === row.id ? { ...p, featured_home: !p.featured_home } : p)));
+    setSavingId(null);
+  }
+
+  // Separate from featured_home (home page): this switch controls
+  // whether every signed-in member sees the photo in their own Photo
+  // Library (/gallery), not just the person who uploaded it — the RLS
+  // policy on both tables now only returns a row when featured_home,
+  // visible_to_members + active member, uploaded_by = viewer, or a
+  // super admin (migration23). Without this switched on, a member's
+  // own uploads are the only ones they'll see.
+  async function toggleMembers(row: PhotoRow) {
+    setSavingId(row.id);
+    setError(null);
+    const table = row.source === "club" ? "club_photos" : "project_media";
+    const { error } = await supabase.from(table).update({ visible_to_members: !row.visible_to_members }).eq("id", row.id);
+    if (error) setError(error.message);
+    else setItems((prev) => prev && prev.map((p) => (p.id === row.id ? { ...p, visible_to_members: !p.visible_to_members } : p)));
     setSavingId(null);
   }
 
@@ -148,10 +166,10 @@ export default function AdminGalleryPage() {
       </h1>
       <p className="text-slate-500 mb-6 max-w-2xl">
         {t(
-          "Энд сонгосон зургууд л нүүр хуудасны зургийн цомогт харагдана. Бусад зургууд системд хадгалагдсан хэвээр байна.",
-          "Only photos switched on here appear in the home page gallery strip. Everything else stays uploaded but hidden from the home page.",
-          "ここでオンにした写真だけがホームページのギャラリーに表示されます。他の写真はアップロードされたまま非表示になります。",
-          "只有在此處開啟的照片才會顯示在首頁照片集中。其他照片仍會保存，但不會顯示在首頁。"
+          "Энд сонгосон зургууд л нүүр хуудасны зургийн цомогт харагдана. Мөн тус тусад нь \"Бүх гишүүнд харуулах\"-ыг асаагаагүй бол гишүүд зөвхөн өөрсдийн байршуулсан зургийг л \"Зургийн сан\" хуудсандаа хардаг.",
+          "Only photos switched on here appear in the home page gallery strip. Separately, unless \"Show to all members\" is on for a photo, members only see their own uploads in their Photo Library page.",
+          "ここでオンにした写真だけがホームページのギャラリーに表示されます。また「全会員に表示」がオンでない限り、会員は自分がアップロードした写真しか写真ライブラリで見られません。",
+          "只有在此處開啟的照片才會顯示在首頁照片集中。另外，除非開啟「向所有會員顯示」，否則會員在照片庫頁面只能看到自己上傳的照片。"
         )}
       </p>
 
@@ -215,27 +233,37 @@ export default function AdminGalleryPage() {
                         {p.source === "club" ? t("Ерөнхий", "Club photo", "一般", "俱樂部照片") : t("Төслийн", "Project photo", "プロジェクト", "項目照片")}
                       </span>
                     </div>
-                    <div className="p-3 flex items-center justify-between gap-3">
-                      <span className="text-xs text-slate-500 line-clamp-1">{p.caption || t("Тайлбаргүй", "No caption", "説明なし", "無說明")}</span>
-                      <div className="flex items-center gap-2 shrink-0">
+                    <div className="p-3">
+                      <span className="text-xs text-slate-500 line-clamp-1 block mb-2">{p.caption || t("Тайлбаргүй", "No caption", "説明なし", "無說明")}</span>
+                      <div className="flex items-center justify-between gap-2 mb-1.5">
+                        <span className="text-[11px] text-slate-500">{t("Нүүр хуудсанд харуулах", "Show on home page", "ホームページに表示", "在首頁顯示")}</span>
                         <button
                           onClick={() => toggle(p)}
                           disabled={savingId === p.id}
                           aria-pressed={p.featured_home}
-                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${p.featured_home ? "bg-rotary-gold" : "bg-slate-300"} disabled:opacity-50`}
-                          title={t("Нүүр хуудсанд харуулах", "Show on home page", "ホームページに表示", "在首頁顯示")}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition shrink-0 ${p.featured_home ? "bg-rotary-gold" : "bg-slate-300"} disabled:opacity-50`}
                         >
                           <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${p.featured_home ? "translate-x-6" : "translate-x-1"}`} />
                         </button>
+                      </div>
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <span className="text-[11px] text-slate-500">{t("Бүх гишүүнд харуулах", "Show to all members", "全会員に表示", "向所有會員顯示")}</span>
                         <button
-                          onClick={() => deletePhoto(p)}
-                          disabled={deletingId === p.id}
-                          title={t("Устгах", "Delete", "削除", "刪除")}
-                          className="text-xs font-semibold px-2 py-1.5 rounded-md border border-rotary-cardinal text-rotary-cardinal hover:bg-rotary-cardinal hover:text-white disabled:opacity-50"
+                          onClick={() => toggleMembers(p)}
+                          disabled={savingId === p.id}
+                          aria-pressed={p.visible_to_members}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition shrink-0 ${p.visible_to_members ? "bg-rotary-royal-blue" : "bg-slate-300"} disabled:opacity-50`}
                         >
-                          {deletingId === p.id ? "…" : t("Устгах", "Delete", "削除", "刪除")}
+                          <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${p.visible_to_members ? "translate-x-6" : "translate-x-1"}`} />
                         </button>
                       </div>
+                      <button
+                        onClick={() => deletePhoto(p)}
+                        disabled={deletingId === p.id}
+                        className="w-full text-xs font-semibold px-2 py-1.5 rounded-md border border-rotary-cardinal text-rotary-cardinal hover:bg-rotary-cardinal hover:text-white disabled:opacity-50"
+                      >
+                        {deletingId === p.id ? "…" : t("Устгах", "Delete", "削除", "刪除")}
+                      </button>
                     </div>
                   </div>
                 );

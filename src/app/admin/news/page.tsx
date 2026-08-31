@@ -12,13 +12,15 @@ type NewsRow = {
   body_en: string | null;
   cover_image_url: string | null;
   facebook_url: string | null;
+  link_url: string | null;
+  featured_home: boolean;
   status: "draft" | "published";
   published_at: string | null;
 };
 
 type PostMode = "facebook" | "written";
 
-const EMPTY = { title_mn: "", title_en: "", body_mn: "", body_en: "" };
+const EMPTY = { title_mn: "", title_en: "", body_mn: "", body_en: "", link_url: "" };
 
 export default function AdminNewsPage() {
   const { t } = useLanguage();
@@ -66,10 +68,11 @@ export default function AdminNewsPage() {
       body_mn: string | null;
       body_en: string | null;
       cover_image_url: string | null;
+      link_url: string | null;
       status: "draft";
     } =
       mode === "facebook"
-        ? { facebook_url: facebookUrl.trim(), title_mn: null, title_en: null, body_mn: null, body_en: null, cover_image_url: null, status: "draft" }
+        ? { facebook_url: facebookUrl.trim(), title_mn: null, title_en: null, body_mn: null, body_en: null, cover_image_url: null, link_url: null, status: "draft" }
         : {
             facebook_url: null,
             title_mn: form.title_mn,
@@ -77,6 +80,7 @@ export default function AdminNewsPage() {
             body_mn: form.body_mn,
             body_en: form.body_en,
             cover_image_url: coverImageUrl || null,
+            link_url: form.link_url.trim() || null,
             status: "draft",
           };
     const { error } = await supabase.from("news").insert(payload);
@@ -107,6 +111,15 @@ export default function AdminNewsPage() {
   async function remove(item: NewsRow) {
     if (!confirm(t("Устгах уу?", "Delete this post?", "削除しますか?", "確定刪除嗎?"))) return;
     await supabase.from("news").delete().eq("id", item.id);
+    refresh();
+  }
+
+  // "Show on Home" — an admin picks exactly which posts appear in the
+  // home page's News row (migration23); the rest still show on the
+  // full /news page. Home page falls back to newest-first if nothing's
+  // been picked yet.
+  async function toggleHome(item: NewsRow) {
+    await supabase.from("news").update({ featured_home: !item.featured_home }).eq("id", item.id);
     refresh();
   }
 
@@ -195,6 +208,24 @@ export default function AdminNewsPage() {
                 <input type="file" accept="image/*" onChange={(e) => setCoverFile(e.target.files?.[0] ?? null)} className="text-sm" />
                 {coverFile && <p className="text-xs text-slate-500 mt-1">{coverFile.name}</p>}
               </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-700 mb-1">{t("Холбоос (заавал биш)", "Link (optional)", "リンク(任意)", "鏈接(可選)")}</p>
+                <p className="text-xs text-slate-400 mb-1.5">
+                  {t(
+                    "Хандив, бүртгэл, эсвэл өөр мэдээний холбоос — постын дэлгэрэнгүй хуудсан дээр товч болж харагдана.",
+                    "A donation link, registration link, or other news link — shown as a button on the post's own page.",
+                    "寄付、登録、または他のニュースへのリンク — 投稿の詳細ページにボタンとして表示されます。",
+                    "捐款、報名或其他新聞鏈接 — 會作為按鈕顯示在該文章的詳情頁上。"
+                  )}
+                </p>
+                <input
+                  type="url"
+                  placeholder="https://..."
+                  value={form.link_url}
+                  onChange={(e) => setForm({ ...form, link_url: e.target.value })}
+                  className="rounded-md border border-slate-300 px-3 py-2 text-sm w-full"
+                />
+              </div>
               {error && <p className="text-sm text-rotary-cardinal">{error}</p>}
               <button type="submit" disabled={busy} className="justify-self-start bg-rotary-royal-blue text-white font-semibold rounded-md px-5 py-2 text-sm disabled:opacity-60">
                 {busy ? t("Хадгалж байна…", "Saving…", "保存中…", "保存中…") : t("Ноорог хадгалах", "Save as Draft", "下書き保存", "保存為草稿")}
@@ -231,6 +262,13 @@ export default function AdminNewsPage() {
               )}
             </div>
             <div className="flex flex-col gap-2 shrink-0">
+              <button
+                onClick={() => toggleHome(item)}
+                className={`text-xs font-semibold px-3 py-1.5 rounded-md border ${item.featured_home ? "border-rotary-gold bg-rotary-gold text-slate-900" : "border-slate-300 text-slate-600 hover:bg-slate-50"}`}
+                title={t("Нүүр хуудсанд харуулах", "Show on the home page", "ホームページに表示", "在首頁顯示")}
+              >
+                {item.featured_home ? t("✓ Нүүрт харагдана", "✓ On Home", "✓ ホームに表示中", "✓ 首頁顯示中") : t("Нүүрт харуулах", "Show on Home", "ホームに表示", "在首頁顯示")}
+              </button>
               <button onClick={() => togglePublish(item)} className="text-xs font-semibold px-3 py-1.5 rounded-md border border-rotary-royal-blue text-rotary-royal-blue hover:bg-rotary-royal-blue hover:text-white">
                 {item.status === "published" ? t("Ноорог болгох", "Unpublish", "非公開にする", "撤回發佈") : t("Нийтлэх", "Publish", "公開する", "發佈")}
               </button>

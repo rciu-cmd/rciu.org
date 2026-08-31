@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { asset } from "@/lib/asset";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
 
@@ -87,10 +90,26 @@ export default function NewsPage() {
                 <div className="fb-post" data-href={/^https?:\/\//i.test(n.facebook_url) ? n.facebook_url : `https://${n.facebook_url}`} data-width="500" data-show-text="true" />
               </article>
             ) : (
-              <article key={n.id} className="rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-lg hover:-translate-y-1 transition">
-                <h2 className="font-bold text-slate-900 mb-2">{t(n.title_mn ?? "", n.title_en ?? "")}</h2>
-                <p className="text-slate-600 text-sm line-clamp-4">{t(n.body_mn ?? "", n.body_en ?? "")}</p>
-              </article>
+              // Written posts: now show the cover photo (was text-only
+              // before) and open the full story on its own page instead
+              // of doing nothing when clicked.
+              <Link key={n.id} href={`/news/view/?id=${n.id}`}>
+                <article className="h-full rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition overflow-hidden bg-white flex flex-col">
+                  <div className="relative aspect-video bg-slate-100">
+                    {n.cover_image_url ? (
+                      <Image src={n.cover_image_url} alt="" fill className="object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-blue-50">
+                        <Image src={asset("/logos/ri-gear-blue.png")} alt="" width={48} height={48} />
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-6 flex-1 flex flex-col">
+                    <h2 className="font-bold text-slate-900 mb-2">{t(n.title_mn ?? "", n.title_en ?? "")}</h2>
+                    <p className="text-slate-600 text-sm line-clamp-4 flex-1">{t(n.body_mn ?? "", n.body_en ?? "")}</p>
+                  </div>
+                </article>
+              </Link>
             )
           )}
         </div>

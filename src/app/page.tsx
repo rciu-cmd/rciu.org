@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { asset } from "@/lib/asset";
@@ -86,12 +86,18 @@ export default function Home() {
       .select("id,name,club_type,logo_url,president_name,contact_phone,contact_email,member_count")
       .order("sort_order")
       .then(({ data }) => setAffiliates((data as AffiliateRow[]) ?? []));
-    supabase
-      .from("projects")
-      .select("id,title_mn,title_en,description_mn,description_en,cover_image_url,cause_icon,status")
-      .order("created_at", { ascending: false })
-      .limit(4)
-      .then(({ data }) => setProjects((data as ProjectRow[]) ?? []));
+    // Projects — same curated-with-fallback pattern as News above.
+    async function loadProjects() {
+      const cols = "id,title_mn,title_en,description_mn,description_en,cover_image_url,cause_icon,status";
+      const featured = await supabase.from("projects").select(cols).eq("featured_home", true).order("created_at", { ascending: false });
+      if ((featured.data?.length ?? 0) > 0) {
+        setProjects(featured.data as ProjectRow[]);
+        return;
+      }
+      const fallback = await supabase.from("projects").select(cols).order("created_at", { ascending: false }).limit(8);
+      setProjects((fallback.data as ProjectRow[]) ?? []);
+    }
+    loadProjects();
     // Up to 3 photos per project, for the same auto-collage the full
     // /projects page uses — keeps the homepage preview in sync with it
     // instead of only ever showing the single cover_image_url.
@@ -108,13 +114,30 @@ export default function Home() {
         for (const id in grouped) grouped[id] = grouped[id].slice(0, 3);
         setProjectPhotos(grouped);
       });
-    supabase
-      .from("news")
-      .select("id,title_mn,title_en,body_mn,body_en,cover_image_url,facebook_url")
-      .eq("status", "published")
-      .order("published_at", { ascending: false })
-      .limit(3)
-      .then(({ data }) => setNews((data as NewsRow[]) ?? []));
+    // News — prefers whatever an admin picked with the "Show on Home"
+    // toggle (featured_home, migration23); falls back to newest-first
+    // so a site with nothing curated yet never shows an empty section.
+    async function loadNews() {
+      const cols = "id,title_mn,title_en,body_mn,body_en,cover_image_url,facebook_url";
+      const featured = await supabase
+        .from("news")
+        .select(cols)
+        .eq("status", "published")
+        .eq("featured_home", true)
+        .order("published_at", { ascending: false });
+      if ((featured.data?.length ?? 0) > 0) {
+        setNews(featured.data as NewsRow[]);
+        return;
+      }
+      const fallback = await supabase
+        .from("news")
+        .select(cols)
+        .eq("status", "published")
+        .order("published_at", { ascending: false })
+        .limit(8);
+      setNews((fallback.data as NewsRow[]) ?? []);
+    }
+    loadNews();
 
     // Photo gallery — admin-curated (see /admin/gallery), merging
     // whichever club_photos + project_media rows an admin switched on
@@ -256,33 +279,39 @@ export default function Home() {
               {t("Мэдээ удахгүй нэмэгдэнэ.", "News posts will appear here once published.", "ニュースは公開され次第表示されます。", "新聞發佈後將顯示在此處。")}
             </div>
           ) : (
-            <div className="grid gap-6 lg:grid-cols-2">
+            <ScrollRow>
               {news.map((n) =>
                 n.facebook_url ? (
                   // Real embedded post (photo/video/full text) via
                   // Facebook's Post Plugin — not just a link to it.
-                  <article key={n.id} className="rounded-2xl border border-slate-200 p-3 shadow-sm hover:shadow-lg transition overflow-hidden bg-white flex justify-center">
-                    <div className="fb-post" data-href={fbHref(n.facebook_url)} data-width="500" data-show-text="true" />
+                  <article key={n.id} className="shrink-0 w-80 snap-start rounded-2xl border border-slate-200 p-3 shadow-sm hover:shadow-lg transition overflow-hidden bg-white flex justify-center">
+                    <div className="fb-post" data-href={fbHref(n.facebook_url)} data-width="280" data-show-text="true" />
                   </article>
                 ) : (
-                  <article key={n.id} className="rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition overflow-hidden bg-white flex flex-col">
-                    <div className="relative aspect-video bg-slate-100">
-                      {n.cover_image_url ? (
-                        <Image src={n.cover_image_url} alt="" fill className="object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-blue-50">
-                          <Image src={asset("/logos/ri-gear-blue.png")} alt="" width={56} height={56} />
-                        </div>
-                      )}
-                    </div>
-                    <div className="p-6 flex-1 flex flex-col">
-                      <h3 className="text-xl font-bold text-slate-900 mb-2 line-clamp-2">{t(n.title_mn ?? "", n.title_en ?? "")}</h3>
-                      <p className="text-slate-600 text-sm line-clamp-3 flex-1">{t(n.body_mn ?? "", n.body_en ?? "")}</p>
-                    </div>
-                  </article>
+                  // Written posts open the full detail page (item: cards
+                  // weren't clickable before, and only showed a partial
+                  // preview here) — /news/view/?id= mirrors the
+                  // /projects/view/ query-string pattern.
+                  <Link key={n.id} href={`/news/view/?id=${n.id}`} className="shrink-0 w-80 snap-start">
+                    <article className="h-full rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition overflow-hidden bg-white flex flex-col">
+                      <div className="relative aspect-video bg-slate-100">
+                        {n.cover_image_url ? (
+                          <Image src={n.cover_image_url} alt="" fill className="object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-blue-50">
+                            <Image src={asset("/logos/ri-gear-blue.png")} alt="" width={56} height={56} />
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-6 flex-1 flex flex-col">
+                        <h3 className="text-xl font-bold text-slate-900 mb-2 line-clamp-2">{t(n.title_mn ?? "", n.title_en ?? "")}</h3>
+                        <p className="text-slate-600 text-sm line-clamp-3 flex-1">{t(n.body_mn ?? "", n.body_en ?? "")}</p>
+                      </div>
+                    </article>
+                  </Link>
                 )
               )}
-            </div>
+            </ScrollRow>
           )}
         </div>
       </section>
@@ -315,11 +344,11 @@ export default function Home() {
             {t("Төслийн мэдээлэл удахгүй нэмэгдэнэ.", "Project details will appear here once added by an admin.", "プロジェクト情報は追加され次第表示されます。", "項目信息將在添加後顯示。")}
           </div>
         ) : (
-          <div className="grid gap-8 lg:grid-cols-2">
+          <ScrollRow>
             {projects.map((p) => {
               const photos = projectPhotos[p.id] ?? (p.cover_image_url ? [p.cover_image_url] : []);
               return (
-                <Link key={p.id} href={`/projects/view/?id=${p.id}`} className="block h-full">
+                <Link key={p.id} href={`/projects/view/?id=${p.id}`} className="shrink-0 w-80 snap-start">
                   <article className="h-full rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition overflow-hidden bg-white flex flex-col">
                     <div className="relative">
                       {photos.length > 0 ? (
@@ -345,7 +374,7 @@ export default function Home() {
                 </Link>
               );
             })}
-          </div>
+          </ScrollRow>
         )}
         <Link href="/projects" className="sm:hidden mt-6 inline-block text-rotary-royal-blue font-semibold hover:underline">
           {t("Бүх төсөл →", "View All Projects →", "すべて見る →", "查看全部 →")}
@@ -478,6 +507,44 @@ function PartnerLogo({ link }: { link: LinkRow }) {
     <a href={link.url ?? undefined} target="_blank" rel="noopener noreferrer" title={link.name} className="shrink-0 text-xs font-bold text-slate-400 uppercase whitespace-nowrap">
       {link.name}
     </a>
+  );
+}
+
+// Horizontal-scrolling row used for News and Projects — shows about
+// 4-5 fixed-width cards at once (more on wide screens), with a left/
+// right arrow to reveal the rest, instead of a 2-up grid that hid
+// everything past the first couple of items.
+function ScrollRow({ children }: { children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  function scroll(dir: 1 | -1) {
+    ref.current?.scrollBy({ left: dir * 340, behavior: "smooth" });
+  }
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => scroll(-1)}
+        aria-label="Scroll left"
+        className="hidden sm:flex absolute -left-4 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white shadow-md border border-slate-200 items-center justify-center text-rotary-royal-blue hover:bg-slate-50 text-lg"
+      >
+        ‹
+      </button>
+      <div
+        ref={ref}
+        className="flex gap-5 overflow-x-auto pb-2 snap-x snap-mandatory scroll-smooth"
+        style={{ scrollbarWidth: "none" }}
+      >
+        {children}
+      </div>
+      <button
+        type="button"
+        onClick={() => scroll(1)}
+        aria-label="Scroll right"
+        className="hidden sm:flex absolute -right-4 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white shadow-md border border-slate-200 items-center justify-center text-rotary-royal-blue hover:bg-slate-50 text-lg"
+      >
+        ›
+      </button>
+    </div>
   );
 }
 

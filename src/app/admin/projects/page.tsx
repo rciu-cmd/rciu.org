@@ -22,6 +22,7 @@ type ProjectRow = {
   funding_amount: number | null;
   funding_currency: string;
   grant_number: string | null;
+  featured_home: boolean;
 };
 
 const PROJECT_TYPE_LABEL: Record<ProjectType, { mn: string; en: string; ja: string; zh: string }> = {
@@ -276,6 +277,15 @@ export default function AdminProjectsPage() {
     refresh();
   }
 
+  // "Show on Home" — an admin picks exactly which projects appear in
+  // the home page's Projects row (migration23); the rest still show on
+  // the full /projects page. Home page falls back to newest-first if
+  // nothing's been picked yet.
+  async function toggleHome(item: ProjectRow) {
+    await supabase.from("projects").update({ featured_home: !item.featured_home }).eq("id", item.id);
+    refresh();
+  }
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -460,6 +470,13 @@ export default function AdminProjectsPage() {
                   <option value="completed">{t("Дууссан", "Completed", "完了", "已完成")}</option>
                 </select>
                 <div className="flex gap-2">
+                  <button
+                    onClick={() => toggleHome(item)}
+                    className={`text-xs font-semibold px-3 py-1.5 rounded-md border ${item.featured_home ? "border-rotary-gold bg-rotary-gold text-slate-900" : "border-slate-300 text-slate-600 hover:bg-slate-50"}`}
+                    title={t("Нүүр хуудсанд харуулах", "Show on the home page", "ホームページに表示", "在首頁顯示")}
+                  >
+                    {item.featured_home ? t("✓ Нүүрт", "✓ On Home", "✓ ホームに表示中", "✓ 首頁顯示中") : t("Нүүрт харуулах", "Show on Home", "ホームに表示", "在首頁顯示")}
+                  </button>
                   <button onClick={() => startEdit(item)} className="text-xs font-semibold px-3 py-1.5 rounded-md border border-rotary-azure text-rotary-azure hover:bg-rotary-azure hover:text-white">
                     {t("Засах", "Edit", "編集", "編輯")}
                   </button>
