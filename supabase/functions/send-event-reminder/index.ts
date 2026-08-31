@@ -110,6 +110,13 @@ Deno.serve(async (req) => {
     // stays private from the others.
     let sent = 0;
     const failures: string[] = [];
+    // Resend's own rejection reason (invalid/unverified sender domain,
+    // bad API key, rate limit, etc.) — captured from the first failure
+    // only, so the admin actually finds out WHY every send failed
+    // instead of just which addresses. Every recipient fails for the
+    // same underlying reason in practice (it's almost never "some
+    // emails are bad"), so one sample is enough to diagnose from.
+    let firstFailureDetail: string | null = null;
     for (const member of recipients) {
       const res = await fetch("https://api.resend.com/emails", {
         method: "POST",
@@ -128,6 +135,10 @@ Deno.serve(async (req) => {
         sent++;
       } else {
         failures.push(member.email);
+        if (!firstFailureDetail) {
+          const text = await res.text().catch(() => "");
+          firstFailureDetail = `Resend ${res.status}: ${text.slice(0, 500)}`;
+        }
       }
     }
 
@@ -139,10 +150,21 @@ Deno.serve(async (req) => {
     // email send into an error response.
     const { error: reminderError } = await admin.from("event_reminders").insert({ event_id });
     if (reminderError) {
-      return json({ sent, total: recipients.length, failures: failures.length > 0 ? failures : undefined, reminder_row_error: reminderError.message });
+      return json({
+        sent,
+        total: recipients.length,
+        failures: failures.length > 0 ? failures : undefined,
+        first_failure_detail: firstFailureDetail ?? undefined,
+        reminder_row_error: reminderError.message,
+      });
     }
 
-    return json({ sent, total: recipients.length, failures: failures.length > 0 ? failures : undefined });
+    return json({
+      sent,
+      total: recipients.length,
+      failures: failures.length > 0 ? failures : undefined,
+      first_failure_detail: firstFailureDetail ?? undefined,
+    });
   } catch (err) {
     return json({ error: err instanceof Error ? err.message : String(err) }, 500);
   }

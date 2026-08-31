@@ -160,7 +160,12 @@ export default function AdminEventsPage() {
     const parts = [`sent: ${data?.sent ?? "?"}`];
     if (typeof data?.total === "number") parts.push(`of ${data.total}`);
     if (data?.note) parts.push(data.note);
-    if (Array.isArray(data?.failures) && data.failures.length > 0) parts.push(`failed: ${data.failures.join(", ")}`);
+    // The actual reason Resend rejected the email (bad API key,
+    // unverified sender domain, etc.) — every recipient fails for the
+    // same reason in practice, so this one sample is the important
+    // part; the address list on its own didn't say WHY they failed.
+    if (data?.first_failure_detail) parts.push(data.first_failure_detail);
+    else if (Array.isArray(data?.failures) && data.failures.length > 0) parts.push(`failed: ${data.failures.join(", ")}`);
     setReminderStatus((s) => ({ ...s, [item.id]: parts.join(" — ") }));
   }
 
@@ -279,7 +284,7 @@ export default function AdminEventsPage() {
                       : t("Сануулга илгээх", "Send Reminder", "リマインダー送信", "發送提醒")}
                   </button>
                   {reminderStatus[ev.id] && reminderStatus[ev.id] !== "sending" && (
-                    <p className="text-xs text-slate-500 max-w-[14rem] text-right">{reminderStatus[ev.id]}</p>
+                    <p className="text-xs text-slate-500 max-w-[20rem] text-right break-words">{reminderStatus[ev.id]}</p>
                   )}
                   <div className="flex gap-2">
                     <button onClick={() => startEdit(ev)} className="text-xs font-semibold px-3 py-1.5 rounded-md border border-rotary-royal-blue text-rotary-royal-blue hover:bg-rotary-royal-blue hover:text-white">
