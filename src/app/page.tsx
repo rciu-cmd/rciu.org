@@ -294,7 +294,15 @@ export default function Home() {
                   // /projects/view/ query-string pattern.
                   <Link key={n.id} href={`/news/view/?id=${n.id}`} className="shrink-0 w-96 snap-start">
                     <article className="h-full rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition overflow-hidden bg-white flex flex-col">
-                      <div className="relative aspect-video bg-slate-100">
+                      {/* Fixed height (not aspect-video) — News cards
+                          are wider than Projects cards (w-96 vs w-80),
+                          so scaling the image by aspect ratio alone
+                          would make it taller too. Pinning the height
+                          to what Projects' image renders at its own
+                          width keeps both card types the same overall
+                          height; the wider News image just crops more
+                          horizontally instead of growing vertically. */}
+                      <div className="relative w-full h-[180px] bg-slate-100">
                         {n.cover_image_url ? (
                           <Image src={n.cover_image_url} alt="" fill className="object-cover" />
                         ) : (
