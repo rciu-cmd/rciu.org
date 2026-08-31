@@ -119,7 +119,11 @@ export default function AdminNewsPage() {
   // full /news page. Home page falls back to newest-first if nothing's
   // been picked yet.
   async function toggleHome(item: NewsRow) {
-    await supabase.from("news").update({ featured_home: !item.featured_home }).eq("id", item.id);
+    const { error } = await supabase.from("news").update({ featured_home: !item.featured_home }).eq("id", item.id);
+    if (error) {
+      setError(error.message);
+      return;
+    }
     refresh();
   }
 
@@ -235,6 +239,7 @@ export default function AdminNewsPage() {
         </div>
       )}
 
+      {!showForm && error && <p className="text-sm text-rotary-cardinal mb-4 break-all">{error}</p>}
       {items === null && <p className="text-slate-400 text-sm">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加載中…")}</p>}
       {items && items.length === 0 && <p className="text-slate-400 text-sm">{t("Мэдээ алга.", "No posts yet.", "投稿がありません。", "暫無文章。")}</p>}
 

@@ -282,7 +282,11 @@ export default function AdminProjectsPage() {
   // the full /projects page. Home page falls back to newest-first if
   // nothing's been picked yet.
   async function toggleHome(item: ProjectRow) {
-    await supabase.from("projects").update({ featured_home: !item.featured_home }).eq("id", item.id);
+    const { error } = await supabase.from("projects").update({ featured_home: !item.featured_home }).eq("id", item.id);
+    if (error) {
+      setError(error.message);
+      return;
+    }
     refresh();
   }
 
@@ -431,6 +435,7 @@ export default function AdminProjectsPage() {
         </form>
       )}
 
+      {!showForm && error && <p className="text-sm text-rotary-cardinal mb-4 break-all">{error}</p>}
       {items === null && <p className="text-slate-400 text-sm">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加載中…")}</p>}
       {items && items.length === 0 && <p className="text-slate-400 text-sm">{t("Төсөл алга.", "No projects yet.", "プロジェクトがありません。", "暫無項目。")}</p>}
 

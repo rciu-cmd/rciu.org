@@ -45,6 +45,14 @@ function NewsDetail() {
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
   const [item, setItem] = useState<NewsRow | null | undefined>(undefined);
+  // Surfaced separately from "not found" — a real query error (e.g. a
+  // schema migration that hasn't been run against this project yet, so
+  // a selected column doesn't exist) was previously indistinguishable
+  // from a genuinely missing/unpublished post, both just showing
+  // "News post not found." Showing the actual message makes a problem
+  // like that immediately diagnosable instead of looking like a bug
+  // with no clue what's wrong.
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) {
@@ -57,7 +65,14 @@ function NewsDetail() {
       .eq("id", id)
       .eq("status", "published")
       .maybeSingle()
-      .then(({ data }) => setItem((data as NewsRow | null) ?? null));
+      .then(({ data, error }) => {
+        if (error) {
+          setLoadError(error.message);
+          setItem(null);
+          return;
+        }
+        setItem((data as NewsRow | null) ?? null);
+      });
   }, [id]);
 
   // Same Facebook Post Plugin embed used on the home page and /news —
@@ -86,9 +101,13 @@ function NewsDetail() {
   if (item === null) {
     return (
       <div className="container-page py-14">
-        <p className="text-slate-500 mb-4">
-          {t("Мэдээ олдсонгүй.", "News post not found.", "ニュースが見つかりません。", "找不到該新聞。")}
-        </p>
+        {loadError ? (
+          <p className="text-rotary-cardinal text-sm mb-4 break-all">{loadError}</p>
+        ) : (
+          <p className="text-slate-500 mb-4">
+            {t("Мэдээ олдсонгүй.", "News post not found.", "ニュースが見つかりません。", "找不到該新聞。")}
+          </p>
+        )}
         <Link href="/news" className="text-rotary-royal-blue font-semibold hover:underline">
           {t("← Бүх мэдээ рүү буцах", "← Back to all News", "← ニュース一覧へ戻る", "← 返回所有新聞")}
         </Link>
