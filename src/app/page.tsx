@@ -297,12 +297,13 @@ export default function Home() {
                       {/* Fixed height (not aspect-video) — News cards
                           are wider than Projects cards (w-96 vs w-80),
                           so scaling the image by aspect ratio alone
-                          would make it taller too. Pinning the height
-                          to what Projects' image renders at its own
-                          width keeps both card types the same overall
-                          height; the wider News image just crops more
-                          horizontally instead of growing vertically. */}
-                      <div className="relative w-full h-[180px] bg-slate-100">
+                          would make it taller too. Projects' own image
+                          renders at 180px tall (320px wide, 16:9); News
+                          is pinned to 180 * 1.15 = 207px, 15% taller
+                          than that on purpose. The wider News image
+                          crops more horizontally, plus this deliberate
+                          15% extra on top. */}
+                      <div className="relative w-full h-[207px] bg-slate-100">
                         {n.cover_image_url ? (
                           <Image src={n.cover_image_url} alt="" fill className="object-cover" />
                         ) : (
