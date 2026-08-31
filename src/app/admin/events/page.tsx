@@ -153,7 +153,15 @@ export default function AdminEventsPage() {
       setReminderStatus((s) => ({ ...s, [item.id]: `error: ${error.message}` }));
       return;
     }
-    setReminderStatus((s) => ({ ...s, [item.id]: `sent: ${data?.sent ?? "?"}` }));
+    // Show the full picture, not just the sent count — "sent: 0" alone
+    // gives no clue whether that's because there were no eligible
+    // recipients (note) or because every send attempt failed
+    // (failures) versus just nobody being active/having an email yet.
+    const parts = [`sent: ${data?.sent ?? "?"}`];
+    if (typeof data?.total === "number") parts.push(`of ${data.total}`);
+    if (data?.note) parts.push(data.note);
+    if (Array.isArray(data?.failures) && data.failures.length > 0) parts.push(`failed: ${data.failures.join(", ")}`);
+    setReminderStatus((s) => ({ ...s, [item.id]: parts.join(" — ") }));
   }
 
   const today = localYmd(new Date());
