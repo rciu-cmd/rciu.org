@@ -456,21 +456,16 @@ create table if not exists public.project_media (
 
 alter table public.project_media enable row level security;
 
--- A photo is visible if: it's featured on the home page (public), an
--- admin has explicitly opened it up to every member, the viewer
--- uploaded it themselves, or the viewer is a super admin (who sees
--- everything from /admin/gallery). Otherwise a member's own Photo
--- Library only ever shows their own uploads (migration23) — previously
--- this was `using (true)`, i.e. every signed-in member (and even the
--- public) could see every photo anyone had ever uploaded.
+-- Fully public on purpose (reverted by migration24 — migration23 had
+-- restricted this the same way as club_photos, but project_media is
+-- also the source for every PUBLIC project photo gallery: the home
+-- page Projects row, /projects, and each project's own /projects/view
+-- page. Those must stay visible to every visitor, logged in or not.
+-- The member-only Photo Library concept from migration23 lives on
+-- club_photos instead, which isn't tied to any public project page.
 drop policy if exists project_media_select_public on public.project_media;
 create policy project_media_select_public on public.project_media
-  for select using (
-    featured_home = true
-    or (visible_to_members = true and exists (select 1 from public.members m where m.id = auth.uid() and m.status = 'active'))
-    or uploaded_by = auth.uid()
-    or public.is_super_admin()
-  );
+  for select using (true);
 
 drop policy if exists project_media_insert_member on public.project_media;
 create policy project_media_insert_member on public.project_media

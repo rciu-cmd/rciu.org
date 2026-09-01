@@ -166,10 +166,10 @@ export default function AdminGalleryPage() {
       </h1>
       <p className="text-slate-500 mb-6 max-w-2xl">
         {t(
-          "Энд сонгосон зургууд л нүүр хуудасны зургийн цомогт харагдана. Мөн тус тусад нь \"Бүх гишүүнд харуулах\"-ыг асаагаагүй бол гишүүд зөвхөн өөрсдийн байршуулсан зургийг л \"Зургийн сан\" хуудсандаа хардаг.",
-          "Only photos switched on here appear in the home page gallery strip. Separately, unless \"Show to all members\" is on for a photo, members only see their own uploads in their Photo Library page.",
-          "ここでオンにした写真だけがホームページのギャラリーに表示されます。また「全会員に表示」がオンでない限り、会員は自分がアップロードした写真しか写真ライブラリで見られません。",
-          "只有在此處開啟的照片才會顯示在首頁照片集中。另外，除非開啟「向所有會員顯示」，否則會員在照片庫頁面只能看到自己上傳的照片。"
+          "Энд сонгосон зургууд л нүүр хуудасны зургийн цомогт харагдана. Ерөнхий (клубын) зургийн хувьд \"Бүх гишүүнд харуулах\"-ыг асаагаагүй бол гишүүд зөвхөн өөрсдийн байршуулсан зургийг л \"Зургийн сан\" хуудсандаа хардаг. Харин төслийн зургууд үргэлж нээлттэй — тухайн төслийн олон нийтийн хуудсан дээр харагддаг.",
+          "Only photos switched on here appear in the home page gallery strip. For general club photos, unless \"Show to all members\" is on, members only see their own uploads in their Photo Library page. Project photos are always public, though — they're what shows on that project's own public page.",
+          "ここでオンにした写真だけがホームページのギャラリーに表示されます。一般のクラブ写真は「全会員に表示」がオンでない限り、会員は自分がアップロードした写真しか写真ライブラリで見られません。ただしプロジェクト写真は常に公開され、そのプロジェクトの公開ページに表示されます。",
+          "只有在此處開啟的照片才會顯示在首頁照片集中。一般俱樂部照片方面，除非開啟「向所有會員顯示」，否則會員在照片庫頁面只能看到自己上傳的照片。但項目照片始終公開，會顯示在該項目的公開頁面上。"
         )}
       </p>
 
@@ -246,17 +246,32 @@ export default function AdminGalleryPage() {
                           <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${p.featured_home ? "translate-x-6" : "translate-x-1"}`} />
                         </button>
                       </div>
-                      <div className="flex items-center justify-between gap-2 mb-2">
-                        <span className="text-[11px] text-slate-500">{t("Бүх гишүүнд харуулах", "Show to all members", "全会員に表示", "向所有會員顯示")}</span>
-                        <button
-                          onClick={() => toggleMembers(p)}
-                          disabled={savingId === p.id}
-                          aria-pressed={p.visible_to_members}
-                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition shrink-0 ${p.visible_to_members ? "bg-rotary-royal-blue" : "bg-slate-300"} disabled:opacity-50`}
-                        >
-                          <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${p.visible_to_members ? "translate-x-6" : "translate-x-1"}`} />
-                        </button>
-                      </div>
+                      {/* Project photos (project_media) are always
+                          public now (migration24) — they're the source
+                          for every project's public photo gallery, so
+                          this per-photo "members only" switch only
+                          makes sense for general club photos
+                          (club_photos); showing it for a project photo
+                          would look like it controls something when it
+                          no longer does anything. */}
+                      {p.source === "club" && (
+                        <div className="flex items-center justify-between gap-2 mb-2">
+                          <span className="text-[11px] text-slate-500">{t("Бүх гишүүнд харуулах", "Show to all members", "全会員に表示", "向所有會員顯示")}</span>
+                          <button
+                            onClick={() => toggleMembers(p)}
+                            disabled={savingId === p.id}
+                            aria-pressed={p.visible_to_members}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition shrink-0 ${p.visible_to_members ? "bg-rotary-royal-blue" : "bg-slate-300"} disabled:opacity-50`}
+                          >
+                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${p.visible_to_members ? "translate-x-6" : "translate-x-1"}`} />
+                          </button>
+                        </div>
+                      )}
+                      {p.source === "project" && (
+                        <p className="text-[11px] text-slate-400 mb-2">
+                          {t("Төслийн зураг үргэлж нээлттэй", "Project photos are always public", "プロジェクト写真は常に公開", "項目照片始終公開")}
+                        </p>
+                      )}
                       <button
                         onClick={() => deletePhoto(p)}
                         disabled={deletingId === p.id}
