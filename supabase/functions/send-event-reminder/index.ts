@@ -93,8 +93,13 @@ Deno.serve(async (req) => {
     if (recipients.length === 0) return json({ sent: 0, note: "No active members with an email on file." });
 
     const subject = `Reminder: ${event.title_en} — ${event.event_date}`;
+    // Absolute URL — email clients can't load site-relative paths, so
+    // this has to point at the live, publicly-served logo file.
+    const LOGO_URL = "https://rciu.org/logos/rciu-logo-transparent.png";
     const bodyHtml = `
-      <p>Hi there,</p>
+      <div style="text-align:center;margin-bottom:20px;">
+        <img src="${LOGO_URL}" alt="Rotary Club of Ikh Urgoo" width="120" style="display:inline-block;max-width:120px;height:auto;" />
+      </div>
       <p>This is a reminder about an upcoming Rotary Club of Ikh Urgoo event:</p>
       <p>
         <strong>${escapeHtml(event.title_en)}</strong><br/>

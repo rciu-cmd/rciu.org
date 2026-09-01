@@ -284,8 +284,27 @@ export default function Home() {
                 n.facebook_url ? (
                   // Real embedded post (photo/video/full text) via
                   // Facebook's Post Plugin — not just a link to it.
-                  <article key={n.id} className="shrink-0 w-96 snap-start rounded-2xl border border-slate-200 p-3 shadow-sm hover:shadow-lg transition overflow-hidden bg-white flex justify-center">
-                    <div className="fb-post" data-href={fbHref(n.facebook_url)} data-width="340" data-show-text="true" />
+                  // Facebook renders this embed at its own natural height
+                  // (depends on photo count, caption length, etc.), which
+                  // we can't pin the way we can our own image+text cards.
+                  // So the card itself is still capped at the same 370px
+                  // every other card uses, the embed is clipped with a
+                  // fade at the bottom instead of being cut off abruptly,
+                  // and an explicit "view full post" link makes sure
+                  // nothing is actually lost — it's one click away.
+                  <article key={n.id} className="shrink-0 w-96 snap-start rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg transition bg-white flex flex-col overflow-hidden h-[370px]">
+                    <div className="relative flex-1 overflow-hidden flex justify-center p-3 pb-0">
+                      <div className="fb-post" data-href={fbHref(n.facebook_url)} data-width="340" data-show-text="true" />
+                      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-white to-transparent" />
+                    </div>
+                    <a
+                      href={fbHref(n.facebook_url)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="shrink-0 border-t border-slate-100 text-center text-sm font-semibold text-rotary-royal-blue hover:bg-slate-50 transition py-3"
+                    >
+                      {t("Facebook дээр бүтэн унших →", "View full post on Facebook →", "Facebookで全文を見る →", "在Facebook查看全文 →")}
+                    </a>
                   </article>
                 ) : (
                   // Written posts open the full detail page (item: cards
