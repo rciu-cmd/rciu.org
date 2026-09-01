@@ -293,16 +293,16 @@ export default function Home() {
                   // preview here) — /news/view/?id= mirrors the
                   // /projects/view/ query-string pattern.
                   <Link key={n.id} href={`/news/view/?id=${n.id}`} className="shrink-0 w-96 snap-start">
-                    <article className="h-full rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition overflow-hidden bg-white flex flex-col">
-                      {/* Fixed height (not aspect-video) — News cards
-                          are wider than Projects cards (w-96 vs w-80),
-                          so scaling the image by aspect ratio alone
-                          would make it taller too. Pinning it to the
-                          same 180px Projects' own image renders at
-                          (320px wide, 16:9) keeps both card types the
-                          same overall height; the wider News image
-                          just crops more horizontally instead of
-                          growing vertically. */}
+                    {/* Both the image (180px) and the text block
+                        (190px) below are pinned to a FIXED height —
+                        same values the Projects cards use — so every
+                        card in both rows renders at the exact same
+                        total height (180+190=370px) no matter how
+                        long or short its actual title/body text is.
+                        Relying on aspect-ratio or flex-grow alone let
+                        real content length quietly throw the two rows
+                        out of sync with each other. */}
+                    <article className="rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition overflow-hidden bg-white flex flex-col">
                       <div className="relative w-full h-[180px] bg-slate-100">
                         {n.cover_image_url ? (
                           <Image src={n.cover_image_url} alt="" fill className="object-cover" />
@@ -312,9 +312,9 @@ export default function Home() {
                           </div>
                         )}
                       </div>
-                      <div className="p-6 flex-1 flex flex-col">
+                      <div className="p-6 h-[190px] flex flex-col">
                         <h3 className="text-xl font-bold text-slate-900 mb-2 line-clamp-2">{t(n.title_mn ?? "", n.title_en ?? "")}</h3>
-                        <p className="text-slate-600 text-sm line-clamp-3 flex-1">{t(n.body_mn ?? "", n.body_en ?? "")}</p>
+                        <p className="text-slate-600 text-sm line-clamp-3">{t(n.body_mn ?? "", n.body_en ?? "")}</p>
                       </div>
                     </article>
                   </Link>
@@ -358,23 +358,29 @@ export default function Home() {
               const photos = projectPhotos[p.id] ?? (p.cover_image_url ? [p.cover_image_url] : []);
               return (
                 <Link key={p.id} href={`/projects/view/?id=${p.id}`} className="shrink-0 w-80 snap-start">
-                  <article className="h-full rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition overflow-hidden bg-white flex flex-col">
+                  {/* Fixed 180px image + fixed 190px text block — same
+                      values as the News cards above, so both rows
+                      total the exact same 370px regardless of actual
+                      title/description length (see the News card
+                      comment for why aspect-ratio/flex-grow alone
+                      wasn't reliable here). */}
+                  <article className="rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition overflow-hidden bg-white flex flex-col">
                     <div className="relative">
                       {photos.length > 0 ? (
-                        <ProjectPhotoCollage photos={photos} />
+                        <ProjectPhotoCollage photos={photos} className="!aspect-auto h-[180px]" />
                       ) : p.cause_icon && CAUSE_ICONS[p.cause_icon] ? (
-                        <div className="w-full aspect-video flex items-center justify-center bg-blue-50">
+                        <div className="w-full h-[180px] flex items-center justify-center bg-blue-50">
                           <Image src={asset(CAUSE_ICONS[p.cause_icon])} alt="" width={72} height={72} />
                         </div>
                       ) : (
-                        <div className="w-full aspect-video flex items-center justify-center text-slate-300 text-sm bg-slate-100">{t("Зураг алга", "No photo yet", "写真なし", "暫無照片")}</div>
+                        <div className="w-full h-[180px] flex items-center justify-center text-slate-300 text-sm bg-slate-100">{t("Зураг алга", "No photo yet", "写真なし", "暫無照片")}</div>
                       )}
                       <span className="absolute top-3 left-3 text-xs font-semibold uppercase tracking-wide bg-white/90 text-rotary-azure px-3 py-1 rounded-full">
                         {t(STATUS_LABEL[p.status].mn, STATUS_LABEL[p.status].en)}
                       </span>
                     </div>
-                    <div className="p-6 flex-1 flex flex-col">
-                      <h3 className="text-xl font-bold text-slate-900 mb-2">{t(p.title_mn, p.title_en)}</h3>
+                    <div className="p-6 h-[190px] flex flex-col">
+                      <h3 className="text-xl font-bold text-slate-900 mb-2 line-clamp-2">{t(p.title_mn, p.title_en)}</h3>
                       {(p.description_mn || p.description_en) && (
                         <p className="text-slate-600 text-sm line-clamp-3">{t(p.description_mn ?? "", p.description_en ?? "")}</p>
                       )}
