@@ -22,6 +22,17 @@ type EventRow = {
   registration_url: string | null;
 };
 
+// One row per "Send Reminder" click — same table the member Dashboard
+// reads for its "Reminders" box (see dashboard/page.tsx). Listed here
+// so an admin can delete a stray/duplicate row (e.g. from clicking the
+// button more than once for the same event) without it piling up in
+// members' Dashboard forever.
+type ReminderLogRow = {
+  id: string;
+  sent_at: string;
+  event: { id: string; title_mn: string; title_en: string; event_date: string } | null;
+};
+
 const CATEGORY_LABELS: Record<Category, { mn: string; en: string }> = {
   installation_ceremony: { mn: "Албан ёсны ёслол", en: "Installation Ceremony" },
   district_events: { mn: "Дүүргийн арга хэмжээ", en: "District Event" },
@@ -56,6 +67,8 @@ export default function AdminEventsPage() {
   const [showForm, setShowForm] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [reminderStatus, setReminderStatus] = useState<Record<string, string>>({});
+  const [reminderLog, setReminderLog] = useState<ReminderLogRow[] | null>(null);
+  const [reminderLogBusyId, setReminderLogBusyId] = useState<string | null>(null);
 
   async function refresh() {
     const { data, error } = await supabase.from("events").select("*").order("event_date", { ascending: true });
@@ -63,8 +76,17 @@ export default function AdminEventsPage() {
     else setItems(data as EventRow[]);
   }
 
+  async function refreshReminderLog() {
+    const { data } = await supabase
+      .from("event_reminders")
+      .select("id, sent_at, event:events(id, title_mn, title_en, event_date)")
+      .order("sent_at", { ascending: false });
+    setReminderLog((data as unknown as ReminderLogRow[]) ?? []);
+  }
+
   useEffect(() => {
     refresh();
+    refreshReminderLog();
   }, []);
 
   function startEdit(item: EventRow) {
@@ -167,6 +189,25 @@ export default function AdminEventsPage() {
     if (data?.first_failure_detail) parts.push(data.first_failure_detail);
     else if (Array.isArray(data?.failures) && data.failures.length > 0) parts.push(`failed: ${data.failures.join(", ")}`);
     setReminderStatus((s) => ({ ...s, [item.id]: parts.join(" — ") }));
+    refreshReminderLog();
+  }
+
+  async function deleteReminderLog(row: ReminderLogRow) {
+    if (
+      !confirm(
+        t(
+          "Энэ сануулгын бичлэгийг устгах уу? Зөвхөн гишүүдийн хянах самбар дахь жагсаалтаас алга болно — и-мэйл дахин илгээгдэхгүй.",
+          "Delete this reminder record? It only disappears from members' Dashboard list — no email gets re-sent.",
+          "このリマインダー記録を削除しますか?メンバーのダッシュボードのリストからのみ削除されます — メールは再送信されません。",
+          "刪除此提醒記錄？僅會從會員儀表板列表中移除——不會重新發送郵件。"
+        )
+      )
+    )
+      return;
+    setReminderLogBusyId(row.id);
+    await supabase.from("event_reminders").delete().eq("id", row.id);
+    setReminderLogBusyId(null);
+    refreshReminderLog();
   }
 
   const today = localYmd(new Date());
@@ -190,6 +231,54 @@ export default function AdminEventsPage() {
           "在此新增的活動會顯示在公開的「活動」頁面(導覽列)——無需登入。提醒郵件不會自動發送——請使用下方按鈕手動發送。"
         )}
       </p>
+
+      {/* Same table the member Dashboard's "🔔 Reminders" box reads —
+          every "Send Reminder" click below adds one row here, so
+          clicking it more than once for the same event shows up as
+          repeated identical lines on members' Dashboard. Delete the
+          extra ones here to clean that up (this only removes the
+          record — it does not send or un-send any email). */}
+      {reminderLog && reminderLog.length > 0 && (
+        <div className="rounded-xl border border-slate-200 p-5 mb-8">
+          <h3 className="font-semibold text-slate-700 mb-1">
+            {t("Илгээсэн сануулгууд", "Sent Reminders", "送信済みリマインダー", "已發送的提醒")}
+          </h3>
+          <p className="text-xs text-slate-400 mb-3">
+            {t(
+              "Гишүүдийн хянах самбарын \"Сануулга\" хэсэгт харагдах жагсаалт. Нэг арга хэмжээнд \"Сануулга илгээх\" товчийг хэд хэдэн удаа дарвал доор давхардсан мөр гарна — илүүдлийг устгаж болно (и-мэйл дахин илгээгдэхгүй, зөвхөн энэ жагсаалтаас хасна).",
+              "This is what shows in the \"Reminders\" box on members' Dashboard. Clicking \"Send Reminder\" more than once for the same event adds a duplicate row below — delete the extras any time (no email is re-sent, this only removes it from the list).",
+              "メンバーのダッシュボードの「リマインダー」欄に表示される内容です。同じイベントで「リマインダー送信」を複数回クリックすると、下に重複した行が追加されます。余分な行はいつでも削除できます(メールは再送信されず、リストから削除されるだけです)。",
+              "這是會員儀表板「提醒」欄顯示的內容。對同一活動多次點擊「發送提醒」會在下方新增重複項目——可隨時刪除多餘項目(不會重新發送郵件，僅從列表中移除)。"
+            )}
+          </p>
+          <ul className="grid gap-2 max-h-72 overflow-y-auto">
+            {reminderLog.map((r) => (
+              <li key={r.id} className="flex items-center justify-between gap-3 text-sm border-b border-slate-100 last:border-0 pb-2 last:pb-0">
+                <span className="min-w-0">
+                  {r.event ? (
+                    <>
+                      <span className="font-medium text-slate-800">{t(r.event.title_mn, r.event.title_en)}</span>
+                      <span className="text-slate-400"> — {r.event.event_date}</span>
+                    </>
+                  ) : (
+                    <span className="italic text-slate-400">{t("Устгагдсан арга хэмжээ", "Deleted event", "削除されたイベント", "已刪除的活動")}</span>
+                  )}
+                  <span className="text-slate-400 block text-xs">
+                    {t("Илгээсэн:", "Sent:", "送信:", "發送時間：")} {new Date(r.sent_at).toLocaleString()}
+                  </span>
+                </span>
+                <button
+                  onClick={() => deleteReminderLog(r)}
+                  disabled={reminderLogBusyId === r.id}
+                  className="shrink-0 text-xs font-semibold px-2.5 py-1 rounded-md border border-rotary-cardinal text-rotary-cardinal hover:bg-rotary-cardinal hover:text-white disabled:opacity-60"
+                >
+                  {t("Устгах", "Delete", "削除", "刪除")}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {showForm && (
         <form onSubmit={saveEvent} className="rounded-xl border border-slate-200 p-6 mb-8 grid gap-3">

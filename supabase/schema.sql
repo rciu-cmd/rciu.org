@@ -734,9 +734,12 @@ create policy events_write_admin on public.events
 -- A row is inserted here every time an admin uses the "Send Reminder"
 -- button, alongside the email that button already sends (migration23) —
 -- the member Dashboard reads this table to also show the reminder
--- in-app. No insert/update/delete policy is defined on purpose: only the
+-- in-app. No insert/update policy is defined on purpose: only the
 -- send-event-reminder Edge Function (service-role key, bypasses RLS) is
--- meant to write rows here.
+-- meant to write rows here. Admins CAN delete rows (migration25) — so a
+-- stray/duplicate "Send Reminder" click (each one adds a row, and the
+-- Dashboard lists every row it finds) can be cleaned up from
+-- Admin → Events instead of piling up in members' Reminders box forever.
 create table if not exists public.event_reminders (
   id uuid primary key default gen_random_uuid(),
   event_id uuid not null references public.events(id) on delete cascade,
@@ -750,6 +753,10 @@ create policy event_reminders_select_member on public.event_reminders
   for select using (
     exists (select 1 from public.members m where m.id = auth.uid() and m.status = 'active')
   );
+
+drop policy if exists event_reminders_delete_admin on public.event_reminders;
+create policy event_reminders_delete_admin on public.event_reminders
+  for delete using (public.is_admin());
 
 -- ------------------------------------------------------------
 -- club_photos — general (non-project) photo library, organized by
