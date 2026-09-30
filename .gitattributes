@@ -1,0 +1,6 @@
+# Store and check out every text file with LF line endings, on every
+# machine. The site is built on Linux (GitHub Actions) and files written
+# by Claude Code use LF, so this stops Windows' core.autocrlf setting
+# from warning "LF will be replaced by CRLF" or converting them.
+# Binary files (images, PDFs) are auto-detected and left untouched.
+* text=auto eol=lf

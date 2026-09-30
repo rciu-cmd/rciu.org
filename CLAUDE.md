@@ -13,10 +13,11 @@ a cloud-based Claude session, before this local Claude Code setup).
   (`supabase/functions/notify-inquiry`, `supabase/functions/send-event-reminder`).
 - Hosted on **GitHub Pages** behind the custom domain `rciu.org` (DNS on
   Cloudflare). `.github/` has the deploy workflow.
-- 4 languages throughout: Mongolian (primary), English, Japanese,
-  Chinese — via `t(mn, en, ja, zh)` from `useLanguage()`
-  (`src/lib/language-context.tsx`). Japanese/Chinese often fall back to
-  English where no real translation has been supplied yet.
+- 5 languages throughout: Mongolian (primary), English, Japanese,
+  Chinese, Korean — via `t(mn, en, ja, zh, ko)` from `useLanguage()`
+  (`src/lib/language-context.tsx`). Japanese/Chinese/Korean often fall
+  back to English where no real translation has been supplied yet
+  (Korean was added later, so many older `t()` calls only pass 4 args).
 
 ## ⚠️ Pushing to `main` deploys to the live site immediately
 
@@ -51,7 +52,7 @@ credentials/psql access from here) — the user runs it themselves in
 Supabase's Dashboard → SQL Editor. So for any schema/RLS change:
 
 1. Write it as a new `supabase/migrationNN_description.sql` file
-   (next number is 26 — 25 migrations exist so far).
+   (next number is 27 — 26 migrations exist so far).
 2. **Also paste the SQL directly in chat**, not just save the file, so
    the user can copy-paste it into the SQL Editor without having to go
    find the file.
@@ -83,6 +84,15 @@ happens there (not in code), give literal numbered instructions, not
   admin). Don't apply `club_photos`'s restriction model to
   `project_media` again — that broke every public project gallery once
   already (see migration24's comment for the full story).
+- **Storage bucket `rciu-photos`** is public, so photo URLs load for
+  everyone with no policy check. Its `storage.objects` SELECT policy
+  only governs list/remove/move and must stay own-uploads + admins —
+  a SELECT-for-everyone policy lets anyone list every file, member-only
+  photos included (fixed in migration26).
+- **Public inquiry forms** (`/join`, "Join a Project" on `/projects`)
+  have a DB rate-limit trigger (migration26) plus a hidden honeypot
+  field (`src/lib/spam-guard.tsx`). Any new public, no-login form
+  should use the same pattern — each inquiry emails three officers.
 - **Resend email**: sending to anyone other than the account owner
   requires a verified domain (resend.com/domains, SPF+DKIM+DMARC via
   Cloudflare) — otherwise every send 403s with a sandbox-mode error.

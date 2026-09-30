@@ -6,6 +6,7 @@ import Link from "next/link";
 import { asset } from "@/lib/asset";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
+import { HoneypotField, INQUIRY_MAX_LENGTH, inquiryLimitMessage } from "@/lib/spam-guard";
 import ProjectPhotoCollage from "@/components/ProjectPhotoCollage";
 
 type ProjectStatus = "ongoing" | "completed" | "planned";
@@ -210,12 +211,18 @@ function JoinProjectModal({
   onClose: () => void;
 }) {
   const [form, setForm] = useState({ club_name: "", contact_name: "", email: "", project_id: "", message: "" });
+  const [honeypot, setHoneypot] = useState("");
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    // Bot filled the hidden field — show "thank you", save nothing.
+    if (honeypot) {
+      setDone(true);
+      return;
+    }
     setBusy(true);
     setError(null);
     const { error } = await supabase.from("project_inquiries").insert({
@@ -227,7 +234,7 @@ function JoinProjectModal({
     });
     setBusy(false);
     if (error) {
-      setError(error.message);
+      setError(inquiryLimitMessage(error.message, t) ?? error.message);
       return;
     }
     setDone(true);
@@ -272,12 +279,14 @@ function JoinProjectModal({
               </p>
               <input
                 required
+                maxLength={INQUIRY_MAX_LENGTH.name}
                 placeholder={t("Клуб/байгууллагын нэр", "Club / organization name", "クラブ・団体名", "俱樂部/機構名稱")}
                 value={form.club_name}
                 onChange={(e) => setForm({ ...form, club_name: e.target.value })}
                 className="rounded-md border border-slate-300 px-3 py-2.5 text-sm"
               />
               <input
+                maxLength={INQUIRY_MAX_LENGTH.name}
                 placeholder={t("Холбогдох хүн (заавал биш)", "Contact person (optional)", "担當者名(任意)", "聯繫人(可選)")}
                 value={form.contact_name}
                 onChange={(e) => setForm({ ...form, contact_name: e.target.value })}
@@ -286,6 +295,7 @@ function JoinProjectModal({
               <input
                 required
                 type="email"
+                maxLength={INQUIRY_MAX_LENGTH.email}
                 placeholder={t("И-мэйл", "Email", "メール", "郵箱")}
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
@@ -308,8 +318,10 @@ function JoinProjectModal({
                 value={form.message}
                 onChange={(e) => setForm({ ...form, message: e.target.value })}
                 rows={3}
+                maxLength={INQUIRY_MAX_LENGTH.message}
                 className="rounded-md border border-slate-300 px-3 py-2.5 text-sm"
               />
+              <HoneypotField value={honeypot} onChange={setHoneypot} />
               {error && <p className="text-sm text-rotary-cardinal">{error}</p>}
               <div className="flex gap-2 mt-1">
                 <button type="submit" disabled={busy} className="flex-1 bg-rotary-royal-blue text-white font-semibold rounded-md py-2.5 text-sm disabled:opacity-60">

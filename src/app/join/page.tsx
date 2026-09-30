@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
+import { HoneypotField, INQUIRY_MAX_LENGTH, inquiryLimitMessage } from "@/lib/spam-guard";
 
 const STEPS = [
   {
@@ -22,12 +23,18 @@ const STEPS = [
 export default function JoinPage() {
   const { t } = useLanguage();
   const [form, setForm] = useState({ name: "", email: "", phone: "", message: "" });
+  const [honeypot, setHoneypot] = useState("");
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    // Bot filled the hidden field — show "thank you", save nothing.
+    if (honeypot) {
+      setDone(true);
+      return;
+    }
     setBusy(true);
     setError(null);
     const { error } = await supabase.from("join_inquiries").insert({
@@ -38,7 +45,7 @@ export default function JoinPage() {
     });
     setBusy(false);
     if (error) {
-      setError(error.message);
+      setError(inquiryLimitMessage(error.message, t) ?? error.message);
       return;
     }
     setDone(true);
@@ -93,6 +100,7 @@ export default function JoinPage() {
               </h2>
               <input
                 required
+                maxLength={INQUIRY_MAX_LENGTH.name}
                 placeholder={t("Нэр", "Full Name", "お名前", "姓名")}
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -101,12 +109,14 @@ export default function JoinPage() {
               <input
                 required
                 type="email"
+                maxLength={INQUIRY_MAX_LENGTH.email}
                 placeholder={t("И-мэйл", "Email", "メール", "郵箱")}
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 className="rounded-md border border-slate-300 px-3 py-2.5 text-sm"
               />
               <input
+                maxLength={INQUIRY_MAX_LENGTH.phone}
                 placeholder={t("Утас (заавал биш)", "Phone (optional)", "電話(任意)", "電話(可選)")}
                 value={form.phone}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
@@ -117,8 +127,10 @@ export default function JoinPage() {
                 value={form.message}
                 onChange={(e) => setForm({ ...form, message: e.target.value })}
                 rows={4}
+                maxLength={INQUIRY_MAX_LENGTH.message}
                 className="rounded-md border border-slate-300 px-3 py-2.5 text-sm"
               />
+              <HoneypotField value={honeypot} onChange={setHoneypot} />
               {error && <p className="text-sm text-rotary-cardinal">{error}</p>}
               <button
                 type="submit"
