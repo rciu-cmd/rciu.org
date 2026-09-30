@@ -18,6 +18,9 @@ a cloud-based Claude session, before this local Claude Code setup).
   (`src/lib/language-context.tsx`). Japanese/Chinese/Korean often fall
   back to English where no real translation has been supplied yet
   (Korean was added later, so many older `t()` calls only pass 4 args).
+  First visit shows the browser's primary language if supported, else
+  Mongolian; a flag click (footer) is saved and wins after that.
+  `<html lang>` follows the current language.
 
 ## ⚠️ Pushing to `main` deploys to the live site immediately
 
