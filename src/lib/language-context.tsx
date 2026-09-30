@@ -36,23 +36,45 @@ const LanguageContext = createContext<LanguageContextValue | undefined>(undefine
 
 const STORAGE_KEY = "rciu-lang";
 
+function isLang(value: string | null | undefined): value is Lang {
+  return LANGUAGES.some((l) => l.code === value);
+}
+
+// First visit (no saved choice): the browser's primary language if the
+// site has it, otherwise Mongolian. Only the *primary* language counts
+// on purpose — a Russian-first browser in Mongolia that also lists
+// English is far more likely a Mongolian reader than an English one.
+// "zh-CN", "ja-JP", etc. match on their first part.
+function detectBrowserLang(): Lang {
+  const primary = (navigator.languages?.[0] ?? navigator.language ?? "").toLowerCase().split("-")[0];
+  return isLang(primary) ? primary : "mn";
+}
+
+// Value for <html lang>, so screen readers, Google, and the browser's
+// CJK font choice all know which language the page is in. The Chinese
+// copy is written in Traditional characters.
+const HTML_LANG: Record<Lang, string> = { mn: "mn", en: "en", ja: "ja", zh: "zh-Hant", ko: "ko" };
+
 export function LanguageProvider({ children }: { children: ReactNode }) {
   // Default to English on both server and first client render so
   // hydration output always matches (avoids a hydration mismatch).
-  // Once mounted, read the visitor's saved preference from
-  // localStorage and switch — this is a deliberate one-time sync from
-  // an external system (browser storage) on mount, not app state
-  // ping-ponging, so we intentionally opt out of the
-  // set-state-in-effect lint rule here.
+  // Once mounted, switch to the visitor's saved choice, or else their
+  // browser language — this is a deliberate one-time sync from
+  // external systems (browser storage/settings) on mount, not app
+  // state ping-ponging, so we intentionally opt out of the
+  // set-state-in-effect lint rule here. The detected language isn't
+  // saved; only an explicit flag click is (setLang below).
   const [lang, setLangState] = useState<Lang>("en");
 
   useEffect(() => {
     const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (stored === "mn" || stored === "en" || stored === "ja" || stored === "zh" || stored === "ko") {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time sync from localStorage on mount, see comment above
-      setLangState(stored);
-    }
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time sync from localStorage/browser on mount, see comment above
+    setLangState(isLang(stored) ? stored : detectBrowserLang());
   }, []);
+
+  useEffect(() => {
+    document.documentElement.lang = HTML_LANG[lang];
+  }, [lang]);
 
   const setLang = (l: Lang) => {
     setLangState(l);

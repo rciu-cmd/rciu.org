@@ -11,5 +11,23 @@ jobs:
     steps:
       - name: Ping rciu.org
         run: |
-          curl -s -o /dev/null -w "Status: %{http_code}" https://rciu.org
+          curl -fsS -o /dev/null -w "Status: %{http_code}" https://rciu.org
           echo " — site is alive"
+
+      # Free-plan Supabase projects pause after a week with no database
+      # activity. Fetching rciu.org above never reaches the database
+      # (curl doesn't run the site's JavaScript), so query it directly —
+      # the same public read the site footer does. URL and publishable
+      # key are the public values from src/lib/supabase.ts; RLS only
+      # allows what any visitor can already read. -f makes this step
+      # fail (and GitHub email the repo owner) if the database is down
+      # or already paused.
+      - name: Ping Supabase database
+        env:
+          SUPABASE_URL: https://mdfexlubrbvkdtyqvvtc.supabase.co
+          SUPABASE_PUBLISHABLE_KEY: sb_publishable_NZzjfPA3P5vKeIAtXOxekg_EgzYLCId
+        run: |
+          curl -fsS -o /dev/null -w "Status: %{http_code}" \
+            -H "apikey: $SUPABASE_PUBLISHABLE_KEY" \
+            "$SUPABASE_URL/rest/v1/site_settings?select=key&limit=1"
+          echo " — database is awake"
