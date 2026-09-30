@@ -882,6 +882,78 @@ create policy project_inquiries_delete_admin on public.project_inquiries
   for delete using (public.is_super_admin());
 
 -- ------------------------------------------------------------
+-- Spam guard for both public inquiry forms (migration26). Every
+-- insert emails three officers (notify-inquiry webhook), so: size
+-- limits, plus a per-form rate limit — same email once per 10 min,
+-- at most 10/hour and 30/day in total. The site shows its own message
+-- for the "already_sent" / "rate_limited" errors (src/lib/spam-guard.tsx).
+-- ------------------------------------------------------------
+alter table public.join_inquiries drop constraint if exists join_inquiries_field_lengths;
+alter table public.join_inquiries add constraint join_inquiries_field_lengths check (
+  length(name) <= 200
+  and length(email) <= 320
+  and length(coalesce(phone, '')) <= 50
+  and length(coalesce(message, '')) <= 5000
+) not valid;
+
+alter table public.project_inquiries drop constraint if exists project_inquiries_field_lengths;
+alter table public.project_inquiries add constraint project_inquiries_field_lengths check (
+  length(club_name) <= 200
+  and length(coalesce(contact_name, '')) <= 200
+  and length(email) <= 320
+  and length(coalesce(message, '')) <= 5000
+) not valid;
+
+-- security definer: anonymous visitors can't read these tables, so
+-- the counts must run as the owner. Also pins created_at/status so a
+-- bot can't backdate rows past the limit or file them as 'closed'.
+create or replace function public.limit_public_inquiries()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  same_email_recent int;
+  last_hour int;
+  last_day int;
+begin
+  new.created_at := now();
+  new.status := 'new';
+
+  execute format(
+    'select count(*) filter (where lower(email) = lower($1) and created_at > now() - interval ''10 minutes''),
+            count(*) filter (where created_at > now() - interval ''1 hour''),
+            count(*)
+       from %I.%I
+      where created_at > now() - interval ''1 day''',
+    tg_table_schema, tg_table_name
+  )
+  into same_email_recent, last_hour, last_day
+  using new.email;
+
+  if same_email_recent > 0 then
+    raise exception 'already_sent: a request from this email was received a few minutes ago';
+  end if;
+  if last_hour >= 10 or last_day >= 30 then
+    raise exception 'rate_limited: too many submissions, please try again later';
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists join_inquiries_rate_limit on public.join_inquiries;
+create trigger join_inquiries_rate_limit
+  before insert on public.join_inquiries
+  for each row execute function public.limit_public_inquiries();
+
+drop trigger if exists project_inquiries_rate_limit on public.project_inquiries;
+create trigger project_inquiries_rate_limit
+  before insert on public.project_inquiries
+  for each row execute function public.limit_public_inquiries();
+
+-- ------------------------------------------------------------
 -- member_travels (migration17) — data behind the "Where We've
 -- Traveled" world map on the About page. Admin-entered only.
 -- ------------------------------------------------------------
@@ -980,3 +1052,53 @@ create policy club_awards_delete_own_pending_or_admin on public.club_awards
 drop policy if exists club_awards_update_admin on public.club_awards;
 create policy club_awards_update_admin on public.club_awards
   for update using (public.is_super_admin()) with check (public.is_super_admin());
+
+-- ------------------------------------------------------------
+-- Photo Storage bucket (migration06, migration16, migration26).
+-- Folder convention: {year}/{category}/{filename} — built by the
+-- upload forms, see migration06's header.
+--
+-- The bucket is public, so every photo URL on the site loads for
+-- anyone without any policy check. The SELECT policy below only
+-- governs the Storage API (list/remove/move): own uploads + admins.
+-- Never make it `using (bucket_id = 'rciu-photos')` for everyone —
+-- that lets anyone with the public key list every file, including
+-- member-only Photo Library uploads (fixed in migration26).
+-- ------------------------------------------------------------
+insert into storage.buckets (id, name, public)
+values ('rciu-photos', 'rciu-photos', true)
+on conflict (id) do nothing;
+
+drop policy if exists rciu_photos_select_public on storage.objects;
+drop policy if exists rciu_photos_select_own_or_admin on storage.objects;
+create policy rciu_photos_select_own_or_admin on storage.objects
+  for select to authenticated
+  using (
+    bucket_id = 'rciu-photos'
+    and (owner = auth.uid() or public.is_admin())
+  );
+
+-- Only active, signed-in members can upload.
+drop policy if exists rciu_photos_insert_member on storage.objects;
+create policy rciu_photos_insert_member on storage.objects
+  for insert to authenticated
+  with check (
+    bucket_id = 'rciu-photos'
+    and exists (select 1 from public.members m where m.id = auth.uid() and m.status = 'active')
+  );
+
+-- A member can delete their own uploads; admins can delete anything.
+drop policy if exists rciu_photos_delete_own_or_admin on storage.objects;
+create policy rciu_photos_delete_own_or_admin on storage.objects
+  for delete to authenticated
+  using (
+    bucket_id = 'rciu-photos'
+    and (owner = auth.uid() or public.is_admin())
+  );
+
+-- Super admins can move/rename files (admin folder rename/merge tool).
+drop policy if exists rciu_photos_update_admin on storage.objects;
+create policy rciu_photos_update_admin on storage.objects
+  for update to authenticated
+  using (bucket_id = 'rciu-photos' and public.is_super_admin())
+  with check (bucket_id = 'rciu-photos' and public.is_super_admin());
