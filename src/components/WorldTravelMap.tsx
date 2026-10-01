@@ -6,6 +6,7 @@ import { feature } from "topojson-client";
 import type { Topology, GeometryCollection } from "topojson-specification";
 import landTopology from "world-atlas/land-110m.json";
 import { HOME, arcPath, haversineKm } from "@/lib/travel";
+import type { Translate } from "@/lib/language-context";
 
 export type TravelPoint = {
   id: string;
@@ -26,7 +27,7 @@ export default function WorldTravelMap({
   t,
 }: {
   travels: TravelPoint[];
-  t: (mn: string, en: string, ja?: string, zh?: string) => string;
+  t: Translate;
 }) {
   const [hoverId, setHoverId] = useState<string | null>(null);
 
@@ -131,7 +132,7 @@ export default function WorldTravelMap({
               <circle cx={home[0]} cy={home[1]} r={9} fill="none" stroke="#f7a81b" strokeWidth={1.5} opacity={0.6} className="animate-ping origin-center" style={{ transformOrigin: `${home[0]}px ${home[1]}px` }} />
               <circle cx={home[0]} cy={home[1]} r={7} fill="#0a3d91" stroke="#fff" strokeWidth={2} />
               <circle cx={home[0]} cy={home[1]} r={2.5} fill="#f7a81b" />
-              <title>{HOME.label} — Rotary Club of Ikh Urgoo</title>
+              <title>{`${t("Улаанбаатар", "Ulaanbaatar", "ウランバートル", "烏蘭巴托", "울란바토르")} — ${t("Их Өргөө Ротари Клуб", "Rotary Club of Ikh Urgoo", "イク・ウルグー・ロータリークラブ", "伊赫烏爾古扶輪社", "이흐 우르구 로타리클럽")}`}</title>
             </g>
           )}
         </svg>
@@ -141,8 +142,9 @@ export default function WorldTravelMap({
         {t(
           `Клубын гишүүд нийт ойролцоогоор ${Math.round(totalKm).toLocaleString()} км (${Math.round(totalKm * 0.621371).toLocaleString()} миль) аялсан байна.`,
           `Club members have collectively traveled roughly ${Math.round(totalKm).toLocaleString()} km (${Math.round(totalKm * 0.621371).toLocaleString()} miles).`,
-          `クラブ会員は合計約${Math.round(totalKm).toLocaleString()}km(${Math.round(totalKm * 0.621371).toLocaleString()}マイル)移動しました。`,
-          `俱乐部会员总共旅行了约 ${Math.round(totalKm).toLocaleString()} 公里(${Math.round(totalKm * 0.621371).toLocaleString()} 英里)。`
+          `クラブ会員の移動距離は合計で約${Math.round(totalKm).toLocaleString()}km（${Math.round(totalKm * 0.621371).toLocaleString()}マイル）です。`,
+          `本社社友累計旅行約 ${Math.round(totalKm).toLocaleString()} 公里（${Math.round(totalKm * 0.621371).toLocaleString()} 英里）。`,
+          `클럽 회원들이 함께 이동한 거리는 약 ${Math.round(totalKm).toLocaleString()}km(${Math.round(totalKm * 0.621371).toLocaleString()}마일)입니다.`
         )}
       </p>
 

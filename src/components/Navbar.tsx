@@ -31,9 +31,9 @@ export default function Navbar() {
   const links = [
     { href: "/about", label: t("Бидний тухай", "About", "私たちについて", "關於我們", "소개") },
     { href: "/news", label: t("Мэдээ", "News", "ニュース", "新聞", "소식") },
-    { href: "/projects", label: t("Төслүүд", "Projects", "プロジェクト", "項目", "프로젝트") },
+    { href: "/projects", label: t("Төслүүд", "Projects", "プロジェクト", "服務計畫", "프로젝트") },
     { href: "/events", label: t("Арга хэмжээ", "Events", "イベント", "活動", "행사") },
-    { href: "/contact", label: t("Холбоо барих", "Contact", "お問い合わせ", "聯繫我們", "문의") },
+    { href: "/contact", label: t("Холбоо барих", "Contact", "お問い合わせ", "聯絡我們", "문의") },
   ];
 
   return (
@@ -43,7 +43,7 @@ export default function Navbar() {
           <Image src={asset("/logos/district-3450.png")} alt="Rotary District 3450" width={160} height={80} className="object-contain hidden sm:block" />
           <Image src={asset("/logos/rciu-emblem.jpg")} alt="RCIU" width={40} height={40} className="rounded-full" />
           <span className="font-bold text-rotary-royal-blue leading-tight hidden sm:block">
-            {t("Их Өргөө Ротари Клуб", "Rotary Club of Ikh Urgoo", "イク・ウルグー・ロータリークラブ", "扶輪伊赫烏爾古俱樂部")}
+            {t("Их Өргөө Ротари Клуб", "Rotary Club of Ikh Urgoo", "イク・ウルグー・ロータリークラブ", "伊赫烏爾古扶輪社", "이흐 우르구 로타리클럽")}
           </span>
         </Link>
 
@@ -63,12 +63,12 @@ export default function Navbar() {
             className="hidden sm:inline-block text-xs font-semibold px-3 py-1.5 rounded-full border border-rotary-royal-blue text-rotary-royal-blue hover:bg-rotary-royal-blue hover:text-white transition-colors"
           >
             {authed
-              ? t("Хувийн профайл", "My Dashboard", "マイページ", "我的主頁", "마이페이지")
-              : t("Гишүүн нэвтрэх", "Member Login", "会員ログイン", "會員登錄", "회원 로그인")}
+              ? t("Хувийн профайл", "My Dashboard", "マイページ", "我的頁面", "마이페이지")
+              : t("Гишүүн нэвтрэх", "Member Login", "会員ログイン", "社友登入", "회원 로그인")}
           </Link>
           <button
             className="lg:hidden p-2 text-slate-700"
-            aria-label="Menu"
+            aria-label={t("Цэс", "Menu", "メニュー", "選單", "메뉴")}
             onClick={() => setOpen((v) => !v)}
           >
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -86,7 +86,7 @@ export default function Navbar() {
             </Link>
           ))}
           <Link href={authed ? "/dashboard" : "/login"} onClick={() => setOpen(false)} className="font-semibold text-rotary-royal-blue">
-            {authed ? t("Хувийн профайл", "My Dashboard", "マイページ", "我的主頁", "마이페이지") : t("Гишүүн нэвтрэх", "Member Login", "会員ログイン", "會員登錄", "회원 로그인")}
+            {authed ? t("Хувийн профайл", "My Dashboard", "マイページ", "我的頁面", "마이페이지") : t("Гишүүн нэвтрэх", "Member Login", "会員ログイン", "社友登入", "회원 로그인")}
           </Link>
         </nav>
       )}

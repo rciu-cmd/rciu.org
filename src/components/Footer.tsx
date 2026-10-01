@@ -34,14 +34,14 @@ export default function Footer() {
         <div>
           <div className="flex items-center gap-2 mb-3">
             <Image src={asset("/logos/rciu-emblem.jpg")} alt="Rotary Club of Ikh Urgoo" width={36} height={36} className="rounded-full" />
-            <span className="font-bold">{t("Их Өргөө Ротари Клуб", "Rotary Club of Ikh Urgoo", "イク・ウルグー・ロータリークラブ", "扶輪伊赫烏爾古俱樂部", "이흐 우르구 로타리클럽")}</span>
+            <span className="font-bold">{t("Их Өргөө Ротари Клуб", "Rotary Club of Ikh Urgoo", "イク・ウルグー・ロータリークラブ", "伊赫烏爾古扶輪社", "이흐 우르구 로타리클럽")}</span>
           </div>
           <p className="text-sm text-blue-100">
             {t(
+              "Улаанбаатар, Монгол · 3450-р дүүрэг",
               "Ulaanbaatar, Mongolia · District 3450",
-              "Ulaanbaatar, Mongolia · District 3450",
-              "モンゴル、ウランバートル · 地区3450",
-              "蒙古國烏蘭巴托 · 3450區",
+              "モンゴル・ウランバートル · 第3450地区",
+              "蒙古國烏蘭巴托 · 3450地區",
               "몽골 울란바토르 · 3450지구"
             )}
           </p>
@@ -61,13 +61,15 @@ export default function Footer() {
         </div>
 
         <div className="text-sm text-blue-100">
-          <p className="font-semibold text-white mb-2">{t("Хурлын мэдээлэл", "Meetings", "例会情報", "例會信息", "모임 안내")}</p>
-          <p>{t("Мягмар гараг, 20:00", "Tuesdays, 20:00", "毎週火曜日 20:00", "每週二 20:00", "매주 화요일 20:00")}</p>
-          <p>Park Castle Restaurant, Sukhbaatar District, Ulaanbaatar</p>
+          <p className="font-semibold text-white mb-2">{t("Хурлын мэдээлэл", "Meetings", "例会情報", "例會資訊", "주회 안내")}</p>
+          <p>{t("Мягмар гараг бүр, 20:00", "Tuesdays, 20:00", "毎週火曜日 20:00", "每週二 20:00", "매주 화요일 20:00")}</p>
+          {/* Venue name and address stay in the Latin script (as on maps and
+              the sign) except in Mongolian. */}
+          <p>{t("Park Castle ресторан, Сүхбаатар дүүрэг, Улаанбаатар", "Park Castle Restaurant, Sukhbaatar District, Ulaanbaatar")}</p>
         </div>
 
         <div className="text-sm text-blue-100">
-          <p className="font-semibold text-white mb-2">{t("Холбоо барих", "Contact", "お問い合わせ", "聯繫方式", "문의")}</p>
+          <p className="font-semibold text-white mb-2">{t("Холбоо барих", "Contact", "お問い合わせ", "聯絡我們", "문의")}</p>
           <p>contact@rciu.org</p>
           <p>{phone}</p>
 
@@ -93,7 +95,7 @@ export default function Footer() {
         </div>
       </div>
       <div className="border-t border-white/15 py-4 text-center text-xs text-blue-100">
-        © {new Date().getFullYear()} Rotary Club of Ikh Urgoo. Service Above Self.
+        © {new Date().getFullYear()} {t("Их Өргөө Ротари Клуб", "Rotary Club of Ikh Urgoo", "イク・ウルグー・ロータリークラブ", "伊赫烏爾古扶輪社", "이흐 우르구 로타리클럽")} · {t("Service Above Self", "Service Above Self", "超我の奉仕", "超我服務", "초아의 봉사")}
       </div>
     </footer>
   );

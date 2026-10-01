@@ -48,11 +48,15 @@ gotchas already learned the hard way.
   (contact phone, "Our impact" numbers and project provinces, theme
   banner).
 
-**Languages** — Mongolian, English, Japanese, Chinese, Korean. Mongolian
-and English are fully written; the others fall back to English where no
-translation exists yet. First-time visitors get their browser's language
-(Mongolian if the site doesn't have it); the flags in the footer switch
-and remember the choice.
+**Languages** — Mongolian, English, Japanese, Chinese (Taiwan 🇹🇼 and
+Hong Kong 🇭🇰, both Traditional characters), Korean. The public pages are
+complete in all of them (October 2026; Japanese/Chinese/Korean drafted,
+native-speaker check pending); the members and admin pages fall back to
+English where no translation exists. Content typed in Admin (news,
+projects, events) is Mongolian + English. First-time visitors get their
+browser's language — Hong Kong and Macau browsers get 🇭🇰 — (Mongolian if
+the site doesn't have it); the flags in the footer switch and remember
+the choice.
 
 ## How it fits together
 
@@ -164,6 +168,7 @@ doesn't.
 
 ## Still to do
 
-- Japanese, Chinese and Korean translations (club to supply).
+- Native-speaker check of the Japanese, Chinese and Korean public-page
+  texts; translations for the members and admin pages.
 - Stock / inventory: the admin-only tables exist in the schema, but
   there is no admin page for them yet.

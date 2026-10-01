@@ -12,9 +12,9 @@ export default function NotFoundContent() {
   const links = [
     { href: "/about", label: t("Бидний тухай", "About", "私たちについて", "關於我們", "소개") },
     { href: "/news", label: t("Мэдээ", "News", "ニュース", "新聞", "소식") },
-    { href: "/projects", label: t("Төслүүд", "Projects", "プロジェクト", "項目", "프로젝트") },
+    { href: "/projects", label: t("Төслүүд", "Projects", "プロジェクト", "服務計畫", "프로젝트") },
     { href: "/events", label: t("Арга хэмжээ", "Events", "イベント", "活動", "행사") },
-    { href: "/contact", label: t("Холбоо барих", "Contact", "お問い合わせ", "聯繫我們", "문의") },
+    { href: "/contact", label: t("Холбоо барих", "Contact", "お問い合わせ", "聯絡我們", "문의") },
   ];
 
   return (

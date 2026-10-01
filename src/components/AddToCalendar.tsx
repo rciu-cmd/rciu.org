@@ -10,7 +10,7 @@ export default function AddToCalendar({ event, className = "mt-2" }: { event: Ca
   return (
     <div className={`${className} flex flex-wrap items-center gap-x-3 gap-y-1 text-xs`}>
       <span className="font-semibold text-slate-500">
-        📅 {t("Хуанлид нэмэх:", "Add to calendar:", "カレンダーに追加:", "加入日曆:", "캘린더에 추가:")}
+        📅 {t("Хуанлид нэмэх:", "Add to calendar:", "カレンダーに追加：", "加入日曆：", "캘린더에 추가:")}
       </span>
       <a
         href={googleCalendarUrl(event)}

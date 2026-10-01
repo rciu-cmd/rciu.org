@@ -22,7 +22,7 @@ export function friendlyError(raw: string, t: Translate): string {
       "Нууц үг хэт богино байна. Дор хаяж 6 тэмдэгт оруулна уу.",
       "That password is too short — use at least 6 characters.",
       "パスワードが短すぎます。6文字以上にしてください。",
-      "密碼太短,請至少使用 6 個字元。",
+      "密碼太短，請至少使用 6 個字元。",
       "비밀번호가 너무 짧습니다. 6자 이상 입력해 주세요."
     );
   }
@@ -40,7 +40,7 @@ export function friendlyError(raw: string, t: Translate): string {
       "Энэ нууц үг хэт амархан байна. Илүү найдвартай нууц үг сонгоно уу.",
       "That password is too easy to guess — please choose a stronger one.",
       "このパスワードは推測されやすいため、より強力なものを選んでください。",
-      "此密碼太容易被猜到,請選擇更安全的密碼。",
+      "此密碼太容易被猜到，請選擇更安全的密碼。",
       "추측하기 쉬운 비밀번호입니다. 더 안전한 비밀번호를 선택해 주세요."
     );
   }
@@ -49,7 +49,7 @@ export function friendlyError(raw: string, t: Translate): string {
       "Файл хэт том байна. Илүү жижиг файл сонгоно уу.",
       "That file is too large — please choose a smaller one.",
       "ファイルが大きすぎます。小さいファイルを選んでください。",
-      "檔案太大,請選擇較小的檔案。",
+      "檔案太大，請選擇較小的檔案。",
       "파일이 너무 큽니다. 더 작은 파일을 선택해 주세요."
     );
   }
@@ -57,7 +57,7 @@ export function friendlyError(raw: string, t: Translate): string {
     "Алдаа гарлаа. Дахин оролдоно уу. Асуудал үргэлжилбэл contact@rciu.org хаягаар холбогдоно уу.",
     "Something went wrong. Please try again — if it keeps happening, email contact@rciu.org.",
     "エラーが発生しました。もう一度お試しください。解決しない場合は contact@rciu.org までご連絡ください。",
-    "發生錯誤,請再試一次。如果問題持續,請寄信至 contact@rciu.org。",
+    "發生錯誤，請再試一次。如果問題持續，請寄信至 contact@rciu.org。",
     "문제가 발생했습니다. 다시 시도해 주세요. 계속되면 contact@rciu.org로 연락해 주세요."
   );
 }
