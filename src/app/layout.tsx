@@ -19,13 +19,42 @@ import Navbar from "@/components/Navbar";
 import ThemeStrip from "@/components/ThemeStrip";
 import Footer from "@/components/Footer";
 
+// Mongolian and English together: Google reads the site in English
+// (pages render in the browser's language), so without this the
+// Mongolian name and words never reach search results.
+const SITE_NAME = "Их Өргөө Ротари Клуб · Rotary Club of Ikh Urgoo";
 const SITE_DESCRIPTION =
-  "Rotary Club of Ikh Urgoo (RCIU) — Ulaanbaatar, Mongolia. News, community service projects, membership, and how to join or donate.";
+  "Их Өргөө Ротари Клуб — Улаанбаатар хот. Мэдээ, олон нийтэд чиглэсэн төслүүд, гишүүнчлэл. Rotary Club of Ikh Urgoo (RCIU) — Ulaanbaatar, Mongolia. News, community service projects, membership, and how to join.";
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+// Wide (1200×630) link-preview picture for pages without a photo of
+// their own — Facebook and Messenger show it full width.
+const SHARE_IMAGE = { url: `${BASE_PATH}/logos/rciu-share.png`, width: 1200, height: 630 };
+
+// Club details for Google's knowledge panel / search results.
+const CLUB_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "NGO",
+  name: "Rotary Club of Ikh Urgoo",
+  alternateName: ["Их Өргөө Ротари Клуб", "RCIU"],
+  url: "https://rciu.org/",
+  logo: `https://rciu.org${BASE_PATH}/logos/rciu-emblem.jpg`,
+  image: `https://rciu.org${SHARE_IMAGE.url}`,
+  description: SITE_DESCRIPTION,
+  email: "contact@rciu.org",
+  sameAs: ["https://www.facebook.com/profile.php?id=100086308363177"],
+  address: { "@type": "PostalAddress", addressLocality: "Ulaanbaatar", addressCountry: "MN" },
+  location: {
+    "@type": "Place",
+    name: "Park Castle Restaurant",
+    address: { "@type": "PostalAddress", addressLocality: "Ulaanbaatar", addressRegion: "Sukhbaatar District", addressCountry: "MN" },
+  },
+  parentOrganization: { "@type": "Organization", name: "Rotary International", url: "https://www.rotary.org/" },
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://rciu.org"),
   title: {
-    default: "Rotary Club of Ikh Urgoo",
+    default: SITE_NAME,
     template: "%s · Rotary Club of Ikh Urgoo",
   },
   description: SITE_DESCRIPTION,
@@ -47,18 +76,20 @@ export const metadata: Metadata = {
     ],
   },
   openGraph: {
-    title: "Rotary Club of Ikh Urgoo",
+    title: SITE_NAME,
     description: SITE_DESCRIPTION,
     url: "https://rciu.org",
     siteName: "Rotary Club of Ikh Urgoo",
-    images: [{ url: `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/logos/rciu-emblem.jpg`, width: 512, height: 512 }],
-    locale: "en_US",
+    images: [SHARE_IMAGE],
+    locale: "mn_MN",
+    alternateLocale: ["en_US"],
     type: "website",
   },
   twitter: {
-    card: "summary",
-    title: "Rotary Club of Ikh Urgoo",
+    card: "summary_large_image",
+    title: SITE_NAME,
     description: SITE_DESCRIPTION,
+    images: [SHARE_IMAGE.url],
   },
 };
 
@@ -76,6 +107,7 @@ export default function RootLayout({
           <main className="flex-1">{children}</main>
           <Footer />
         </LanguageProvider>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(CLUB_JSON_LD) }} />
         {/* Visitor statistics — see src/lib/analytics.ts */}
         {CLOUDFLARE_WEB_ANALYTICS_TOKEN && (
           <script

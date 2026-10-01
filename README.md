@@ -11,15 +11,19 @@ gotchas already learned the hard way.
 ## What's on the site
 
 **Public pages**
-- **Home** — featured projects and photos, latest news (including
-  Facebook post embeds), club stats, partners.
+- **Home** — what the club does with "Join us" / "Our projects"
+  buttons and live club stats, the next event (with "Add to
+  calendar"), latest news (including Facebook post embeds), featured
+  projects, a photo gallery that opens photos full size, partners. One
+  Rotary wheel turns slowly in the corner and changes colour from
+  section to section.
 - **About** — club history, honor roll (Paul Harris Fellows), "Where
   We've Traveled" world map, charter certificates, links to Board and
   Members.
 - **News** and **Projects** — lists plus a page per item
   (`/news/<id>/`, `/projects/<id>/`) whose shared links preview with
-  the item's own title and photo; Projects also has a "Join a Project"
-  partnership form.
+  the item's own title and photo, with Facebook / share / copy-link
+  buttons; Projects also has a "Join a Project" partnership form.
 - **Events** — monthly calendar with "Add to calendar" (Google /
   Apple / Outlook) on upcoming events. Members are emailed a reminder
   automatically at 09:00 one week before and one day before each event.
