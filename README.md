@@ -76,11 +76,36 @@ and merge when ready.
   ✗ on the pull request means the change would break the site; don't
   merge it.
 - `.github/workflows/deploy.yml` builds and publishes on every push to
-  `main`, and also **every hour**, so newly published news and projects
-  get their own link-preview page. To share something on Facebook right
-  after publishing it, first run the deploy by hand (GitHub → Actions →
-  Deploy to GitHub Pages → Run workflow) and wait a minute — Facebook
-  caches the first preview it sees.
+  `main`, and also **whenever news or projects are published or changed**
+  in Admin (a Supabase trigger asks GitHub to rebuild — migration28), so
+  their link-preview pages are live about a minute later. Wait that
+  minute before sharing a brand-new post on Facebook — Facebook caches
+  the first preview it sees. An hourly scheduled rebuild is kept as a
+  fallback (GitHub often runs it late), and you can always run the
+  deploy by hand: GitHub → Actions → Deploy to GitHub Pages → Run
+  workflow.
+
+  The trigger needs a GitHub token stored in Supabase Vault (never in
+  this repo). To set it up or replace an expired one:
+  1. GitHub → your profile picture → **Settings** → **Developer
+     settings** → **Personal access tokens** → **Fine-grained tokens** →
+     **Generate new token**. Repository access: only `rciu.org`.
+     Permissions → Repository permissions → **Actions: Read and write**.
+     Copy the token (it starts with `github_pat_`).
+  2. Supabase → **SQL Editor**, run this with your token in place of
+     `PASTE_TOKEN_HERE` (running it again replaces the old token):
+     ```sql
+     do $$
+     declare existing uuid;
+     begin
+       select id into existing from vault.secrets where name = 'github_rebuild_token';
+       if existing is null then
+         perform vault.create_secret('PASTE_TOKEN_HERE', 'github_rebuild_token', 'GitHub token: lets Supabase start the rciu.org rebuild');
+       else
+         perform vault.update_secret(existing, 'PASTE_TOKEN_HERE');
+       end if;
+     end $$;
+     ```
 - `.github/workflows/keep-alive.yml` pings the site and the database
   every 3 days so a free-plan Supabase project doesn't pause.
 

@@ -57,7 +57,7 @@ credentials/psql access from here) — the user runs it themselves in
 Supabase's Dashboard → SQL Editor. So for any schema/RLS change:
 
 1. Write it as a new `supabase/migrationNN_description.sql` file
-   (next number is 28 — 27 migrations exist so far).
+   (next number is 29 — 28 migrations exist so far).
 2. **Also paste the SQL directly in chat**, not just save the file, so
    the user can copy-paste it into the SQL Editor without having to go
    find the file.
@@ -121,8 +121,11 @@ happens there (not in code), give literal numbered instructions, not
   `<Suspense>` for `useSearchParams()`) load any item live — including
   ones published after the last build, which the 404 page's inline
   script forwards there. Both render the same `NewsDetail` /
-  `ProjectDetail` component. The deploy workflow rebuilds hourly to
-  pick up new items. A static export fails to build a `[id]` route with
+  `ProjectDetail` component. New items get their page because a
+  Supabase trigger (migration28) starts the deploy workflow via
+  `workflow_dispatch` whenever published news / projects / project
+  photos change; the hourly schedule is only a fallback (GitHub runs it
+  hours late). A static export fails to build a `[id]` route with
   zero params, so `staticParams()` emits a noindex `_` placeholder when
   there's no data (e.g. Supabase unreachable during the build).
 - **Errors on public/member pages** go through `friendlyError()`
@@ -137,6 +140,12 @@ happens there (not in code), give literal numbered instructions, not
   'week_before' / 'day_before'), so repeat/concurrent calls send nothing. Edge Function code changes must
   be deployed by the user (Dashboard → Edge Functions → Code → Deploy,
   or the CLI) — merging to `main` doesn't deploy them.
+- **Rebuild-on-publish** (migration28): `request_site_rebuild()` is a
+  security-definer trigger that reads the GitHub token from Supabase
+  Vault (`github_rebuild_token`) and calls the GitHub API via pg_net.
+  It swallows all errors on purpose so saving a post can never fail
+  because of it. In PL/pgSQL, don't combine a table check and a column
+  reference in one `and` (no guaranteed short-circuit) — nest the `if`.
 - **Visitor statistics**: Cloudflare Web Analytics beacon in
   `src/app/layout.tsx`, token in `src/lib/analytics.ts` (empty = off).
   rciu.org is DNS-only (grey cloud) on Cloudflare, so automatic
@@ -157,4 +166,4 @@ page titles / 404 page, "Add to calendar" on events, missing-translation
 fallback in `t()`, README rewrite, lighter icons, per-item link-preview
 pages + hourly rebuild, friendly errors, pull-request build check,
 automatic week-before + day-before event reminders (migration27), Cloudflare Web
-Analytics hook.
+Analytics hook, rebuild-on-publish trigger (migration28).
