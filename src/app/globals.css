@@ -95,13 +95,24 @@ body {
 .impact-seen .impact-bar {
   transform: scaleX(var(--impact-fill));
 }
+.impact-province {
+  fill: rgba(255, 255, 255, 0.12);
+  transition: fill 0.6s ease-out;
+}
+.impact-seen .impact-province {
+  fill: #f7a81b;
+}
 @media (prefers-reduced-motion: reduce) {
   .impact-arc,
   .impact-pin,
   .impact-icon,
   .impact-step,
-  .impact-bar {
+  .impact-bar,
+  .impact-province {
     transition: none;
+  }
+  .impact-province {
+    fill: #f7a81b;
   }
   .impact-arc {
     stroke-dashoffset: 0;
