@@ -21,7 +21,8 @@ gotchas already learned the hard way.
   the item's own title and photo; Projects also has a "Join a Project"
   partnership form.
 - **Events** — monthly calendar with "Add to calendar" (Google /
-  Apple / Outlook) on upcoming events.
+  Apple / Outlook) on upcoming events. Members are emailed a reminder
+  automatically at 09:00 the day before each event.
 - **Board**, **Join** (membership interest form), **Contact**.
 - A friendly "page not found" page for broken links.
 
@@ -53,12 +54,16 @@ and remember the choice.
   ship.
 - **Email:** two Supabase Edge Functions using Resend —
   `notify-inquiry` (emails officers when a Join / Project form is
-  submitted) and `send-event-reminder` (the "Send Reminder" button in
+  submitted) and `send-event-reminder` (the daily day-before reminders,
+  plus the "Send Reminder" button in
   Admin → Calendar). Setup notes: the comment at the top of
   `supabase/functions/notify-inquiry/index.ts`, and
   `supabase/functions/send-event-reminder/DEPLOY_INSTRUCTIONS.md`.
 - **Spam protection** on the public forms: a database rate limit plus a
   hidden bot-trap field (migration26).
+- **Visitor statistics:** Cloudflare Web Analytics (no cookies). Turned
+  on by the token in `src/lib/analytics.ts`; the numbers are in the
+  Cloudflare dashboard → Analytics & Logs → Web Analytics.
 
 ## Deploying
 
