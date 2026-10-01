@@ -3,6 +3,7 @@ Allow: /
 Disallow: /admin/
 Disallow: /dashboard/
 Disallow: /members/
+Disallow: /gallery/
 Disallow: /login/
 
 Sitemap: https://rciu.org/sitemap.xml
