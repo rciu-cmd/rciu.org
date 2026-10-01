@@ -5,6 +5,7 @@ import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
 import { localYmd } from "@/lib/date";
+import { type CalendarEvent, googleCalendarUrl, icsDataUrl, icsFileName } from "@/lib/calendar";
 
 type Category = "installation_ceremony" | "district_events" | "projects" | "other" | "public_holiday";
 
@@ -212,6 +213,20 @@ export default function EventsPage() {
                         {t("Бүртгүүлэх →", "Register →", "登録 →", "報名 →")}
                       </a>
                     )}
+                    {/* Upcoming club events only — public holidays are
+                        already in everyone's calendar. */}
+                    {ev.event_date >= todayStr && ev.category !== "public_holiday" && (
+                      <AddToCalendar
+                        event={{
+                          id: ev.id,
+                          title: t(ev.title_mn, ev.title_en),
+                          description: t(ev.description_mn ?? "", ev.description_en ?? "") || null,
+                          location: ev.location,
+                          date: ev.event_date,
+                          time: ev.event_time,
+                        }}
+                      />
+                    )}
                   </div>
                 ))}
               </div>
@@ -219,6 +234,28 @@ export default function EventsPage() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function AddToCalendar({ event }: { event: CalendarEvent }) {
+  const { t } = useLanguage();
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+      <span className="font-semibold text-slate-500">
+        📅 {t("Хуанлид нэмэх:", "Add to calendar:", "カレンダーに追加:", "加入日曆:", "캘린더에 추가:")}
+      </span>
+      <a
+        href={googleCalendarUrl(event)}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="font-semibold text-rotary-royal-blue hover:underline"
+      >
+        Google
+      </a>
+      <a href={icsDataUrl(event)} download={icsFileName(event)} className="font-semibold text-rotary-royal-blue hover:underline">
+        Apple / Outlook
+      </a>
     </div>
   );
 }
