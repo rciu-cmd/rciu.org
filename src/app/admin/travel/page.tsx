@@ -33,8 +33,9 @@ const EMPTY = {
   manualLng: "",
 };
 
-// Intl.DisplayNames' locale tags for the site's 5 languages.
-const INTL_LOCALE: Record<Lang, string> = { mn: "mn", en: "en", ja: "ja", zh: "zh", ko: "ko" };
+// Intl.DisplayNames' locale tags for the site's languages (both Chinese
+// versions in Traditional characters).
+const INTL_LOCALE: Record<Lang, string> = { mn: "mn", en: "en", ja: "ja", zh: "zh-Hant-TW", hk: "zh-Hant-HK", ko: "ko" };
 
 export default function AdminTravelPage() {
   const { t, lang } = useLanguage();
@@ -108,7 +109,7 @@ export default function AdminTravelPage() {
     }
     return codes
       .map((code) => ({ code, label: displayNames?.of(code) ?? code }))
-      .sort((a, b) => a.label.localeCompare(b.label, lang));
+      .sort((a, b) => a.label.localeCompare(b.label, INTL_LOCALE[lang]));
   }, [lang]);
 
   // City dropdown — cities in the selected country only.

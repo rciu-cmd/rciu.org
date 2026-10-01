@@ -30,7 +30,7 @@ export default function ShareButtons({ path, title }: { path: string; title: str
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      window.prompt(t("Холбоосыг хуулна уу:", "Copy this link:", "このリンクをコピー:", "複製此連結:", "이 링크를 복사하세요:"), url);
+      window.prompt(t("Холбоосыг хуулна уу:", "Copy this link:", "このリンクをコピー：", "複製此連結：", "이 링크를 복사하세요:"), url);
     }
   }
 
@@ -47,7 +47,7 @@ export default function ShareButtons({ path, title }: { path: string; title: str
 
   return (
     <div className="mt-6 flex flex-wrap items-center gap-2">
-      <span className="text-sm font-semibold text-slate-500 mr-1">{t("Хуваалцах:", "Share:", "シェア:", "分享:", "공유:")}</span>
+      <span className="text-sm font-semibold text-slate-500 mr-1">{t("Хуваалцах:", "Share:", "シェア：", "分享：", "공유:")}</span>
       <a
         href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`}
         target="_blank"

@@ -47,7 +47,7 @@ export function inquiryLimitMessage(errorMessage: string, t: Translate): string 
       "Энэ и-мэйлээс саяхан хүсэлт ирсэн байна. Бид удахгүй тантай холбогдоно.",
       "We already received a request from this email a few minutes ago. We'll be in touch soon.",
       "このメールアドレスからのお問い合わせは数分前に受け付けました。まもなくご連絡いたします。",
-      "我們在幾分鐘前已收到此郵箱的申請，會盡快與您聯繫。",
+      "我們在幾分鐘前已收到此電子郵件信箱的申請，會盡快與您聯絡。",
       "몇 분 전에 이 이메일로 보낸 요청을 이미 받았습니다. 곧 연락드리겠습니다."
     );
   }

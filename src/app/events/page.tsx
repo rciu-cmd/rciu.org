@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
-import { useLanguage } from "@/lib/language-context";
-import { localYmd, MONTH_LABEL } from "@/lib/date";
+import { useLanguage, type Label } from "@/lib/language-context";
+import { localYmd, MONTH_LABEL, dayMonthLabel, monthYearLabel } from "@/lib/date";
 import AddToCalendar from "@/components/AddToCalendar";
 
 type Category = "installation_ceremony" | "district_events" | "projects" | "other" | "public_holiday";
@@ -23,17 +23,17 @@ type EventRow = {
   registration_url: string | null;
 };
 
-const CATEGORY_LABELS: Record<Category, { mn: string; en: string }> = {
-  installation_ceremony: { mn: "Албан ёсны ёслол", en: "Installation Ceremony" },
-  district_events: { mn: "Дүүргийн арга хэмжээ", en: "District Event" },
-  projects: { mn: "Төслийн арга хэмжээ", en: "Project Event" },
-  other: { mn: "Бусад", en: "Other" },
-  public_holiday: { mn: "Улсын баяр", en: "Public Holiday" },
+const CATEGORY_LABELS: Record<Category, Label> = {
+  installation_ceremony: { mn: "Албан ёсны ёслол", en: "Installation Ceremony", ja: "就任式", zh: "就職典禮", ko: "이·취임식" },
+  district_events: { mn: "Дүүргийн арга хэмжээ", en: "District Event", ja: "地区行事", zh: "地區活動", ko: "지구 행사" },
+  projects: { mn: "Төслийн арга хэмжээ", en: "Project Event", ja: "プロジェクト行事", zh: "服務計畫活動", ko: "프로젝트 행사" },
+  other: { mn: "Бусад", en: "Other", ja: "その他", zh: "其他", ko: "기타" },
+  public_holiday: { mn: "Улсын баяр", en: "Public Holiday", ja: "祝日", zh: "國定假日", ko: "공휴일" },
 };
 
-const WEEKDAY_LABEL: [string, string, string, string][] = [
-  ["Да", "Mo", "月", "一"], ["Мя", "Tu", "火", "二"], ["Лх", "We", "水", "三"],
-  ["Пү", "Th", "木", "四"], ["Ба", "Fr", "金", "五"], ["Бя", "Sa", "土", "六"], ["Ня", "Su", "日", "日"],
+const WEEKDAY_LABEL: [string, string, string, string, string][] = [
+  ["Да", "Mo", "月", "一", "월"], ["Мя", "Tu", "火", "二", "화"], ["Лх", "We", "水", "三", "수"],
+  ["Пү", "Th", "木", "四", "목"], ["Ба", "Fr", "金", "五", "금"], ["Бя", "Sa", "土", "六", "토"], ["Ня", "Su", "日", "日", "일"],
 ];
 
 export default function EventsPage() {
@@ -97,31 +97,30 @@ export default function EventsPage() {
   return (
     <div className="container-page py-14">
       <h1 className="text-3xl font-bold text-rotary-royal-blue mb-3">
-        {t("Арга хэмжээний хуанли", "Events Calendar", "イベントカレンダー", "活動日曆")}
+        {t("Арга хэмжээний хуанли", "Events Calendar", "イベントカレンダー", "活動日曆", "행사 캘린더")}
       </h1>
       <p className="text-slate-600 max-w-2xl mb-10">
         {t(
           "Клубын бүх арга хэмжээ, сар бүрээр.",
           "Every club event, month by month.",
           "クラブのすべてのイベントを月別に表示します。",
-          "俱樂部所有活動，按月顯示。"
+          "本社所有活動，依月份顯示。",
+          "클럽의 모든 행사를 월별로 보여 줍니다."
         )}
       </p>
 
-      {events === null && <p className="text-slate-400 text-sm">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加載中…")}</p>}
+      {events === null && <p className="text-slate-400 text-sm">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "載入中…", "불러오는 중…")}</p>}
 
       {events && (
         <div className="grid gap-8 lg:grid-cols-[1fr_440px] items-start">
           {/* Month grid */}
           <div className="rounded-2xl border border-slate-200 overflow-hidden bg-white">
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
-              <button onClick={goPrevMonth} className="text-slate-500 hover:text-rotary-royal-blue px-2 py-1 rounded-md hover:bg-slate-50" aria-label="Previous month">
+              <button onClick={goPrevMonth} className="text-slate-500 hover:text-rotary-royal-blue px-2 py-1 rounded-md hover:bg-slate-50" aria-label={t("Өмнөх сар", "Previous month", "前の月", "上個月", "이전 달")}>
                 ←
               </button>
-              <p className="font-bold text-slate-900">
-                {t(...MONTH_LABEL[viewMonth])} {viewYear}
-              </p>
-              <button onClick={goNextMonth} className="text-slate-500 hover:text-rotary-royal-blue px-2 py-1 rounded-md hover:bg-slate-50" aria-label="Next month">
+              <p className="font-bold text-slate-900">{monthYearLabel(t, viewMonth, viewYear)}</p>
+              <button onClick={goNextMonth} className="text-slate-500 hover:text-rotary-royal-blue px-2 py-1 rounded-md hover:bg-slate-50" aria-label={t("Дараагийн сар", "Next month", "次の月", "下個月", "다음 달")}>
                 →
               </button>
             </div>
@@ -164,10 +163,19 @@ export default function EventsPage() {
           {/* This month's events */}
           <div className="rounded-2xl border border-slate-200 bg-white p-5">
             <p className="text-xs font-semibold text-rotary-azure uppercase tracking-wide mb-4">
-              {t(...MONTH_LABEL[viewMonth])} {viewYear} — {t("арга хэмжээнүүд", "events", "のイベント", "的活動")}
+              {(() => {
+                const [mn, en, ja, zh, ko] = MONTH_LABEL[viewMonth];
+                return t(
+                  `${viewYear} оны ${mn}ын арга хэмжээ`,
+                  `${en} ${viewYear} events`,
+                  `${viewYear}年${ja}のイベント`,
+                  `${viewYear}年${zh}的活動`,
+                  `${viewYear}년 ${ko} 행사`
+                );
+              })()}
             </p>
             {monthEvents.length === 0 ? (
-              <p className="text-slate-400 text-sm">{t("Энэ сард төлөвлөсөн арга хэмжээ алга.", "No events scheduled this month.", "今月予定されているイベントはありません。", "本月暫無安排的活動。")}</p>
+              <p className="text-slate-400 text-sm">{t("Энэ сард төлөвлөсөн арга хэмжээ алга.", "No events scheduled this month.", "今月予定されているイベントはありません。", "本月尚無安排的活動。", "이번 달 예정된 행사가 없습니다.")}</p>
             ) : (
               <div className="flex flex-col divide-y divide-slate-100">
                 {monthEvents.map((ev) => (
@@ -181,13 +189,13 @@ export default function EventsPage() {
                       </div>
                     )}
                     <p className="text-xs font-semibold text-rotary-azure">
-                      {ev.event_date.slice(8, 10)} {t(...MONTH_LABEL[viewMonth])}
+                      {dayMonthLabel(t, viewMonth, Number(ev.event_date.slice(8, 10)))}
                       {ev.event_time && ` · ${ev.event_time}`}
                     </p>
                     <p className="font-bold text-slate-900 leading-snug">{t(ev.title_mn, ev.title_en)}</p>
                     {ev.category && (
                       <span className="inline-block text-[10px] font-semibold uppercase tracking-wide text-slate-400 mt-0.5">
-                        {t(CATEGORY_LABELS[ev.category].mn, CATEGORY_LABELS[ev.category].en)}
+                        {t(CATEGORY_LABELS[ev.category].mn, CATEGORY_LABELS[ev.category].en, CATEGORY_LABELS[ev.category].ja, CATEGORY_LABELS[ev.category].zh, CATEGORY_LABELS[ev.category].ko)}
                       </span>
                     )}
                     {ev.location && <p className="text-sm text-slate-500 mt-1">{ev.location}</p>}
@@ -201,7 +209,7 @@ export default function EventsPage() {
                         rel="noopener noreferrer"
                         className="inline-block mt-2 text-xs font-semibold px-3 py-1.5 rounded-full bg-rotary-gold text-[#5a3d0a] hover:brightness-95 transition"
                       >
-                        {t("Бүртгүүлэх →", "Register →", "登録 →", "報名 →")}
+                        {t("Бүртгүүлэх →", "Register →", "申し込む →", "報名 →", "신청하기 →")}
                       </a>
                     )}
                     {/* Upcoming club events only — public holidays are

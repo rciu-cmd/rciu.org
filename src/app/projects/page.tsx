@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { asset } from "@/lib/asset";
 import { supabase } from "@/lib/supabase";
-import { useLanguage } from "@/lib/language-context";
+import { useLanguage, type Label, type Translate } from "@/lib/language-context";
 import { friendlyError } from "@/lib/friendly-error";
 import { HoneypotField, INQUIRY_MAX_LENGTH, inquiryLimitMessage } from "@/lib/spam-guard";
 import ProjectPhotoCollage from "@/components/ProjectPhotoCollage";
@@ -26,10 +26,10 @@ type ProjectRow = {
   grant_number: string | null;
 };
 
-const STATUS_LABEL: Record<ProjectStatus, { mn: string; en: string; ja: string; zh: string }> = {
-  ongoing: { mn: "Хэрэгжиж буй", en: "Ongoing", ja: "実施中", zh: "進行中" },
-  completed: { mn: "Хаагдсан", en: "Completed", ja: "完了", zh: "已完成" },
-  planned: { mn: "Төлөвлөж буй", en: "Planned", ja: "計画中", zh: "計劃中" },
+const STATUS_LABEL: Record<ProjectStatus, Label> = {
+  ongoing: { mn: "Хэрэгжиж буй", en: "Ongoing", ja: "実施中", zh: "進行中", ko: "진행 중" },
+  completed: { mn: "Дууссан", en: "Completed", ja: "完了", zh: "已完成", ko: "완료" },
+  planned: { mn: "Төлөвлөж буй", en: "Planned", ja: "計画中", zh: "規劃中", ko: "계획 중" },
 };
 
 export default function ProjectsPage() {
@@ -68,39 +68,40 @@ export default function ProjectsPage() {
     <div className="container-page py-14">
       <div className="flex flex-wrap items-start justify-between gap-4 mb-3">
         <h1 className="text-3xl font-bold text-rotary-royal-blue">
-          {t("Төслүүд", "Projects", "プロジェクト", "項目")}
+          {t("Төслүүд", "Projects", "プロジェクト", "服務計畫", "프로젝트")}
         </h1>
         <div className="flex gap-3">
           <button
             onClick={() => setShowDonate(true)}
             className="text-sm font-semibold bg-rotary-gold text-[#5a3d0a] rounded-full px-5 py-2 hover:brightness-95 transition"
           >
-            {t("Хандив өргөх", "Donate", "寄付する", "捐款")}
+            {t("Хандив өргөх", "Donate", "寄付する", "捐款", "기부하기")}
           </button>
           <button
             onClick={() => setShowJoinForm(true)}
             className="text-sm font-semibold border-2 border-rotary-royal-blue text-rotary-royal-blue rounded-full px-5 py-2 hover:bg-rotary-royal-blue hover:text-white transition"
           >
-            {t("Төсөлд нэгдэх", "Join a Project", "プロジェクトに参加", "加入項目")}
+            {t("Төсөлд нэгдэх", "Join a Project", "プロジェクトに参加", "參與服務計畫", "프로젝트 참여")}
           </button>
         </div>
       </div>
       <p className="text-slate-600 max-w-2xl mb-10">
-        {t("Клубын хэрэгжүүлж буй болон дуусгасан төслүүд.", "Ongoing and completed community service projects.", "実施中および完了したコミュニティ・サービス・プロジェクト。", "正在進行和已完成的社區服務項目。")}
+        {t("Клубын хэрэгжүүлж буй болон дуусгасан төслүүд.", "Ongoing and completed community service projects.", "実施中および完了したコミュニティ・サービス・プロジェクト。", "進行中與已完成的社區服務計畫。", "진행 중이거나 완료된 지역사회 봉사 프로젝트입니다.")}
       </p>
 
       {showJoinForm && <JoinProjectModal t={t} projects={items ?? []} onClose={() => setShowJoinForm(false)} />}
       {showDonate && <DonateModal t={t} onClose={() => setShowDonate(false)} />}
 
-      {items === null && <p className="text-slate-400 text-sm">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加載中…")}</p>}
+      {items === null && <p className="text-slate-400 text-sm">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "載入中…", "불러오는 중…")}</p>}
 
       {items && items.length === 0 && (
         <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center text-slate-500">
           {t(
             "Төслийн мэдээлэл удахгүй нэмэгдэнэ.",
             "Project details will appear here once added by an admin.",
-            "プロジェクト情報は管理者が追加次第、表示されます。",
-            "項目信息將在管理員添加後顯示。"
+            "プロジェクト情報は追加され次第表示されます。",
+            "服務計畫新增後將顯示在這裡。",
+            "프로젝트가 추가되면 여기에 표시됩니다."
           )}
         </div>
       )}
@@ -116,7 +117,7 @@ export default function ProjectsPage() {
                   <div className="p-6">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="inline-block text-xs font-semibold uppercase tracking-wide text-rotary-azure">
-                        {t(STATUS_LABEL[p.status].mn, STATUS_LABEL[p.status].en, STATUS_LABEL[p.status].ja, STATUS_LABEL[p.status].zh)}
+                        {t(STATUS_LABEL[p.status].mn, STATUS_LABEL[p.status].en, STATUS_LABEL[p.status].ja, STATUS_LABEL[p.status].zh, STATUS_LABEL[p.status].ko)}
                       </span>
                       {p.project_type !== "local_project" && (
                         <span className="inline-block text-[10px] font-bold text-white bg-rotary-gold rounded-full px-2 py-0.5">
@@ -153,12 +154,12 @@ const DONATE_ACCOUNT = {
   currency: "MNT",
 };
 
-function DonateModal({ t, onClose }: { t: (mn: string, en: string, ja?: string, zh?: string) => string; onClose: () => void }) {
+function DonateModal({ t, onClose }: { t: Translate; onClose: () => void }) {
   const rows: [string, string][] = [
-    [t("Дансны нэр", "Account Name", "口座名義", "賬戶名稱"), DONATE_ACCOUNT.accountName],
-    [t("Дансны дугаар", "Account Number", "口座番号", "賬號"), DONATE_ACCOUNT.accountNumber],
-    [t("IBAN дугаар", "IBAN", "IBAN", "IBAN"), DONATE_ACCOUNT.iban],
-    [t("Валют", "Currency", "通貨", "幣種"), DONATE_ACCOUNT.currency],
+    [t("Дансны нэр", "Account Name", "口座名義", "戶名", "예금주"), DONATE_ACCOUNT.accountName],
+    [t("Дансны дугаар", "Account Number", "口座番号", "帳號", "계좌번호"), DONATE_ACCOUNT.accountNumber],
+    [t("IBAN дугаар", "IBAN", "IBAN", "IBAN", "IBAN"), DONATE_ACCOUNT.iban],
+    [t("Валют", "Currency", "通貨", "幣別", "통화"), DONATE_ACCOUNT.currency],
   ];
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4" onClick={onClose}>
@@ -166,8 +167,8 @@ function DonateModal({ t, onClose }: { t: (mn: string, en: string, ja?: string, 
         <div className="flex items-center gap-3 p-6 border-b border-slate-100">
           <Image src={asset("/logos/rciu-emblem.jpg")} alt="RCIU" width={40} height={40} className="rounded-full shrink-0" />
           <div>
-            <p className="font-bold text-rotary-royal-blue leading-tight">Rotary Club of Ikh Urgoo</p>
-            <p className="text-xs text-slate-400">{t("Дансны мэдээлэл", "Bank Account Information", "口座情報", "銀行賬戶信息")}</p>
+            <p className="font-bold text-rotary-royal-blue leading-tight">{t("Их Өргөө Ротари Клуб", "Rotary Club of Ikh Urgoo", "イク・ウルグー・ロータリークラブ", "伊赫烏爾古扶輪社", "이흐 우르구 로타리클럽")}</p>
+            <p className="text-xs text-slate-400">{t("Дансны мэдээлэл", "Bank Account Information", "口座情報", "銀行帳戶資訊", "계좌 정보")}</p>
           </div>
         </div>
         <div className="p-6">
@@ -176,7 +177,8 @@ function DonateModal({ t, onClose }: { t: (mn: string, en: string, ja?: string, 
               "Клубын дансаар шууд шилжүүлэг хийж хандив өргөх боломжтой.",
               "You can donate directly by bank transfer to the club's account below.",
               "以下のクラブ口座へ直接お振込みいただけます。",
-              "您可以直接向以下俱樂部賬戶轉賬捐款。"
+              "您可以直接轉帳至以下本社帳戶進行捐款。",
+              "아래 클럽 계좌로 직접 송금하여 기부하실 수 있습니다."
             )}
           </p>
           <dl className="rounded-xl border border-slate-200 divide-y divide-slate-100 overflow-hidden">
@@ -188,7 +190,7 @@ function DonateModal({ t, onClose }: { t: (mn: string, en: string, ja?: string, 
             ))}
           </dl>
           <button onClick={onClose} className="mt-6 w-full text-sm font-semibold bg-rotary-royal-blue text-white rounded-md py-2.5">
-            {t("Хаах", "Close", "閉じる", "關閉")}
+            {t("Хаах", "Close", "閉じる", "關閉", "닫기")}
           </button>
         </div>
       </div>
@@ -207,7 +209,7 @@ function JoinProjectModal({
   projects,
   onClose,
 }: {
-  t: (mn: string, en: string, ja?: string, zh?: string) => string;
+  t: Translate;
   projects: ProjectRow[];
   onClose: () => void;
 }) {
@@ -248,48 +250,50 @@ function JoinProjectModal({
         <div className="flex items-center gap-3 p-6 border-b border-slate-100">
           <Image src={asset("/logos/rciu-emblem.jpg")} alt="RCIU" width={40} height={40} className="rounded-full shrink-0" />
           <div>
-            <p className="font-bold text-rotary-royal-blue leading-tight">Rotary Club of Ikh Urgoo</p>
-            <p className="text-xs text-slate-400">{t("Төсөлд нэгдэх хүсэлт", "Project Partnership Request", "プロジェクト参加依頼", "項目合作申請")}</p>
+            <p className="font-bold text-rotary-royal-blue leading-tight">{t("Их Өргөө Ротари Клуб", "Rotary Club of Ikh Urgoo", "イク・ウルグー・ロータリークラブ", "伊赫烏爾古扶輪社", "이흐 우르구 로타리클럽")}</p>
+            <p className="text-xs text-slate-400">{t("Төсөлд нэгдэх хүсэлт", "Project Partnership Request", "プロジェクト参加のお申し込み", "服務計畫合作申請", "프로젝트 협력 신청")}</p>
           </div>
         </div>
 
         <div className="p-6">
           {done ? (
             <div className="text-center py-6">
-              <p className="text-xl font-bold text-rotary-royal-blue mb-2">{t("Баярлалаа!", "Thank you!", "ありがとうございます!", "謝謝!")}</p>
+              <p className="text-xl font-bold text-rotary-royal-blue mb-2">{t("Баярлалаа!", "Thank you!", "ありがとうございます！", "謝謝！", "감사합니다!")}</p>
               <p className="text-slate-600 text-sm mb-6">
                 {t(
                   "Таны хүсэлтийг хүлээн авлаа. Бид удахгүй тантай холбогдоно.",
                   "We've received your request and will be in touch soon.",
                   "お問い合わせを受け付けました。まもなくご連絡いたします。",
-                  "我們已收到您的申請，會盡快與您聯繫。"
+                  "我們已收到您的申請，會盡快與您聯絡。",
+                  "요청을 접수했습니다. 곧 연락드리겠습니다."
                 )}
               </p>
               <button onClick={onClose} className="text-sm font-semibold bg-rotary-royal-blue text-white rounded-md px-5 py-2">
-                {t("Хаах", "Close", "閉じる", "關閉")}
+                {t("Хаах", "Close", "閉じる", "關閉", "닫기")}
               </button>
             </div>
           ) : (
             <form onSubmit={submit} className="grid gap-3">
               <p className="text-sm text-slate-500 mb-1">
                 {t(
-                  "Өөр клуб, байгууллага эсвэл хувь хүнээр манай төсөлд хамтран ажиллахыг хүсвэл доорх маягтыг бөглөнө үү.",
+                  "Өөр клуб (гадаадын клуб ч болно), байгууллага эсвэл хувь хүний хувиар манай төсөлд хамтран ажиллахыг хүсвэл доорх маягтыг бөглөнө үү.",
                   "Interested in partnering on one of our projects — as another club (including from abroad), organization, or individual? Fill out the form below.",
-                  "他のクラブ(海外含む)、団体、個人としてプロジェクトへの参加をご希望の方は、以下のフォームにご記入ください。",
-                  "無論您來自其他俱樂部（包括國外）、機構還是個人，如有意合作，請填寫以下表格。"
+                  "他のクラブ（海外を含む）、団体、または個人として当クラブのプロジェクトへの協力をご希望の方は、以下のフォームにご記入ください。",
+                  "無論您是其他扶輪社（包括海外）、機構或個人，若有意合作參與我們的服務計畫，請填寫下方表格。",
+                  "다른 클럽(해외 포함), 단체 또는 개인으로서 저희 프로젝트에 함께하고 싶으시다면 아래 양식을 작성해 주세요."
                 )}
               </p>
               <input
                 required
                 maxLength={INQUIRY_MAX_LENGTH.name}
-                placeholder={t("Клуб/байгууллагын нэр", "Club / organization name", "クラブ・団体名", "俱樂部/機構名稱")}
+                placeholder={t("Клуб/байгууллагын нэр", "Club / organization name", "クラブ・団体名", "扶輪社／機構名稱", "클럽/단체명")}
                 value={form.club_name}
                 onChange={(e) => setForm({ ...form, club_name: e.target.value })}
                 className="rounded-md border border-slate-300 px-3 py-2.5 text-sm"
               />
               <input
                 maxLength={INQUIRY_MAX_LENGTH.name}
-                placeholder={t("Холбогдох хүн (заавал биш)", "Contact person (optional)", "担當者名(任意)", "聯繫人(可選)")}
+                placeholder={t("Холбогдох хүн (заавал биш)", "Contact person (optional)", "担当者名（任意）", "聯絡人（選填）", "담당자 (선택)")}
                 value={form.contact_name}
                 onChange={(e) => setForm({ ...form, contact_name: e.target.value })}
                 className="rounded-md border border-slate-300 px-3 py-2.5 text-sm"
@@ -298,7 +302,7 @@ function JoinProjectModal({
                 required
                 type="email"
                 maxLength={INQUIRY_MAX_LENGTH.email}
-                placeholder={t("И-мэйл", "Email", "メール", "郵箱")}
+                placeholder={t("И-мэйл", "Email", "メール", "電子郵件", "이메일")}
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 className="rounded-md border border-slate-300 px-3 py-2.5 text-sm"
@@ -309,14 +313,14 @@ function JoinProjectModal({
                   onChange={(e) => setForm({ ...form, project_id: e.target.value })}
                   className="rounded-md border border-slate-300 px-3 py-2.5 text-sm"
                 >
-                  <option value="">{t("Ерөнхий сонирхол (тодорхой төсөлгүй)", "General interest (no specific project)", "特定のプロジェクトなし", "一般興趣（不限項目）")}</option>
+                  <option value="">{t("Ерөнхий сонирхол (тодорхой төсөлгүй)", "General interest (no specific project)", "全般的な関心（特定のプロジェクトなし）", "一般意向（不限特定計畫）", "일반 관심 (특정 프로젝트 없음)")}</option>
                   {projects.map((p) => (
                     <option key={p.id} value={p.id}>{p.title_en}</option>
                   ))}
                 </select>
               )}
               <textarea
-                placeholder={t("Мессеж (заавал биш)", "Message (optional)", "メッセージ(任意)", "留言(可選)")}
+                placeholder={t("Мессеж (заавал биш)", "Message (optional)", "メッセージ（任意）", "留言（選填）", "메시지 (선택)")}
                 value={form.message}
                 onChange={(e) => setForm({ ...form, message: e.target.value })}
                 rows={3}
@@ -327,10 +331,10 @@ function JoinProjectModal({
               {error && <p className="text-sm text-rotary-cardinal">{error}</p>}
               <div className="flex gap-2 mt-1">
                 <button type="submit" disabled={busy} className="flex-1 bg-rotary-royal-blue text-white font-semibold rounded-md py-2.5 text-sm disabled:opacity-60">
-                  {busy ? t("Илгээж байна…", "Sending…", "送信中…", "發送中…") : t("Илгээх", "Send", "送信", "提交")}
+                  {busy ? t("Илгээж байна…", "Sending…", "送信中…", "傳送中…", "보내는 중…") : t("Илгээх", "Send", "送信", "送出", "보내기")}
                 </button>
                 <button type="button" onClick={onClose} className="text-sm font-semibold px-4 rounded-md border border-slate-300 text-slate-600">
-                  {t("Цуцлах", "Cancel", "キャンセル", "取消")}
+                  {t("Цуцлах", "Cancel", "キャンセル", "取消", "취소")}
                 </button>
               </div>
             </form>

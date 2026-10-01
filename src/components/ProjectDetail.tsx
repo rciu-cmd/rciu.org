@@ -9,7 +9,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { asset } from "@/lib/asset";
 import { supabase } from "@/lib/supabase";
-import { useLanguage } from "@/lib/language-context";
+import { useLanguage, type Label } from "@/lib/language-context";
 import ProjectPhotoCollage from "@/components/ProjectPhotoCollage";
 import ShareButtons from "@/components/ShareButtons";
 
@@ -32,16 +32,16 @@ type ProjectRow = {
   grant_number: string | null;
 };
 
-const STATUS_LABEL: Record<ProjectRow["status"], { mn: string; en: string; ja: string; zh: string }> = {
-  ongoing: { mn: "Хэрэгжиж буй", en: "Ongoing", ja: "実施中", zh: "進行中" },
-  completed: { mn: "Хаагдсан", en: "Completed", ja: "完了", zh: "已完成" },
-  planned: { mn: "Төлөвлөж буй", en: "Planned", ja: "計画中", zh: "計劃中" },
+const STATUS_LABEL: Record<ProjectRow["status"], Label> = {
+  ongoing: { mn: "Хэрэгжиж буй", en: "Ongoing", ja: "実施中", zh: "進行中", ko: "진행 중" },
+  completed: { mn: "Дууссан", en: "Completed", ja: "完了", zh: "已完成", ko: "완료" },
+  planned: { mn: "Төлөвлөж буй", en: "Planned", ja: "計画中", zh: "規劃中", ko: "계획 중" },
 };
 
-const PROJECT_TYPE_LABEL: Record<ProjectType, { mn: string; en: string; ja: string; zh: string }> = {
-  local_project: { mn: "Орон нутгийн төсөл", en: "Local Project", ja: "地域プロジェクト", zh: "本地項目" },
-  district_grant: { mn: "Дүүргийн тэтгэлэг (DG)", en: "District Grant (DG)", ja: "地区補助金(DG)", zh: "地區獎助金(DG)" },
-  global_grant: { mn: "Глобал тэтгэлэг (GG)", en: "Global Grant (GG)", ja: "グローバル補助金(GG)", zh: "全球獎助金(GG)" },
+const PROJECT_TYPE_LABEL: Record<ProjectType, Label> = {
+  local_project: { mn: "Орон нутгийн төсөл", en: "Local Project", ja: "地域プロジェクト", zh: "在地服務計畫", ko: "지역 프로젝트" },
+  district_grant: { mn: "Дүүргийн тэтгэлэг (DG)", en: "District Grant (DG)", ja: "地区補助金（DG）", zh: "地區獎助金（DG）", ko: "지구 보조금 (DG)" },
+  global_grant: { mn: "Глобал тэтгэлэг (GG)", en: "Global Grant (GG)", ja: "グローバル補助金（GG）", zh: "全球獎助金（GG）", ko: "글로벌 보조금 (GG)" },
 };
 
 const CAUSE_ICONS: Record<string, string> = {
@@ -79,17 +79,17 @@ export default function ProjectDetail({ id }: { id: string | null }) {
   }, [id]);
 
   if (id && project === undefined) {
-    return <div className="container-page py-14 text-slate-400 text-sm">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加載中…")}</div>;
+    return <div className="container-page py-14 text-slate-400 text-sm">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "載入中…", "불러오는 중…")}</div>;
   }
 
   if (!id || !project) {
     return (
       <div className="container-page py-14">
         <p className="text-slate-500 mb-4">
-          {t("Төсөл олдсонгүй.", "Project not found.", "プロジェクトが見つかりません。", "找不到該項目。")}
+          {t("Төсөл олдсонгүй.", "Project not found.", "プロジェクトが見つかりません。", "找不到這項服務計畫。", "프로젝트를 찾을 수 없습니다.")}
         </p>
         <Link href="/projects" className="text-rotary-royal-blue font-semibold hover:underline">
-          {t("← Бүх төсөл рүү буцах", "← Back to all Projects", "← 全てのプロジェクトへ戻る", "← 返回所有項目")}
+          {t("← Бүх төсөл рүү буцах", "← Back to all Projects", "← プロジェクト一覧へ戻る", "← 返回所有服務計畫", "← 모든 프로젝트로 돌아가기")}
         </Link>
       </div>
     );
@@ -100,7 +100,7 @@ export default function ProjectDetail({ id }: { id: string | null }) {
   return (
     <div className="container-page py-14 max-w-4xl">
       <Link href="/projects" className="text-sm text-rotary-royal-blue font-semibold hover:underline mb-6 inline-block">
-        {t("← Бүх төсөл рүү буцах", "← Back to all Projects", "← 全てのプロジェクトへ戻る", "← 返回所有項目")}
+        {t("← Бүх төсөл рүү буцах", "← Back to all Projects", "← プロジェクト一覧へ戻る", "← 返回所有服務計畫", "← 모든 프로젝트로 돌아가기")}
       </Link>
 
       <div className="rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
@@ -115,7 +115,7 @@ export default function ProjectDetail({ id }: { id: string | null }) {
         <div className="p-8">
           <div className="flex items-center gap-2 mb-3 flex-wrap">
             <span className="inline-block text-xs font-semibold uppercase tracking-wide bg-blue-50 text-rotary-azure px-3 py-1 rounded-full">
-              {t(STATUS_LABEL[p.status].mn, STATUS_LABEL[p.status].en, STATUS_LABEL[p.status].ja, STATUS_LABEL[p.status].zh)}
+              {t(STATUS_LABEL[p.status].mn, STATUS_LABEL[p.status].en, STATUS_LABEL[p.status].ja, STATUS_LABEL[p.status].zh, STATUS_LABEL[p.status].ko)}
             </span>
             {p.project_type !== "local_project" && (
               <span className="inline-block text-xs font-bold text-white bg-rotary-gold px-3 py-1 rounded-full">
@@ -123,7 +123,8 @@ export default function ProjectDetail({ id }: { id: string | null }) {
                   PROJECT_TYPE_LABEL[p.project_type].mn,
                   PROJECT_TYPE_LABEL[p.project_type].en,
                   PROJECT_TYPE_LABEL[p.project_type].ja,
-                  PROJECT_TYPE_LABEL[p.project_type].zh
+                  PROJECT_TYPE_LABEL[p.project_type].zh,
+                  PROJECT_TYPE_LABEL[p.project_type].ko
                 )}
               </span>
             )}
@@ -153,7 +154,7 @@ export default function ProjectDetail({ id }: { id: string | null }) {
       {photos.length > 1 && (
         <div className="mt-8">
           <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3">
-            {t("Бүх зураг", "All Photos", "すべての写真", "所有照片")}
+            {t("Бүх зураг", "All Photos", "すべての写真", "所有照片", "전체 사진")}
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {photos.map((url, i) => (

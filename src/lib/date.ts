@@ -1,3 +1,5 @@
+import type { Translate } from "./language-context";
+
 // Local-calendar-day "YYYY-MM-DD" for a Date — deliberately NOT
 // `d.toISOString().slice(0, 10)`. toISOString() converts through UTC
 // first, which shifts the date whenever the viewer's timezone isn't
@@ -27,3 +29,16 @@ export const MONTH_LABEL: [string, string, string, string, string][] = [
   ["9-р сар", "September", "9月", "9月", "9월"], ["10-р сар", "October", "10月", "10月", "10월"],
   ["11-р сар", "November", "11月", "11月", "11월"], ["12-р сар", "December", "12月", "12月", "12월"],
 ];
+
+// Month + year and day + month in each language's own order:
+// "2026 оны 10-р сар" / "October 2026" / "2026年10月" / "2026년 10월",
+// "10-р сарын 14" / "14 October" / "10月14日" / "10월 14일".
+export function monthYearLabel(t: Translate, month: number, year: number): string {
+  const [mn, en, ja, zh, ko] = MONTH_LABEL[month];
+  return t(`${year} оны ${mn}`, `${en} ${year}`, `${year}年${ja}`, `${year}年${zh}`, `${year}년 ${ko}`);
+}
+
+export function dayMonthLabel(t: Translate, month: number, day: number): string {
+  const [mn, en, ja, zh, ko] = MONTH_LABEL[month];
+  return t(`${mn}ын ${day}`, `${day} ${en}`, `${ja}${day}日`, `${zh}${day}日`, `${ko} ${day}일`);
+}

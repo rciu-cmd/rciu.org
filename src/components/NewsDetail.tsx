@@ -87,7 +87,7 @@ export default function NewsDetail({ id }: { id: string | null }) {
   }, [item]);
 
   if (id && item === undefined) {
-    return <div className="container-page py-14 text-slate-400 text-sm">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加載中…")}</div>;
+    return <div className="container-page py-14 text-slate-400 text-sm">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "載入中…", "불러오는 중…")}</div>;
   }
 
   if (!id || !item) {
@@ -97,11 +97,11 @@ export default function NewsDetail({ id }: { id: string | null }) {
           <p className="text-rotary-cardinal text-sm mb-4">{friendlyError(loadError, t)}</p>
         ) : (
           <p className="text-slate-500 mb-4">
-            {t("Мэдээ олдсонгүй.", "News post not found.", "ニュースが見つかりません。", "找不到該新聞。")}
+            {t("Мэдээ олдсонгүй.", "News post not found.", "ニュースが見つかりません。", "找不到這則消息。", "소식을 찾을 수 없습니다.")}
           </p>
         )}
         <Link href="/news" className="text-rotary-royal-blue font-semibold hover:underline">
-          {t("← Бүх мэдээ рүү буцах", "← Back to all News", "← ニュース一覧へ戻る", "← 返回所有新聞")}
+          {t("← Бүх мэдээ рүү буцах", "← Back to all News", "← ニュース一覧へ戻る", "← 返回所有消息", "← 모든 소식으로 돌아가기")}
         </Link>
       </div>
     );
@@ -110,7 +110,7 @@ export default function NewsDetail({ id }: { id: string | null }) {
   return (
     <div className="container-page py-14 max-w-3xl">
       <Link href="/news" className="text-sm text-rotary-royal-blue font-semibold hover:underline mb-6 inline-block">
-        {t("← Бүх мэдээ рүү буцах", "← Back to all News", "← ニュース一覧へ戻る", "← 返回所有新聞")}
+        {t("← Бүх мэдээ рүү буцах", "← Back to all News", "← ニュース一覧へ戻る", "← 返回所有消息", "← 모든 소식으로 돌아가기")}
       </Link>
 
       {item.facebook_url ? (
@@ -144,7 +144,7 @@ export default function NewsDetail({ id }: { id: string | null }) {
                 rel="noopener noreferrer"
                 className="inline-block mt-6 text-sm font-bold px-6 py-3 rounded-full bg-rotary-gold text-slate-900 shadow-sm hover:brightness-95 transition"
               >
-                {t("Дэлгэрэнгүй холбоос →", "Learn More →", "詳しくはこちら →", "了解更多 →")}
+                {t("Дэлгэрэнгүй холбоос →", "Learn More →", "詳しくはこちら →", "了解更多 →", "자세히 보기 →")}
               </a>
             )}
           </div>

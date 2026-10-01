@@ -63,21 +63,22 @@ export default function NewsPage() {
   return (
     <div className="container-page py-14">
       <h1 className="text-3xl font-bold text-rotary-royal-blue mb-3">
-        {t("Мэдээ", "News", "ニュース", "新聞")}
+        {t("Мэдээ", "News", "ニュース", "新聞", "소식")}
       </h1>
       <p className="text-slate-600 max-w-2xl mb-10">
-        {t("Клубын сүүлийн үеийн мэдээ, үйл явдал.", "The latest news and updates from the club.", "クラブの最新ニュースと活動報告。", "俱樂部最新新聞與動態。")}
+        {t("Клубын сүүлийн үеийн мэдээ, үйл явдал.", "The latest news and updates from the club.", "クラブの最新ニュースと活動報告。", "本社最新消息與動態。", "클럽의 최신 소식과 활동입니다.")}
       </p>
 
-      {items === null && <p className="text-slate-400 text-sm">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加載中…")}</p>}
+      {items === null && <p className="text-slate-400 text-sm">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "載入中…", "불러오는 중…")}</p>}
 
       {items && items.length === 0 && (
         <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center text-slate-500">
           {t(
-            "Мэдээ удахгүй нэмэгдэнэ. Admin самбараас нийтэлж болно.",
+            "Мэдээ удахгүй нэмэгдэнэ. Админ самбараас нийтэлж болно.",
             "No news posted yet — admins can publish updates from the admin dashboard.",
             "まだニュースはありません。管理者ダッシュボードから投稿できます。",
-            "暫無新聞。管理員可從後臺發佈動態。"
+            "目前尚無消息，管理員可從管理後台發布。",
+            "아직 게시된 소식이 없습니다. 관리자 대시보드에서 게시할 수 있습니다."
           )}
         </div>
       )}

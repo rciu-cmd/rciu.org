@@ -163,12 +163,12 @@ function ProvinceMap({ provinces, spaced }: { provinces: string[]; spaced: boole
         <span className="text-blue-100 text-sm">
           {aimags > 0
             ? withUb
-              ? t("аймаг, Улаанбаатарт төсөл хэрэгжүүлсэн", "provinces and Ulaanbaatar with our projects", "県とウランバートルでプロジェクト実施", "個省及烏蘭巴托實施項目", "개 아이막과 울란바토르에서 프로젝트")
-              : t("аймагт төсөл хэрэгжүүлсэн", "provinces with our projects", "県でプロジェクト実施", "個省實施項目", "개 아이막에서 프로젝트")
-            : t("Улаанбаатарт төсөл хэрэгжүүлсэн", "Projects in Ulaanbaatar", "ウランバートルでプロジェクト実施", "在烏蘭巴托實施項目", "울란바토르에서 프로젝트")}
+              ? t("аймаг, Улаанбаатарт төсөл хэрэгжүүлсэн", "provinces and Ulaanbaatar with our projects", "県とウランバートルでプロジェクトを実施", "個省及烏蘭巴托實施服務計畫", "개 아이막과 울란바토르에서 프로젝트 진행")
+              : t("аймагт төсөл хэрэгжүүлсэн", "provinces with our projects", "県でプロジェクトを実施", "個省實施服務計畫", "개 아이막에서 프로젝트 진행")
+            : t("Улаанбаатарт төсөл хэрэгжүүлсэн", "Projects in Ulaanbaatar", "ウランバートルでプロジェクトを実施", "在烏蘭巴托實施服務計畫", "울란바토르에서 프로젝트 진행")}
         </span>
       </p>
-      <svg viewBox={MONGOLIA_VIEWBOX} className="w-full h-auto block" role="img" aria-label={t("Төсөл хэрэгжүүлсэн аймгууд", "Provinces with our projects", "プロジェクト実施県", "實施項目的省份", "프로젝트 아이막")}>
+      <svg viewBox={MONGOLIA_VIEWBOX} className="w-full h-auto block" role="img" aria-label={t("Төсөл хэрэгжүүлсэн аймгууд", "Provinces with our projects", "プロジェクト実施県", "實施服務計畫的省份", "프로젝트 진행 아이막")}>
         {PROVINCES.map((p) => {
           const on = provinces.includes(p.id);
           return (
@@ -198,7 +198,7 @@ function YearsCard({ compact, className }: { compact: boolean; className: string
   const years = yearsOfService(new Date());
   const steps = [
     { year: "2009", label: t("Байгуулагдсан", "Founded", "設立", "成立", "설립") },
-    { year: "2012", label: t("Ротарид элссэн", "Chartered", "ロータリー加盟", "加入扶輪", "로타리 가입") },
+    { year: "2012", label: t("Ротарид элссэн", "Chartered", "ロータリー加盟", "獲得授證", "로타리 가입") },
     { year: String(new Date().getFullYear()), label: t("Өнөөдөр", "Today", "現在", "今天", "오늘") },
   ];
   const ring = (
@@ -215,7 +215,7 @@ function YearsCard({ compact, className }: { compact: boolean; className: string
   );
   return (
     <div className={`${card} flex flex-col ${className}`}>
-      <p className={cardTitle}>⚙ {t("2012 оноос хойш", "Since 2012", "2012年から", "自2012年", "2012년부터")}</p>
+      <p className={cardTitle}>⚙ {t("2012 оноос хойш", "Since 2012", "2012年から", "2012年起", "2012년부터")}</p>
       <div className={compact ? "flex-1 flex flex-col items-center md:flex-row gap-5" : "flex-1 flex flex-col"}>
         {ring}
         <div className={compact ? "w-full md:flex-1" : "flex-1 flex flex-col"}>

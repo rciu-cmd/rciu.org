@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { asset } from "@/lib/asset";
 import { supabase } from "@/lib/supabase";
-import { useLanguage } from "@/lib/language-context";
+import { useLanguage, type Label } from "@/lib/language-context";
 import ProjectPhotoCollage from "@/components/ProjectPhotoCollage";
 import HomeGear from "@/components/HomeGear";
 import AddToCalendar from "@/components/AddToCalendar";
@@ -90,10 +90,10 @@ function gridColumns(cols: number) {
   return { gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` };
 }
 
-const STATUS_LABEL: Record<ProjectRow["status"], { mn: string; en: string }> = {
-  ongoing: { mn: "Хэрэгжиж буй", en: "Ongoing" },
-  completed: { mn: "Хаагдсан", en: "Completed" },
-  planned: { mn: "Төлөвлөж буй", en: "Planned" },
+const STATUS_LABEL: Record<ProjectRow["status"], Label> = {
+  ongoing: { mn: "Хэрэгжиж буй", en: "Ongoing", ja: "実施中", zh: "進行中", ko: "진행 중" },
+  completed: { mn: "Дууссан", en: "Completed", ja: "完了", zh: "已完成", ko: "완료" },
+  planned: { mn: "Төлөвлөж буй", en: "Planned", ja: "計画中", zh: "規劃中", ko: "계획 중" },
 };
 
 export default function Home() {
@@ -296,7 +296,7 @@ export default function Home() {
               )}
             </p>
             <h1 className="text-3xl sm:text-5xl font-extrabold leading-tight mb-3 max-w-lg">
-              {t("Их Өргөө Ротари Клуб", "Rotary Club of Ikh Urgoo", "イク・ウルグー・ロータリークラブ", "扶輪伊赫烏爾古俱樂部", "이흐 우르구 로타리클럽")}
+              {t("Их Өргөө Ротари Клуб", "Rotary Club of Ikh Urgoo", "イク・ウルグー・ロータリークラブ", "伊赫烏爾古扶輪社", "이흐 우르구 로타리클럽")}
             </h1>
             <p className="text-blue-100 sm:text-lg max-w-lg mb-6">
               {t(
@@ -318,21 +318,21 @@ export default function Home() {
                 href="/projects"
                 className="rounded-full border border-white/60 text-white font-semibold px-6 py-2.5 hover:bg-white/10 transition"
               >
-                {t("Манай төслүүд", "Our projects", "私たちのプロジェクト", "我們的項目", "우리의 프로젝트")}
+                {t("Манай төслүүд", "Our projects", "私たちのプロジェクト", "我們的服務計畫", "우리의 프로젝트")}
               </Link>
             </div>
             <div className="grid grid-cols-3 gap-3 max-w-md">
               <HeroStat
                 value={stats.phfPercent === null ? "—" : `${stats.phfPercent}%`}
-                label={t("Paul Harris Fellow", "Paul Harris Fellows", "ポール・ハリス・フェロー", "保羅·哈里斯會員")}
+                label={t("Paul Harris Fellow", "Paul Harris Fellows", "ポール・ハリス・フェロー", "保羅·哈里斯之友", "폴 해리스 펠로우")}
               />
               <HeroStat
                 value={stats.affiliateCount === null ? "—" : String(stats.affiliateCount)}
-                label={t("Дэмждэг клуб", "Sponsored Clubs", "スポンサークラブ", "贊助俱樂部")}
+                label={t("Дэмждэг клуб", "Sponsored Clubs", "支援クラブ", "輔導社團", "후원 클럽")}
               />
               <HeroStat
                 value={stats.projectCount === null ? "—" : String(stats.projectCount)}
-                label={t("Хэрэгжүүлсэн төсөл", "Community Projects", "コミュニティ・プロジェクト", "社區項目")}
+                label={t("Хэрэгжүүлсэн төсөл", "Community Projects", "地域奉仕プロジェクト", "社區服務計畫", "지역사회 프로젝트")}
               />
             </div>
           </div>
@@ -360,7 +360,7 @@ export default function Home() {
             link={{ href: "/news", label: t("Бүх мэдээ →", "View All News →", "すべて見る →", "查看全部 →", "모두 보기 →") }}
           />
           {news.length === 0 ? (
-            <EmptyState text={t("Мэдээ удахгүй нэмэгдэнэ.", "News posts will appear here once published.", "ニュースは公開され次第表示されます。", "新聞發佈後將顯示在此處。")} />
+            <EmptyState text={t("Мэдээ удахгүй нэмэгдэнэ.", "News posts will appear here once published.", "ニュースは公開され次第表示されます。", "新聞發布後將顯示在這裡。", "소식이 게시되면 여기에 표시됩니다.")} />
           ) : (
             <div className="grid gap-5" style={gridColumns(newsCols)}>
               {shownNews.map((n) =>
@@ -380,7 +380,7 @@ export default function Home() {
                       rel="noopener noreferrer"
                       className="shrink-0 border-t border-slate-100 text-center text-sm font-semibold text-rotary-royal-blue hover:bg-slate-50 transition py-3"
                     >
-                      {t("Facebook дээр бүтэн унших →", "View full post on Facebook →", "Facebookで全文を見る →", "在Facebook查看全文 →")}
+                      {t("Facebook дээр бүтэн унших →", "View full post on Facebook →", "Facebookで全文を見る →", "在 Facebook 查看全文 →", "Facebook에서 전체 게시물 보기 →")}
                     </a>
                   </article>
                 ) : (
@@ -421,17 +421,18 @@ export default function Home() {
       <section data-gear="royal" className="bg-white py-10">
         <div className="container-page relative z-10">
           <SectionHeader
-            title={t("Манай төслүүд", "Our Projects", "私たちのプロジェクト", "我們的項目", "우리의 프로젝트")}
+            title={t("Манай төслүүд", "Our Projects", "私たちのプロジェクト", "我們的服務計畫", "우리의 프로젝트")}
             subtitle={t(
               "Боловсрол, эх хүүхдийн эрүүл мэнд, өвчнөөс сэргийлэх чиглэлээр хэрэгжүүлж буй бодит ажлууд.",
               "Real work in progress — education, maternal and child health, and disease prevention.",
               "教育、母子保健、疾病予防の分野での実際の活動。",
-              "在教育、母嬰健康和疾病預防領域開展的實際工作。"
+              "在教育、母嬰健康與疾病預防領域推動的實際行動。",
+              "교육, 모자 보건, 질병 예방 분야에서 진행 중인 실제 활동입니다."
             )}
             link={{ href: "/projects", label: t("Бүх төсөл →", "View All Projects →", "すべて見る →", "查看全部 →", "모두 보기 →") }}
           />
           {projects.length === 0 ? (
-            <EmptyState text={t("Төслийн мэдээлэл удахгүй нэмэгдэнэ.", "Project details will appear here once added by an admin.", "プロジェクト情報は追加され次第表示されます。", "項目信息將在添加後顯示。")} />
+            <EmptyState text={t("Төслийн мэдээлэл удахгүй нэмэгдэнэ.", "Project details will appear here once added by an admin.", "プロジェクト情報は追加され次第表示されます。", "服務計畫新增後將顯示在這裡。", "프로젝트가 추가되면 여기에 표시됩니다.")} />
           ) : (
             <div className="grid gap-3 sm:gap-5" style={gridColumns(projectCols)}>
               {shownProjects.map((p) => {
@@ -464,7 +465,7 @@ export default function Home() {
                     </div>
                     <div className="p-3 sm:p-4 min-w-0 flex-1">
                       <p className="text-[11px] font-bold uppercase tracking-wide text-rotary-azure mb-1">
-                        {t(STATUS_LABEL[p.status].mn, STATUS_LABEL[p.status].en)}
+                        {t(STATUS_LABEL[p.status].mn, STATUS_LABEL[p.status].en, STATUS_LABEL[p.status].ja, STATUS_LABEL[p.status].zh, STATUS_LABEL[p.status].ko)}
                       </p>
                       <h3 className="font-bold text-slate-900 group-hover:text-rotary-royal-blue transition-colors leading-snug line-clamp-2 mb-1">
                         {t(p.title_mn, p.title_en)}
@@ -503,7 +504,7 @@ export default function Home() {
       {photos.length > 0 && (
         <section data-gear="turquoise" className="bg-[#fdf6e9] py-10">
           <div className="container-page relative z-10">
-            <SectionHeader title={t("Зургийн цомог", "Photo Gallery", "フォトギャラリー", "照片集", "사진 갤러리")} />
+            <SectionHeader title={t("Зургийн цомог", "Photo Gallery", "フォトギャラリー", "相簿", "사진 갤러리")} />
             <div className="grid gap-2 sm:gap-3" style={gridColumns(photoCols)}>
               {shownPhotos.map((p, i) => (
                 <button
@@ -538,7 +539,7 @@ export default function Home() {
             {affiliates.length > 0 && (
               <div>
                 <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">
-                  {t("Дэмждэг клубууд", "Sponsored Clubs", "スポンサークラブ", "贊助俱樂部")}
+                  {t("Дэмждэг клубууд", "Sponsored Clubs", "支援しているクラブ", "輔導的社團", "후원 클럽")}
                 </h2>
                 <div className="flex flex-wrap items-center gap-6">
                   {affiliates.map((a) => {
@@ -556,11 +557,11 @@ export default function Home() {
             {links.length > 0 && (
               <div>
                 <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">
-                  {t("Холбоос ба түншүүд", "Links & Partners", "リンクとパートナー", "鏈接與夥伴")}
+                  {t("Холбоос ба түншүүд", "Links & Partners", "リンクとパートナー", "相關連結與夥伴", "링크 및 파트너")}
                 </h2>
                 <div className="flex flex-wrap gap-x-10 gap-y-4">
-                  {districtLinks.length > 0 && <PartnerRow title={t("Дүүргүүд", "Districts", "地区", "地區")} links={districtLinks} />}
-                  {clubLinks.length > 0 && <PartnerRow title={t("Клубууд", "Clubs", "クラブ", "俱樂部")} links={clubLinks} />}
+                  {districtLinks.length > 0 && <PartnerRow title={t("Дүүргүүд", "Districts", "地区", "地區", "지구")} links={districtLinks} />}
+                  {clubLinks.length > 0 && <PartnerRow title={t("Клубууд", "Clubs", "クラブ", "扶輪社", "클럽")} links={clubLinks} />}
                 </div>
               </div>
             )}

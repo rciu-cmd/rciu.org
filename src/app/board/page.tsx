@@ -44,31 +44,33 @@ export default function BoardPage() {
   return (
     <div className="container-page py-14">
       <h1 className="text-3xl font-bold text-rotary-royal-blue mb-3">
-        {t("Удирдлага", "Board of Directors", "役員", "理事會")}
+        {t("Удирдлага", "Board of Directors", "理事会", "理事會", "이사회")}
       </h1>
       <p className="text-slate-600 max-w-2xl mb-1">
         {t(
           "Rotary жилийн удирдлагын багийн бүрэлдэхүүн.",
           "The club's leadership team for the current Rotary year.",
           "現ロータリー年度のクラブ役員です。",
-          "本扶輪年度俱樂部理事會成員。"
+          "本扶輪年度的理事會成員。",
+          "이번 로타리 연도의 클럽 임원진입니다."
         )}
       </p>
       {currentYear && <p className="text-sm text-rotary-azure font-semibold mb-10">{currentYear}</p>}
 
-      {rows === null && <p className="text-slate-400 text-sm">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加載中…")}</p>}
+      {rows === null && <p className="text-slate-400 text-sm">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "載入中…", "불러오는 중…")}</p>}
 
       {rows && currentRows.length === 0 && (
         <div className="rounded-xl border border-dashed border-slate-300 p-8 text-center text-slate-500">
           <p className="mb-1 font-medium">
-            {t("Удирдлагын бүрэлдэхүүн удахгүй нэмэгдэнэ.", "Board roles will be published here soon.", "役員情報は近日公開予定です。", "理事會成員名單即將公佈。")}
+            {t("Удирдлагын бүрэлдэхүүн удахгүй нэмэгдэнэ.", "Board roles will be published here soon.", "役員情報は近日公開予定です。", "理事會名單即將公布。", "이사회 명단은 곧 공개됩니다.")}
           </p>
           <p className="text-sm">
             {t(
-              "Admin самбараас нэмэх боломжтой.",
+              "Админ самбараас нэмэх боломжтой.",
               "Admins can add board positions from the admin dashboard once officer titles are confirmed.",
               "役職が確定次第、管理者ダッシュボードから追加できます。",
-              "職位確認後,管理員可從後臺添加理事會成員。"
+              "職稱確定後，管理員即可從管理後台新增理事會成員。",
+              "직책이 확정되면 관리자 대시보드에서 추가할 수 있습니다."
             )}
           </p>
         </div>

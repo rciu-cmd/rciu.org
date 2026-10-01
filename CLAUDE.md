@@ -13,13 +13,27 @@ a cloud-based Claude session, before this local Claude Code setup).
   (`supabase/functions/notify-inquiry`, `supabase/functions/send-event-reminder`).
 - Hosted on **GitHub Pages** behind the custom domain `rciu.org` (DNS on
   Cloudflare). `.github/` has the deploy workflow.
-- 5 languages throughout: Mongolian (primary), English, Japanese,
-  Chinese, Korean — via `t(mn, en, ja, zh, ko)` from `useLanguage()`
-  (`src/lib/language-context.tsx`). Japanese/Chinese/Korean often fall
-  back to English where no real translation has been supplied yet
-  (Korean was added later, so many older `t()` calls only pass 4 args).
-  First visit shows the browser's primary language if supported, else
-  Mongolian; a flag click (footer) is saved and wins after that.
+- 6 language versions: Mongolian (primary), English, Japanese,
+  Chinese 🇹🇼 (Traditional, Taiwan wording), Chinese 🇭🇰 (Hong Kong),
+  Korean — via `t(mn, en, ja, zh, ko)` from `useLanguage()`
+  (`src/lib/language-context.tsx`). Hong Kong (`hk`) has no argument of
+  its own: it shows the `zh` text through `toHongKong()`
+  (`src/lib/zh-hk.ts` — whole-text overrides keyed by the exact `zh`
+  text, plus a few always-different words like 計畫→計劃, 電子郵件→電郵).
+  District 3450 is Hong Kong, Macau and Mongolia, hence the 🇭🇰 option.
+  Public pages pass all 5 arguments everywhere (Oct 2026); members/admin
+  pages often pass 4 or 2 and fall back to English. Lists of labels use
+  the `Label` type ({mn, en, ja, zh, ko}); components handed `t` as a prop
+  type it `Translate`. Dates: `monthYearLabel()` / `dayMonthLabel()` in
+  `src/lib/date.ts` put day/month/year in each language's own order.
+  Terms: ZH is Traditional only (扶輪社, 社友, 服務計畫, 保羅·哈里斯之友,
+  授證) with full-width punctuation; JA uses 国際ロータリー, 例会, 幹事;
+  KO uses 국제로타리, 3450지구, 주회, 초아의 봉사. The motto stays
+  "Service Above Self" in MN and EN. The meeting address is translated
+  only into Mongolian (Latin script elsewhere, as on maps).
+  First visit shows the browser's primary language if supported (zh-HK,
+  zh-MO and yue → 🇭🇰), else Mongolian; a flag click (footer) is saved
+  and wins after that.
   `<html lang>` follows the current language. `t()` never returns blank
   while any version has text (empty MN falls back to EN and vice versa),
   so DB content filled in only one language still shows.
@@ -228,6 +242,7 @@ lint at zero + in the PR check, Actions on Node 24 versions, Next.js
 gear, grids, hero buttons, next-event card, gallery viewer), bilingual
 search titles, generated sitemap, wide share image, share buttons,
 "Our impact" infographic (travel map, people/school/hospital icon rows,
-province map, years ring), security check + fixes (migration29: directory
+province map, years ring), public pages complete in every language +
+Hong Kong 🇭🇰 version, security check + fixes (migration29: directory
 active-only, protected title, upload types, reminder-job secret; sign-up
 check in CI).
