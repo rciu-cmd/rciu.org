@@ -57,7 +57,7 @@ credentials/psql access from here) — the user runs it themselves in
 Supabase's Dashboard → SQL Editor. So for any schema/RLS change:
 
 1. Write it as a new `supabase/migrationNN_description.sql` file
-   (next number is 29 — 28 migrations exist so far).
+   (next number is 30 — 29 migrations exist so far).
 2. **Also paste the SQL directly in chat**, not just save the file, so
    the user can copy-paste it into the SQL Editor without having to go
    find the file.
@@ -94,6 +94,15 @@ happens there (not in code), give literal numbered instructions, not
   only governs list/remove/move and must stay own-uploads + admins —
   a SELECT-for-everyone policy lets anyone list every file, member-only
   photos included (fixed in migration26).
+- **Members & sign-ups** (migration29): only admins create logins —
+  Supabase's "Allow new users to sign up" must stay OFF; the PR build
+  check and the keep-alive workflow both fail if it's ever switched on
+  (they read `/auth/v1/settings`). `members_directory` (emails/phones)
+  only returns rows to *active* members, and members can't change their
+  own `highest_position` (public honor roll) — it's in the
+  `protect_member_self_service_columns` list. Bucket `rciu-photos`
+  accepts images + PDF only (no SVG/HTML), 50 MB per file; files are
+  stored as uploaded, never resized.
 - **Public inquiry forms** (`/join`, "Join a Project" on `/projects`)
   have a DB rate-limit trigger (migration26) plus a hidden honeypot
   field (`src/lib/spam-guard.tsx`). Any new public, no-login form
@@ -134,7 +143,10 @@ happens there (not in code), give literal numbered instructions, not
 - **Automatic event reminders** (migration27): pg_cron calls the
   `send-event-reminder` Edge Function daily at 01:00 UTC (09:00 UB) with
   `{"mode":"auto"}` — no login, so that mode must stay harmless to call:
-  it only emails about events exactly 7 days and 1 day away
+  the job sends a random secret from Vault (`reminder_cron_secret`) in
+  `x-cron-secret`, checked via `reminder_cron_secret_ok()` (service role
+  only), so strangers can't trigger it (migration29). It
+  only emails about events exactly 7 days and 1 day away
   (`AUTO_REMINDERS` in the function) and claims each one first via a
   unique index (`event_reminders` (event_id, kind) for kinds
   'week_before' / 'day_before'), so repeat/concurrent calls send nothing. Edge Function code changes must
@@ -216,4 +228,6 @@ lint at zero + in the PR check, Actions on Node 24 versions, Next.js
 gear, grids, hero buttons, next-event card, gallery viewer), bilingual
 search titles, generated sitemap, wide share image, share buttons,
 "Our impact" infographic (travel map, people/school/hospital icon rows,
-province map, years ring).
+province map, years ring), security check + fixes (migration29: directory
+active-only, protected title, upload types, reminder-job secret; sign-up
+check in CI).

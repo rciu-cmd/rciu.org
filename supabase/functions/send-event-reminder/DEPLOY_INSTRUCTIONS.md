@@ -76,3 +76,12 @@ shows each daily run.
 
 To switch it off again: run `select cron.unschedule('rciu-event-reminders');`
 in the SQL Editor.
+
+### Daily-job secret (migration29)
+
+Since migration29 the daily job sends a random secret (kept in Supabase
+Vault as `reminder_cron_secret`, created by the migration — nobody types
+or copies it), and the function ignores "auto" calls without it. Order
+matters: run `supabase/migration29_security_fixes.sql` first, **then**
+deploy the updated `index.ts` (steps 2–3 above). Deployed the other way
+round, that day's reminders would be turned away until the SQL is run.
