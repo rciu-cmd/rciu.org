@@ -11,8 +11,9 @@ import HomeGear from "@/components/HomeGear";
 import AddToCalendar from "@/components/AddToCalendar";
 import { localYmd, MONTH_LABEL } from "@/lib/date";
 import { useBreakpoint, fullRows, type PerBreakpoint } from "@/lib/use-breakpoint";
-import { IMPACT_KEY, parseImpact, yearsOfService, type ImpactStat } from "@/lib/impact";
-import { travelTotals } from "@/lib/travel";
+import ImpactPanel from "@/components/ImpactPanel";
+import { IMPACT_KEY, parseImpact, type ImpactStat } from "@/lib/impact";
+import type { Trip } from "@/lib/travel";
 
 type LinkRow = { id: string; name: string; url: string | null; logo_url: string | null; category: string | null };
 type AffiliateRow = {
@@ -109,7 +110,7 @@ export default function Home() {
   const [nextEvent, setNextEvent] = useState<EventRow | null>(null);
   const [openPhoto, setOpenPhoto] = useState<number | null>(null);
   const [impact, setImpact] = useState<ImpactStat[]>([]);
-  const [travel, setTravel] = useState<{ countries: number; km: number } | null>(null);
+  const [trips, setTrips] = useState<Trip[]>([]);
   const bp = useBreakpoint();
   const newsCols = NEWS_GRID.cols[bp];
   const shownNews = news.slice(0, fullRows(news.length, newsCols, NEWS_GRID.max[bp]));
@@ -240,10 +241,7 @@ export default function Home() {
     supabase
       .from("member_travels")
       .select("destination_country,latitude,longitude")
-      .then(({ data }) => {
-        const trips = (data as { destination_country: string; latitude: number; longitude: number }[] | null) ?? [];
-        setTravel(trips.length > 0 ? travelTotals(trips) : null);
-      });
+      .then(({ data }) => setTrips((data as Trip[] | null) ?? []));
   }, []);
 
   // Facebook-linked news cards render the real embedded post (photo,
@@ -479,38 +477,16 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Our impact — the club's numbers at a glance. Countries and km
-          come from the travel map, years from the 2012 charter; the rest
-          are typed in Admin → Settings. No money amounts, on purpose. */}
-      {(impact.length > 0 || travel) && (
+      {/* Our impact — travel map, typed numbers and years of service as
+          pictures (ImpactPanel). Shown once there's a trip on the travel
+          map or a number typed in Admin → Settings. */}
+      {(impact.length > 0 || trips.length > 0) && (
         <section data-gear="gold" className="bg-gradient-to-br from-rotary-royal-blue via-[#123a75] to-rotary-azure text-white py-10">
           <div className="container-page relative z-10">
-            <h2 className="text-center text-sm font-bold uppercase tracking-wider text-rotary-gold mb-6">
+            <h2 className="text-2xl sm:text-3xl font-bold mb-5">
               {t("Бидний үр нөлөө", "Our impact", "私たちの歩み", "我們的足跡", "우리의 발자취")}
             </h2>
-            <div className="flex flex-wrap justify-center gap-x-4 gap-y-6">
-              {impact.map((s, i) => (
-                <ImpactTile key={i} value={s.value} label={t(s.label_mn, s.label_en)} />
-              ))}
-              {travel && travel.countries > 0 && (
-                <ImpactTile
-                  value={String(travel.countries)}
-                  label={t("улс оронд зочилсон", "countries visited", "か国を訪問", "個國家足跡", "개국 방문")}
-                  href="/about/#travel"
-                />
-              )}
-              {travel && (
-                <ImpactTile
-                  value={Math.round(travel.km).toLocaleString("en-US")}
-                  label={t("км замыг туулсан", "km traveled", "km の移動距離", "公里旅程", "km 이동 거리")}
-                  href="/about/#travel"
-                />
-              )}
-              <ImpactTile
-                value={String(yearsOfService(new Date()))}
-                label={t("жилийн үйлчилгээ", "years of service", "年の奉仕活動", "年服務", "년간의 봉사")}
-              />
-            </div>
+            <ImpactPanel impact={impact} trips={trips} />
           </div>
         </section>
       )}
@@ -807,25 +783,6 @@ function PartnerLogo({ link }: { link: LinkRow }) {
     <a href={link.url ?? undefined} target="_blank" rel="noopener noreferrer" title={link.name} className="shrink-0 text-xs font-bold text-slate-400 uppercase whitespace-nowrap">
       {link.name}
     </a>
-  );
-}
-
-// One number in the "Our impact" band — two per row on phones, all in
-// one row from sm up. Travel numbers link to the map on the About page.
-function ImpactTile({ value, label, href }: { value: string; label: string; href?: string }) {
-  const body = (
-    <>
-      <div className="text-3xl sm:text-4xl font-extrabold text-rotary-gold leading-none">{value}</div>
-      <div className="text-blue-100 text-sm mt-2">{label}</div>
-    </>
-  );
-  const box = "basis-[calc(50%-0.5rem)] sm:basis-0 sm:flex-1 sm:max-w-[15rem] text-center";
-  return href ? (
-    <Link href={href} className={`${box} rounded-xl hover:bg-white/5 transition`}>
-      {body}
-    </Link>
-  ) : (
-    <div className={box}>{body}</div>
   );
 }
 

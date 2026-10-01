@@ -14,8 +14,9 @@ gotchas already learned the hard way.
 - **Home** — what the club does with "Join us" / "Our projects"
   buttons and live club stats, the next event (with "Add to
   calendar"), latest news (including Facebook post embeds), featured
-  projects, "Our impact" numbers (countries and km from the travel map,
-  years of service, plus up to 3 typed in Admin → Settings), a photo
+  projects, an "Our impact" infographic (flight map with countries and
+  km from the travel map, icon rows for up to 3 numbers typed in
+  Admin → Settings, years of service since 2012), a photo
   gallery that opens photos full size, partners. One
   Rotary wheel turns slowly in the corner and changes colour from
   section to section.

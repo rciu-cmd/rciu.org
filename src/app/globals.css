@@ -63,3 +63,55 @@ body {
   border-radius: 9999px;
   padding: 0.15rem 0.6rem;
 }
+
+/* "Our impact" panel (src/components/ImpactPanel.tsx): flight lines,
+   pins, icons, the around-the-Earth bar and the timeline fill in once
+   the panel scrolls into view (.impact-seen). Shown finished straight
+   away for visitors who ask for reduced motion. */
+.impact-arc {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 1.4s ease-out;
+}
+.impact-pin,
+.impact-icon,
+.impact-step {
+  opacity: 0.18;
+  transition: opacity 0.5s ease-out;
+}
+.impact-bar {
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 1.6s ease-out 0.4s;
+}
+.impact-seen .impact-arc {
+  stroke-dashoffset: 0;
+}
+.impact-seen .impact-pin,
+.impact-seen .impact-icon,
+.impact-seen .impact-step {
+  opacity: 1;
+}
+.impact-seen .impact-bar {
+  transform: scaleX(var(--impact-fill));
+}
+@media (prefers-reduced-motion: reduce) {
+  .impact-arc,
+  .impact-pin,
+  .impact-icon,
+  .impact-step,
+  .impact-bar {
+    transition: none;
+  }
+  .impact-arc {
+    stroke-dashoffset: 0;
+  }
+  .impact-pin,
+  .impact-icon,
+  .impact-step {
+    opacity: 1;
+  }
+  .impact-bar {
+    transform: scaleX(var(--impact-fill));
+  }
+}

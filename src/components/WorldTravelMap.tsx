@@ -5,7 +5,7 @@ import { geoNaturalEarth1, geoPath } from "d3-geo";
 import { feature } from "topojson-client";
 import type { Topology, GeometryCollection } from "topojson-specification";
 import landTopology from "world-atlas/land-110m.json";
-import { HOME, haversineKm } from "@/lib/travel";
+import { HOME, arcPath, haversineKm } from "@/lib/travel";
 
 export type TravelPoint = {
   id: string;
@@ -17,15 +17,6 @@ export type TravelPoint = {
   event_date: string | null;
   memberNames: string[];
 };
-
-// A gently upward-bowing arc between two points, instead of a straight
-// line — reads much more like an actual flight path on a map.
-function arcPath(x1: number, y1: number, x2: number, y2: number): string {
-  const dist = Math.hypot(x2 - x1, y2 - y1);
-  const midX = (x1 + x2) / 2;
-  const midY = (y1 + y2) / 2 - dist * 0.16;
-  return `M ${x1} ${y1} Q ${midX} ${midY} ${x2} ${y2}`;
-}
 
 const WIDTH = 960;
 const HEIGHT = 500;

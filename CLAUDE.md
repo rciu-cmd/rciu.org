@@ -157,12 +157,16 @@ happens there (not in code), give literal numbered instructions, not
   from `NEWS_GRID` etc. + `useBreakpoint()`/`fullRows()`
   (`src/lib/use-breakpoint.ts`), which trims to whole rows. Gallery
   tiles open a full-size viewer (the original photo, never resized).
-  The "Our impact" band never shows money amounts (club's decision):
-  countries visited + km traveled are counted from `member_travels`
-  (`src/lib/travel.ts`, the same math as the About page's map; trips
-  inside Mongolia add no country), years of service from the June 2012
-  charter, plus up to 3 numbers typed in Admin → Settings (stored as
-  JSON in `site_settings` key `impact_stats` — `src/lib/impact.ts`).
+  The "Our impact" band (`src/components/ImpactPanel.tsx`) is pictures,
+  not bare numbers, and never shows money amounts (club's decision):
+  a mini flight map + countries/km + "around the Earth" bar from
+  `member_travels` (`src/lib/travel.ts`, the same math as the About
+  page's map; trips inside Mongolia add no country), icon rows for up
+  to 3 numbers typed in Admin → Settings (JSON in `site_settings` key
+  `impact_stats`, with an icon per number — `src/lib/impact.ts`), and
+  years since the June 2012 charter in a gold ring (deliberately not a
+  Rotary wheel — HomeGear stays the only one). Animations play once on
+  scroll-in (`.impact-*` in globals.css) and are off for reduced motion.
 - **Search & sharing**: Google renders the pages in English (browser
   language), so Mongolian only reaches search through metadata — page
   titles are "Мэдээ · News" style and descriptions carry both
