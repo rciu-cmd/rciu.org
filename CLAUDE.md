@@ -57,7 +57,7 @@ credentials/psql access from here) — the user runs it themselves in
 Supabase's Dashboard → SQL Editor. So for any schema/RLS change:
 
 1. Write it as a new `supabase/migrationNN_description.sql` file
-   (next number is 27 — 26 migrations exist so far).
+   (next number is 28 — 27 migrations exist so far).
 2. **Also paste the SQL directly in chat**, not just save the file, so
    the user can copy-paste it into the SQL Editor without having to go
    find the file.
@@ -128,6 +128,19 @@ happens there (not in code), give literal numbered instructions, not
 - **Errors on public/member pages** go through `friendlyError()`
   (`src/lib/friendly-error.ts`) with the raw error `console.error`ed;
   admin pages show raw errors on purpose.
+- **Automatic event reminders** (migration27): pg_cron calls the
+  `send-event-reminder` Edge Function daily at 01:00 UTC (09:00 UB) with
+  `{"mode":"auto"}` — no login, so that mode must stay harmless to call:
+  it only emails about events exactly 7 days and 1 day away
+  (`AUTO_REMINDERS` in the function) and claims each one first via a
+  unique index (`event_reminders` (event_id, kind) for kinds
+  'week_before' / 'day_before'), so repeat/concurrent calls send nothing. Edge Function code changes must
+  be deployed by the user (Dashboard → Edge Functions → Code → Deploy,
+  or the CLI) — merging to `main` doesn't deploy them.
+- **Visitor statistics**: Cloudflare Web Analytics beacon in
+  `src/app/layout.tsx`, token in `src/lib/analytics.ts` (empty = off).
+  rciu.org is DNS-only (grey cloud) on Cloudflare, so automatic
+  injection doesn't apply — the script tag is required.
 - **Pull requests** run `.github/workflows/build-check.yml` (`npm ci` +
   `npm run build`). `npm run lint` still has 13 old
   `react-hooks/set-state-in-effect` errors (load-on-mount pattern), so
@@ -142,4 +155,6 @@ private photo-bucket listing + inquiry-form spam guard (migration26),
 keep-alive that pings Supabase, browser-language first visit, sitemap /
 page titles / 404 page, "Add to calendar" on events, missing-translation
 fallback in `t()`, README rewrite, lighter icons, per-item link-preview
-pages + hourly rebuild, friendly errors, pull-request build check.
+pages + hourly rebuild, friendly errors, pull-request build check,
+automatic week-before + day-before event reminders (migration27), Cloudflare Web
+Analytics hook.

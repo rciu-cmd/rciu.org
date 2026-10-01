@@ -740,11 +740,28 @@ create policy events_write_admin on public.events
 -- stray/duplicate "Send Reminder" click (each one adds a row, and the
 -- Dashboard lists every row it finds) can be cleaned up from
 -- Admin → Events instead of piling up in members' Reminders box forever.
+-- kind (migration27): 'manual' = the button; 'week_before' /
+-- 'day_before' = the daily job below. The unique index allows one of
+-- each automatic kind per event, which is what stops the job ever
+-- emailing members twice about the same thing.
 create table if not exists public.event_reminders (
   id uuid primary key default gen_random_uuid(),
   event_id uuid not null references public.events(id) on delete cascade,
   sent_at timestamptz not null default now()
 );
+
+alter table public.event_reminders
+  add column if not exists kind text not null default 'manual';
+
+alter table public.event_reminders drop constraint if exists event_reminders_kind_check;
+update public.event_reminders set kind = 'day_before' where kind = 'auto';
+alter table public.event_reminders add constraint event_reminders_kind_check
+  check (kind in ('manual', 'week_before', 'day_before'));
+
+drop index if exists public.event_reminders_one_auto_per_event;
+create unique index if not exists event_reminders_one_per_auto_kind
+  on public.event_reminders (event_id, kind)
+  where kind <> 'manual';
 
 alter table public.event_reminders enable row level security;
 
@@ -1102,3 +1119,31 @@ create policy rciu_photos_update_admin on storage.objects
   for update to authenticated
   using (bucket_id = 'rciu-photos' and public.is_super_admin())
   with check (bucket_id = 'rciu-photos' and public.is_super_admin());
+
+-- ------------------------------------------------------------
+-- Automatic event reminders (migration27): every day at 09:00
+-- Ulaanbaatar (01:00 UTC) pg_cron calls the send-event-reminder Edge
+-- Function in "auto" mode, which emails active members about every
+-- event one week away and every event tomorrow (not public holidays;
+-- skipped if an admin sent a manual reminder in the last 24 hours).
+-- Re-running replaces the job, since cron.schedule upserts by name.
+-- ------------------------------------------------------------
+create extension if not exists pg_cron;
+create extension if not exists pg_net with schema extensions;
+
+select cron.schedule(
+  'rciu-event-reminders',
+  '0 1 * * *', -- 01:00 UTC = 09:00 Ulaanbaatar, every day
+  $job$
+    select net.http_post(
+      url := 'https://mdfexlubrbvkdtyqvvtc.supabase.co/functions/v1/send-event-reminder',
+      headers := jsonb_build_object(
+        'Content-Type', 'application/json',
+        -- The site's public (publishable) key — not a secret; it's in
+        -- every page of rciu.org.
+        'apikey', 'sb_publishable_NZzjfPA3P5vKeIAtXOxekg_EgzYLCId'
+      ),
+      body := '{"mode": "auto"}'::jsonb
+    );
+  $job$
+);

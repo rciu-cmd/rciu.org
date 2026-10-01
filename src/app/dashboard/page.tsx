@@ -70,8 +70,9 @@ export default function DashboardPage() {
       setLoading(false);
 
       // Rotary calendar with upcoming events — read-only here, managed
-      // from /admin/events. Reminder emails go out manually (a button
-      // in the admin calendar), not automatically.
+      // from /admin/events. Reminder emails go out automatically a week
+      // and a day before each event (migration27), or from the admin
+      // calendar's "Send Reminder" button.
       const today = localYmd(new Date());
       const { data: upcoming } = await supabase
         .from("events")
@@ -88,8 +89,18 @@ export default function DashboardPage() {
         .from("event_reminders")
         .select("id, sent_at, event:events(id, title_mn, title_en, event_date)")
         .order("sent_at", { ascending: false })
-        .limit(5);
-      setReminders((reminderRows as unknown as ReminderRow[]) ?? []);
+        .limit(10);
+      // One line per event: an event can have a manual "Send Reminder"
+      // row plus the automatic week-before and day-before ones
+      // (migration27).
+      const seen = new Set<string>();
+      const unique = ((reminderRows as unknown as ReminderRow[]) ?? []).filter((r) => {
+        const key = r.event?.id ?? r.id;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+      setReminders(unique.slice(0, 5));
     });
   }, [router]);
 

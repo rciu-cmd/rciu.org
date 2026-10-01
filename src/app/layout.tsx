@@ -11,6 +11,7 @@ import "@fontsource/noto-sans/cyrillic-700.css";
 import "@fontsource/noto-sans/cyrillic-800.css";
 import "./globals.css";
 import { LanguageProvider } from "@/lib/language-context";
+import { CLOUDFLARE_WEB_ANALYTICS_TOKEN } from "@/lib/analytics";
 import Navbar from "@/components/Navbar";
 // DistrictBanner removed from the top of the site per request — the top
 // strip above the hero was deleted. District 3450 logo placement pending
@@ -75,6 +76,14 @@ export default function RootLayout({
           <main className="flex-1">{children}</main>
           <Footer />
         </LanguageProvider>
+        {/* Visitor statistics — see src/lib/analytics.ts */}
+        {CLOUDFLARE_WEB_ANALYTICS_TOKEN && (
+          <script
+            defer
+            src="https://static.cloudflareinsights.com/beacon.min.js"
+            data-cf-beacon={JSON.stringify({ token: CLOUDFLARE_WEB_ANALYTICS_TOKEN })}
+          />
+        )}
       </body>
     </html>
   );

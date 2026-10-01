@@ -49,3 +49,30 @@ Some Supabase plans/versions only let you deploy Edge Functions via the command-
 6. Run `supabase secrets set RESEND_API_KEY=your_key_here RESEND_FROM_EMAIL="Rotary Club of Ikh Urgoo <events@rciu.org>"`
 
 Let me know which path you hit and I can walk through it step by step.
+
+## Automatic reminders (migration27, October 2026)
+
+Since migration27 this function also runs by itself every day at 09:00
+Ulaanbaatar time and emails members twice about each event: one week
+before and one day before (public holidays excluded; a reminder is
+skipped if someone clicked **Send Reminder** for that event in the last
+24 hours). Each event gets at most one of each. To change the timing,
+edit `AUTO_REMINDERS` near the top of `index.ts`. To switch it on:
+
+1. Run `supabase/migration27_automatic_event_reminders.sql` in
+   Supabase → **SQL Editor** (adds the daily schedule).
+2. Update this function's code: Supabase → **Edge Functions** →
+   `send-event-reminder` → **Code** → replace everything with the
+   current `index.ts` from this folder → **Deploy**.
+   (CLI alternative: `supabase functions deploy send-event-reminder`.)
+3. Leave **Verify JWT** OFF for this function, as it already is for the
+   Send Reminder button — the daily call has no login.
+
+To check it ran: the next day, Admin → Calendar → **Sent Reminders**
+shows a line marked "automatic, 1 week before" or "automatic, 1 day
+before" for each reminder sent. In
+the SQL Editor, `select * from cron.job_run_details order by start_time desc limit 5;`
+shows each daily run.
+
+To switch it off again: run `select cron.unschedule('rciu-event-reminders');`
+in the SQL Editor.
