@@ -72,9 +72,9 @@ and remember the choice.
 there is no staging site. Make changes on a branch, open a pull request,
 and merge when ready.
 
-- `.github/workflows/build-check.yml` builds every pull request — a red
-  ✗ on the pull request means the change would break the site; don't
-  merge it.
+- `.github/workflows/build-check.yml` lints and builds every pull
+  request — a red ✗ on the pull request means the change would break the
+  site (or has lint errors); don't merge it.
 - `.github/workflows/deploy.yml` builds and publishes on every push to
   `main`, and also **whenever news or projects are published or changed**
   in Admin (a Supabase trigger asks GitHub to rebuild — migration28), so

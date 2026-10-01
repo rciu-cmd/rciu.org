@@ -151,9 +151,17 @@ happens there (not in code), give literal numbered instructions, not
   rciu.org is DNS-only (grey cloud) on Cloudflare, so automatic
   injection doesn't apply — the script tag is required.
 - **Pull requests** run `.github/workflows/build-check.yml` (`npm ci` +
-  `npm run build`). `npm run lint` still has 13 old
-  `react-hooks/set-state-in-effect` errors (load-on-mount pattern), so
-  lint isn't part of the check yet.
+  `npm run lint` + `npm run build`) — keep lint at zero problems.
+  `react-hooks/set-state-in-effect` can't see async boundaries, so it
+  flags `useEffect(() => { refresh(); }, [])` even when `refresh()`
+  awaits before setting state; those call sites carry a one-line
+  `eslint-disable-next-line` with that reason. Only use it when the
+  function really awaits first — the rule is right about synchronous
+  setState in an effect.
+- **GitHub Actions versions**: checkout/setup-node v7, configure-pages
+  v6, upload-pages-artifact v5, deploy-pages v5 (all Node 24). Before
+  bumping, check the action's `action.yml` at the new tag for the inputs
+  we pass — a bad version in `deploy.yml` only shows up after merging.
 
 ## Where things stand
 
@@ -166,4 +174,5 @@ page titles / 404 page, "Add to calendar" on events, missing-translation
 fallback in `t()`, README rewrite, lighter icons, per-item link-preview
 pages + hourly rebuild, friendly errors, pull-request build check,
 automatic week-before + day-before event reminders (migration27), Cloudflare Web
-Analytics hook, rebuild-on-publish trigger (migration28).
+Analytics hook, rebuild-on-publish trigger (migration28), Admin → News edit button,
+lint at zero + in the PR check, Actions on Node 24 versions.

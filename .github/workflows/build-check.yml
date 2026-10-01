@@ -1,9 +1,10 @@
 name: Build check
 
-# Runs the same install + build as the deploy on every pull request, so a
-# change that breaks the build (including TypeScript errors) shows a red ✗
-# on the pull request before it's merged — merging to main deploys
-# straight to rciu.org, with no staging site in between.
+# Runs the same install + build as the deploy (plus the linter) on every
+# pull request, so a change that breaks the build, has TypeScript errors
+# or lint errors shows a red ✗ on the pull request before it's merged —
+# merging to main deploys straight to rciu.org, with no staging site in
+# between.
 on:
   pull_request:
 
@@ -19,16 +20,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Lint
+        run: npm run lint
 
       - name: Build
         run: npm run build
