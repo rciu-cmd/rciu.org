@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { geoNaturalEarth1, geoPath } from "d3-geo";
 import { feature } from "topojson-client";
 import type { Topology, GeometryCollection } from "topojson-specification";
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 import landTopology from "world-atlas/land-110m.json";
 
 // Ulaanbaatar — every trip's distance/line is measured from here.

@@ -51,6 +51,7 @@ export default function AdminAffiliatesPage() {
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- refresh() awaits the Supabase query before setting any state; the rule can't see async boundaries
     refresh();
   }, []);
 

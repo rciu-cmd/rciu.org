@@ -72,6 +72,7 @@ export default function AdminMembersPage() {
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- refresh() awaits the Supabase query before setting any state; the rule can't see async boundaries
     refresh();
     supabase.auth.getSession().then(({ data: { session } }) => setSelfId(session?.user.id ?? null));
   }, []);
