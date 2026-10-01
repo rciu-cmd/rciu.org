@@ -132,15 +132,7 @@ function ServiceCard({ impact, provinces, className }: { impact: ImpactStat[]; p
                     ))}
                   </div>
                   {row.unit > 1 && (
-                    <p className="text-[11px] text-blue-200/80 mt-1">
-                      {t(
-                        `Нэг дүрс = ${row.unit.toLocaleString("en-US")}`,
-                        `Each icon = ${row.unit.toLocaleString("en-US")}`,
-                        `1アイコン = ${row.unit.toLocaleString("en-US")}`,
-                        `每個圖示 = ${row.unit.toLocaleString("en-US")}`,
-                        `아이콘 1개 = ${row.unit.toLocaleString("en-US")}`
-                      )}
-                    </p>
+                    <p className="text-[11px] text-blue-200/80 mt-1">{unitCaption(s.icon, row.unit, t)}</p>
                   )}
                 </>
               )}
@@ -243,6 +235,29 @@ function YearsCard({ compact, className }: { compact: boolean; className: string
         </div>
       </div>
     </div>
+  );
+}
+
+// What one icon stands for — "Нэг дүрс = 2 эмнэлэг", "Each icon = 100
+// people" — named after the row's icon (the heart has no noun).
+const ICON_NOUN: Record<ImpactIcon, [string, string, string, string, string]> = {
+  person: ["хүн", "people", "人", "人", "명"],
+  school: ["сургууль", "schools", "校", "所學校", "개 학교"],
+  hospital: ["эмнэлэг", "hospitals", "病院", "家醫院", "개 병원"],
+  clock: ["цаг", "hours", "時間", "小時", "시간"],
+  tree: ["мод", "trees", "本の木", "棵樹", "그루"],
+  heart: ["", "", "", "", ""],
+};
+
+function unitCaption(icon: ImpactIcon, unit: number, t: (mn: string, en: string, ja?: string, zh?: string, ko?: string) => string) {
+  const n = unit.toLocaleString("en-US");
+  const [mn, en, ja, zh, ko] = ICON_NOUN[icon];
+  return t(
+    `Нэг дүрс = ${n} ${mn}`.trim(),
+    `Each icon = ${n} ${en}`.trim(),
+    `1アイコン = ${n}${ja}`,
+    `每個圖示 = ${n}${zh}`,
+    `아이콘 1개 = ${n}${ko}`
   );
 }
 
