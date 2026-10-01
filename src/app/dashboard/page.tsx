@@ -619,6 +619,7 @@ function AwardSubmissionCard({ t, memberId }: { t: (mn: string, en: string, ja?:
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- refresh() awaits the Supabase query before setting any state; the rule can't see async boundaries
     refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time load for this member
   }, []);
