@@ -5,6 +5,15 @@ import Image from "next/image";
 import { asset } from "@/lib/asset";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
+import { IMPACT_ICONS, IMPACT_KEY, IMPACT_MAX, parseImpact, type ImpactIcon, type ImpactStat } from "@/lib/impact";
+
+const ICON_LABEL: Record<ImpactIcon, [string, string]> = {
+  person: ["👤 Хүн", "👤 Person"],
+  school: ["🎓 Сургууль", "🎓 School"],
+  clock: ["🕒 Цаг", "🕒 Clock"],
+  tree: ["🌲 Мод", "🌲 Tree"],
+  heart: ["♥ Зүрх", "♥ Heart"],
+};
 
 const PRESET_BANNERS = [
   "/theme/create-lasting-impact-blue-wide.png",
@@ -32,18 +41,47 @@ export default function AdminSettingsPage() {
   const [phoneSaved, setPhoneSaved] = useState(false);
   const [phoneError, setPhoneError] = useState<string | null>(null);
 
+  // "Our impact" numbers on the home page (src/lib/impact.ts). Always
+  // IMPACT_MAX rows here; empty ones are dropped when saving.
+  const [impact, setImpact] = useState<ImpactStat[]>([]);
+  const [impactBusy, setImpactBusy] = useState(false);
+  const [impactSaved, setImpactSaved] = useState(false);
+  const [impactError, setImpactError] = useState<string | null>(null);
+
   useEffect(() => {
     supabase
       .from("site_settings")
       .select("key, value_en")
-      .in("key", ["rotary_theme_banner_url", "contact_phone"])
+      .in("key", ["rotary_theme_banner_url", "contact_phone", IMPACT_KEY])
       .then(({ data }) => {
         const row = (key: string) => data?.find((r) => r.key === key)?.value_en;
         setBannerUrl(row("rotary_theme_banner_url") ?? PRESET_BANNERS[2]);
         setPhone(row("contact_phone") ?? "");
+        const saved = parseImpact(row(IMPACT_KEY));
+        setImpact(Array.from({ length: IMPACT_MAX }, (_, i) => saved[i] ?? { value: "", label_mn: "", label_en: "", icon: "person" }));
         setLoaded(true);
       });
   }, []);
+
+  function setImpactField(i: number, field: keyof ImpactStat, value: string) {
+    setImpact((rows) => rows.map((r, j) => (j === i ? { ...r, [field]: value } : r)));
+    setImpactSaved(false);
+  }
+
+  async function saveImpact(e: React.FormEvent) {
+    e.preventDefault();
+    setImpactBusy(true);
+    setImpactError(null);
+    setImpactSaved(false);
+    const json = JSON.stringify(parseImpact(JSON.stringify(impact)));
+    const { error } = await supabase.from("site_settings").upsert({ key: IMPACT_KEY, value_en: json, value_mn: json });
+    setImpactBusy(false);
+    if (error) {
+      setImpactError(error.message);
+      return;
+    }
+    setImpactSaved(true);
+  }
 
   async function save(url: string) {
     setBusy(true);
@@ -143,6 +181,71 @@ export default function AdminSettingsPage() {
             </form>
             {phoneSaved && <p className="text-sm text-green-700 mt-2">{t("Хадгалагдлаа!", "Saved!", "保存しました!", "已保存!")}</p>}
             {phoneError && <p className="text-sm text-rotary-cardinal mt-2">{phoneError}</p>}
+          </div>
+
+          <div>
+            <h3 className="font-bold text-slate-900 mb-1">{t("Бидний үр нөлөө (нүүр хуудас)", "Our Impact (home page)", "私たちの歩み(ホーム)", "我們的足跡(首頁)")}</h3>
+            <p className="text-sm text-slate-500 mb-3">
+              {t(
+                "Нүүр хуудасны \"Бидний үр нөлөө\" хэсэгт харагдах тоонууд. Зочилсон улс, туулсан км (\"Аяллын зураг\" хэсгээс) болон үйлчилгээний жилийг сайт өөрөө тоолно — энд 3 хүртэл нэмэлт тоо оруулж болно, жишээ нь \"1,200+ · хүнд тусалсан\". Тоо бүр сонгосон дүрсээрээ эгнээ болж харагдана (жишээ нь 1,200 → 100 тутамд нэг хүн, 12 дүрс). Хоосон мөр харагдахгүй.",
+                "Numbers shown in the home page's \"Our impact\" band. Countries visited and km traveled (from the Travel Map) and years of service are counted automatically — add up to 3 more here, e.g. \"1,200+ · people helped\". Each number is drawn as a row of the icon you pick (e.g. 1,200 → 12 people icons, one per 100). Empty rows are hidden.",
+                "ホームの「私たちの歩み」に表示される数字です。訪問国数・移動距離(旅行マップから)と奉仕年数は自動で数えます。ここでは最大3つまで追加できます。空の行は表示されません。",
+                "首頁「我們的足跡」中顯示的數字。造訪國家數、旅程公里數(來自旅行地圖)和服務年數會自動計算——此處可再新增最多3個。空白行不會顯示。"
+              )}
+            </p>
+            <form onSubmit={saveImpact} className="grid gap-2">
+              <div className="hidden sm:grid grid-cols-[6rem_8rem_1fr_1fr] gap-2 text-xs font-semibold text-slate-500">
+                <span>{t("Тоо", "Number", "数字", "數字")}</span>
+                <span>{t("Дүрс", "Icon", "アイコン", "圖示")}</span>
+                <span>{t("Тайлбар (Монгол)", "Label (Mongolian)", "ラベル(モンゴル語)", "標籤(蒙古語)")}</span>
+                <span>{t("Тайлбар (Англи)", "Label (English)", "ラベル(英語)", "標籤(英語)")}</span>
+              </div>
+              {impact.map((row, i) => (
+                <div key={i} className="grid grid-cols-1 sm:grid-cols-[6rem_8rem_1fr_1fr] gap-2">
+                  <input
+                    value={row.value}
+                    onChange={(e) => setImpactField(i, "value", e.target.value)}
+                    placeholder={["1,200+", "15", "3,000"][i]}
+                    className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  />
+                  <select
+                    value={row.icon}
+                    onChange={(e) => setImpactField(i, "icon", e.target.value)}
+                    aria-label={t("Дүрс", "Icon", "アイコン", "圖示")}
+                    className="rounded-md border border-slate-300 px-2 py-2 text-sm bg-white"
+                  >
+                    {IMPACT_ICONS.map((icon) => (
+                      <option key={icon} value={icon}>
+                        {t(...ICON_LABEL[icon])}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    value={row.label_mn}
+                    onChange={(e) => setImpactField(i, "label_mn", e.target.value)}
+                    placeholder={["хүнд тусалсан", "сургууль, цэцэрлэгт дэмжлэг", "сайн дурын цаг"][i]}
+                    className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  />
+                  <input
+                    value={row.label_en}
+                    onChange={(e) => setImpactField(i, "label_en", e.target.value)}
+                    placeholder={["people helped", "schools & kindergartens supported", "volunteer hours"][i]}
+                    className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  />
+                </div>
+              ))}
+              <div>
+                <button
+                  type="submit"
+                  disabled={impactBusy}
+                  className="bg-rotary-royal-blue text-white font-semibold rounded-md px-4 py-2 text-sm disabled:opacity-60"
+                >
+                  {impactBusy ? t("Хадгалж байна…", "Saving…", "保存中…", "保存中…") : t("Хадгалах", "Save", "保存", "保存")}
+                </button>
+              </div>
+            </form>
+            {impactSaved && <p className="text-sm text-green-700 mt-2">{t("Хадгалагдлаа!", "Saved!", "保存しました!", "已保存!")}</p>}
+            {impactError && <p className="text-sm text-rotary-cardinal mt-2">{impactError}</p>}
           </div>
 
           <div>

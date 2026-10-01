@@ -11,6 +11,9 @@ import HomeGear from "@/components/HomeGear";
 import AddToCalendar from "@/components/AddToCalendar";
 import { localYmd, MONTH_LABEL } from "@/lib/date";
 import { useBreakpoint, fullRows, type PerBreakpoint } from "@/lib/use-breakpoint";
+import ImpactPanel from "@/components/ImpactPanel";
+import { IMPACT_KEY, parseImpact, type ImpactStat } from "@/lib/impact";
+import type { Trip } from "@/lib/travel";
 
 type LinkRow = { id: string; name: string; url: string | null; logo_url: string | null; category: string | null };
 type AffiliateRow = {
@@ -106,6 +109,8 @@ export default function Home() {
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
   const [nextEvent, setNextEvent] = useState<EventRow | null>(null);
   const [openPhoto, setOpenPhoto] = useState<number | null>(null);
+  const [impact, setImpact] = useState<ImpactStat[]>([]);
+  const [trips, setTrips] = useState<Trip[]>([]);
   const bp = useBreakpoint();
   const newsCols = NEWS_GRID.cols[bp];
   const shownNews = news.slice(0, fullRows(news.length, newsCols, NEWS_GRID.max[bp]));
@@ -224,6 +229,19 @@ export default function Home() {
       setNextEvent((data as EventRow[] | null)?.[0] ?? null);
     }
     loadNextEvent();
+
+    // "Our impact": the numbers typed in Admin → Settings, plus
+    // countries and km counted from the travel map (Admin → Travel Map).
+    supabase
+      .from("site_settings")
+      .select("value_en")
+      .eq("key", IMPACT_KEY)
+      .maybeSingle()
+      .then(({ data }) => setImpact(parseImpact(data?.value_en)));
+    supabase
+      .from("member_travels")
+      .select("destination_country,latitude,longitude")
+      .then(({ data }) => setTrips((data as Trip[] | null) ?? []));
   }, []);
 
   // Facebook-linked news cards render the real embedded post (photo,
@@ -458,6 +476,20 @@ export default function Home() {
           )}
         </div>
       </section>
+
+      {/* Our impact — travel map, typed numbers and years of service as
+          pictures (ImpactPanel). Shown once there's a trip on the travel
+          map or a number typed in Admin → Settings. */}
+      {(impact.length > 0 || trips.length > 0) && (
+        <section data-gear="gold" className="bg-gradient-to-br from-rotary-royal-blue via-[#123a75] to-rotary-azure text-white py-10">
+          <div className="container-page relative z-10">
+            <h2 className="text-2xl sm:text-3xl font-bold mb-5">
+              {t("Бидний үр нөлөө", "Our impact", "私たちの歩み", "我們的足跡", "우리의 발자취")}
+            </h2>
+            <ImpactPanel impact={impact} trips={trips} />
+          </div>
+        </section>
+      )}
 
       {/* Photo gallery — admin-curated (see /admin/gallery). Whole rows
           of tiles; tapping one opens it full size (the original file,
