@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { asset } from "@/lib/asset";
 import { useLanguage } from "@/lib/language-context";
+import { friendlyError } from "@/lib/friendly-error";
 import { effectiveTheme } from "@/lib/phf";
 import { localYmd } from "@/lib/date";
 import PhfPinBadge from "@/components/PhfPinBadge";
@@ -631,7 +632,8 @@ function AwardSubmissionCard({ t, memberId }: { t: (mn: string, en: string, ja?:
       const { error: uploadError } = await supabase.storage.from("rciu-photos").upload(path, file);
       if (uploadError) {
         setBusy(false);
-        setError(uploadError.message);
+        console.error(uploadError);
+        setError(friendlyError(uploadError.message, t));
         return;
       }
       fileUrl = supabase.storage.from("rciu-photos").getPublicUrl(path).data.publicUrl;
@@ -647,7 +649,8 @@ function AwardSubmissionCard({ t, memberId }: { t: (mn: string, en: string, ja?:
     });
     setBusy(false);
     if (insertError) {
-      setError(insertError.message);
+      console.error(insertError);
+      setError(friendlyError(insertError.message, t));
       return;
     }
     setTitle("");
@@ -780,7 +783,8 @@ function MyInfoCard({
     const { error } = await supabase.from("members").update(payload).eq("id", member.id);
     setBusy(false);
     if (error) {
-      setError(error.message);
+      console.error(error);
+      setError(friendlyError(error.message, t));
       return;
     }
     setMember({ ...member, ...payload });
@@ -891,7 +895,8 @@ function SetPasswordCard({
     const { error: authError } = await supabase.auth.updateUser({ password });
     if (authError) {
       setBusy(false);
-      setError(authError.message);
+      console.error(authError);
+      setError(friendlyError(authError.message, t));
       return;
     }
     const { data: { session } } = await supabase.auth.getSession();

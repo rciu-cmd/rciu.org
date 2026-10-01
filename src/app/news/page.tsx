@@ -93,7 +93,7 @@ export default function NewsPage() {
               // Written posts: now show the cover photo (was text-only
               // before) and open the full story on its own page instead
               // of doing nothing when clicked.
-              <Link key={n.id} href={`/news/view/?id=${n.id}`}>
+              <Link key={n.id} href={`/news/${n.id}/`}>
                 <article className="h-full rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition overflow-hidden bg-white flex flex-col">
                   <div className="relative aspect-video bg-slate-100">
                     {n.cover_image_url ? (

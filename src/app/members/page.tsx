@@ -53,7 +53,10 @@ export default function MembersPage() {
       .select("*")
       .order("last_name")
       .then(({ data, error }) => {
-        if (error) setError(error.message);
+        if (error) {
+          console.error(error);
+          setError("load");
+        }
         else setMembers(data as DirectoryMember[]);
       });
   }, [checkedAuth]);
@@ -86,7 +89,6 @@ export default function MembersPage() {
       {error && (
         <p className="text-sm text-rotary-cardinal mb-6">
           {t("Гишүүдийн мэдээлэл ачаалахад алдаа гарлаа.", "Couldn't load member data.", "会員データを読み込めませんでした。", "無法加載會員數據。")}
-          {" "}({error})
         </p>
       )}
 

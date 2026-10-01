@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { asset } from "@/lib/asset";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
+import { friendlyError } from "@/lib/friendly-error";
 
 type Mode = "link" | "password";
 
@@ -43,6 +44,7 @@ export default function LoginPage() {
     });
     setBusy(false);
     if (error) {
+      console.error(error);
       setError(
         /signups not allowed|user not found/i.test(error.message)
           ? t(
@@ -58,7 +60,7 @@ export default function LoginPage() {
               "メール送信の上限に達しました。しばらくしてから再度お試しください。",
               "郵件發送已達上限,請稍後再試。"
             )
-          : error.message
+          : friendlyError(error.message, t)
       );
       return;
     }
