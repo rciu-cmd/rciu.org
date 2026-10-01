@@ -102,8 +102,10 @@ export default function GalleryPage() {
       supabase.from("project_media").select("id,project_id,storage_path,caption,created_at").order("created_at", { ascending: false }),
       supabase.from("projects").select("id,title_mn,title_en"),
     ]).then(([clubRes, projectRes, projectsRes]) => {
-      if (clubRes.error) setError(clubRes.error.message);
-      if (projectRes.error) setError((prev) => prev ?? projectRes.error?.message ?? null);
+      // The page shows its own "Couldn't load photos." — raw detail to the console.
+      if (clubRes.error) console.error(clubRes.error);
+      if (projectRes.error) console.error(projectRes.error);
+      if (clubRes.error || projectRes.error) setError("load");
       const club = ((clubRes.data as Omit<PhotoRow, "source" | "projectId">[]) ?? []).map((p) => ({ ...p, source: "club" as const, projectId: null }));
       const project = ((projectRes.data as (Omit<PhotoRow, "source" | "projectId"> & { project_id: string })[]) ?? []).map((p) => ({
         id: p.id,
@@ -183,7 +185,8 @@ export default function GalleryPage() {
 
       {error && (
         <p className="text-sm text-rotary-cardinal mb-6">
-          {t("Зураг ачаалахад алдаа гарлаа.", "Couldn't load photos.", "写真を読み込めませんでした。", "無法加載照片。")} ({error})
+          {/* "load" = the photo list failed; anything else is an already-translated message (e.g. a failed download). */}
+          {error === "load" ? t("Зураг ачаалахад алдаа гарлаа.", "Couldn't load photos.", "写真を読み込めませんでした。", "無法加載照片。") : error}
         </p>
       )}
 

@@ -18,7 +18,7 @@ jobs:
       # activity. Fetching rciu.org above never reaches the database
       # (curl doesn't run the site's JavaScript), so query it directly —
       # the same public read the site footer does. URL and publishable
-      # key are the public values from src/lib/supabase.ts; RLS only
+      # key are the public values from src/lib/supabase-config.ts; RLS only
       # allows what any visitor can already read. -f makes this step
       # fail (and GitHub email the repo owner) if the database is down
       # or already paused.

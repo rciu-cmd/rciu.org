@@ -6,6 +6,7 @@ import Link from "next/link";
 import { asset } from "@/lib/asset";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
+import { friendlyError } from "@/lib/friendly-error";
 import { HoneypotField, INQUIRY_MAX_LENGTH, inquiryLimitMessage } from "@/lib/spam-guard";
 import ProjectPhotoCollage from "@/components/ProjectPhotoCollage";
 
@@ -109,7 +110,7 @@ export default function ProjectsPage() {
           {items.map((p) => {
             const photos = photosByProject[p.id] ?? (p.cover_image_url ? [p.cover_image_url] : []);
             return (
-              <Link key={p.id} href={`/projects/view/?id=${p.id}`} className="block">
+              <Link key={p.id} href={`/projects/${p.id}/`} className="block">
                 <article className="h-full rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition">
                   {photos.length > 0 && <ProjectPhotoCollage photos={photos} />}
                   <div className="p-6">
@@ -234,7 +235,8 @@ function JoinProjectModal({
     });
     setBusy(false);
     if (error) {
-      setError(inquiryLimitMessage(error.message, t) ?? error.message);
+      console.error(error);
+      setError(inquiryLimitMessage(error.message, t) ?? friendlyError(error.message, t));
       return;
     }
     setDone(true);

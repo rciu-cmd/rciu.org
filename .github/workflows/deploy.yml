@@ -3,6 +3,13 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+  # Hourly rebuild of the same code, so news/projects published since the
+  # last deploy get their own /news/<id>/ link-preview page
+  # (src/lib/share-data.ts). After publishing something you want to share
+  # right away, run this workflow by hand: Actions → Deploy to GitHub
+  # Pages → Run workflow.
+  schedule:
+    - cron: '17 * * * *'
   workflow_dispatch:
 
 permissions:

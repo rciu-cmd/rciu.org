@@ -42,7 +42,7 @@ npm run dev
 ```
 
 No `.env` file is needed — the Supabase URL and public anon key are
-hardcoded in `src/lib/supabase.ts` (both are safe to ship client-side;
+hardcoded in `src/lib/supabase-config.ts` (both are safe to ship client-side;
 real access control is entirely via RLS policies in the database, not
 by hiding these values).
 
@@ -113,10 +113,25 @@ happens there (not in code), give literal numbered instructions, not
   fixed height as the other cards, `overflow-hidden` + a bottom
   gradient fade, plus an explicit "View full post on Facebook →" link
   so nothing is actually lost.
-- Detail pages (`/news/view/?id=`, `/projects/view/?id=`) use a
-  query-string + `<Suspense>` pattern for static-export compatibility
-  with `useSearchParams()` — follow that pattern for any new detail
-  page rather than a dynamic route segment.
+- **Detail pages come in two forms.** `/news/<id>/` and
+  `/projects/<id>/` are built per item at build time
+  (`generateStaticParams` + `src/lib/share-data.ts`) so link previews
+  (Facebook etc.) show each item's own title/photo; site links use these.
+  `/news/view/?id=` and `/projects/view/?id=` (query string +
+  `<Suspense>` for `useSearchParams()`) load any item live — including
+  ones published after the last build, which the 404 page's inline
+  script forwards there. Both render the same `NewsDetail` /
+  `ProjectDetail` component. The deploy workflow rebuilds hourly to
+  pick up new items. A static export fails to build a `[id]` route with
+  zero params, so `staticParams()` emits a noindex `_` placeholder when
+  there's no data (e.g. Supabase unreachable during the build).
+- **Errors on public/member pages** go through `friendlyError()`
+  (`src/lib/friendly-error.ts`) with the raw error `console.error`ed;
+  admin pages show raw errors on purpose.
+- **Pull requests** run `.github/workflows/build-check.yml` (`npm ci` +
+  `npm run build`). `npm run lint` still has 13 old
+  `react-hooks/set-state-in-effect` errors (load-on-mount pattern), so
+  lint isn't part of the check yet.
 
 ## Where things stand
 
@@ -126,4 +141,5 @@ has the full feature list. Recent work (Oct 2026):
 private photo-bucket listing + inquiry-form spam guard (migration26),
 keep-alive that pings Supabase, browser-language first visit, sitemap /
 page titles / 404 page, "Add to calendar" on events, missing-translation
-fallback in `t()`, README rewrite.
+fallback in `t()`, README rewrite, lighter icons, per-item link-preview
+pages + hourly rebuild, friendly errors, pull-request build check.

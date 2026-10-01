@@ -16,9 +16,10 @@ gotchas already learned the hard way.
 - **About** — club history, honor roll (Paul Harris Fellows), "Where
   We've Traveled" world map, charter certificates, links to Board and
   Members.
-- **News** and **Projects** — lists plus detail pages
-  (`/news/view/?id=`, `/projects/view/?id=`); Projects also has a
-  "Join a Project" partnership form.
+- **News** and **Projects** — lists plus a page per item
+  (`/news/<id>/`, `/projects/<id>/`) whose shared links preview with
+  the item's own title and photo; Projects also has a "Join a Project"
+  partnership form.
 - **Events** — monthly calendar with "Add to calendar" (Google /
   Apple / Outlook) on upcoming events.
 - **Board**, **Join** (membership interest form), **Contact**.
@@ -48,7 +49,7 @@ and remember the choice.
   Cloudflare). The site is plain static files — no server.
 - **Data, login, photos:** Supabase. All access control is Row Level
   Security in the database (public / member / editor / super admin), so
-  the public Supabase URL and key in `src/lib/supabase.ts` are safe to
+  the public Supabase URL and key in `src/lib/supabase-config.ts` are safe to
   ship.
 - **Email:** two Supabase Edge Functions using Resend —
   `notify-inquiry` (emails officers when a Join / Project form is
@@ -63,9 +64,19 @@ and remember the choice.
 
 **Pushing to `main` deploys to the live site within about a minute** —
 there is no staging site. Make changes on a branch, open a pull request,
-and merge when ready. `.github/workflows/deploy.yml` builds and
-publishes; `.github/workflows/keep-alive.yml` pings the site and the
-database every 3 days so a free-plan Supabase project doesn't pause.
+and merge when ready.
+
+- `.github/workflows/build-check.yml` builds every pull request — a red
+  ✗ on the pull request means the change would break the site; don't
+  merge it.
+- `.github/workflows/deploy.yml` builds and publishes on every push to
+  `main`, and also **every hour**, so newly published news and projects
+  get their own link-preview page. To share something on Facebook right
+  after publishing it, first run the deploy by hand (GitHub → Actions →
+  Deploy to GitHub Pages → Run workflow) and wait a minute — Facebook
+  caches the first preview it sees.
+- `.github/workflows/keep-alive.yml` pings the site and the database
+  every 3 days so a free-plan Supabase project doesn't pause.
 
 ## Database changes
 

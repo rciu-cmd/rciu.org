@@ -309,9 +309,9 @@ export default function Home() {
                 ) : (
                   // Written posts open the full detail page (item: cards
                   // weren't clickable before, and only showed a partial
-                  // preview here) — /news/view/?id= mirrors the
-                  // /projects/view/ query-string pattern.
-                  <Link key={n.id} href={`/news/view/?id=${n.id}`} className="shrink-0 w-96 snap-start">
+                  // preview here) — /news/<id>/ has the post's own
+                  // link preview (src/app/news/[id]/page.tsx).
+                  <Link key={n.id} href={`/news/${n.id}/`} className="shrink-0 w-96 snap-start">
                     {/* Both the image (180px) and the text block
                         (190px) below are pinned to a FIXED height —
                         same values the Projects cards use — so every
@@ -376,7 +376,7 @@ export default function Home() {
             {projects.map((p) => {
               const photos = projectPhotos[p.id] ?? (p.cover_image_url ? [p.cover_image_url] : []);
               return (
-                <Link key={p.id} href={`/projects/view/?id=${p.id}`} className="shrink-0 w-80 snap-start">
+                <Link key={p.id} href={`/projects/${p.id}/`} className="shrink-0 w-80 snap-start">
                   {/* Fixed 180px image + fixed 190px text block — same
                       values as the News cards above, so both rows
                       total the exact same 370px regardless of actual

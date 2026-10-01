@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
+import { friendlyError } from "@/lib/friendly-error";
 import { HoneypotField, INQUIRY_MAX_LENGTH, inquiryLimitMessage } from "@/lib/spam-guard";
 
 const STEPS = [
@@ -45,7 +46,8 @@ export default function JoinPage() {
     });
     setBusy(false);
     if (error) {
-      setError(inquiryLimitMessage(error.message, t) ?? error.message);
+      console.error(error);
+      setError(inquiryLimitMessage(error.message, t) ?? friendlyError(error.message, t));
       return;
     }
     setDone(true);
