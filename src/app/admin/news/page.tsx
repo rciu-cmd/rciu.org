@@ -32,6 +32,11 @@ export default function AdminNewsPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  // Set while editing an existing post (the same form is used for new
+  // posts and edits); existingCover is that post's current cover photo,
+  // null once removed.
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [existingCover, setExistingCover] = useState<string | null>(null);
 
   async function refresh() {
     const { data, error } = await supabase.from("news").select("*").order("created_at", { ascending: false });
@@ -43,7 +48,35 @@ export default function AdminNewsPage() {
     refresh();
   }, []);
 
-  async function createPost(e: React.FormEvent) {
+  function startEdit(item: NewsRow) {
+    setEditingId(item.id);
+    setMode(item.facebook_url ? "facebook" : "written");
+    setFacebookUrl(item.facebook_url ?? "");
+    setForm({
+      title_mn: item.title_mn ?? "",
+      title_en: item.title_en ?? "",
+      body_mn: item.body_mn ?? "",
+      body_en: item.body_en ?? "",
+      link_url: item.link_url ?? "",
+    });
+    setCoverFile(null);
+    setExistingCover(item.cover_image_url);
+    setError(null);
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function closeForm() {
+    setShowForm(false);
+    setEditingId(null);
+    setExistingCover(null);
+    setForm(EMPTY);
+    setCoverFile(null);
+    setFacebookUrl("");
+    setError(null);
+  }
+
+  async function savePost(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setError(null);
@@ -61,7 +94,7 @@ export default function AdminNewsPage() {
       coverImageUrl = supabase.storage.from("rciu-photos").getPublicUrl(path).data.publicUrl;
     }
 
-    const payload: {
+    const content: {
       facebook_url: string | null;
       title_mn: string | null;
       title_en: string | null;
@@ -69,30 +102,30 @@ export default function AdminNewsPage() {
       body_en: string | null;
       cover_image_url: string | null;
       link_url: string | null;
-      status: "draft";
     } =
       mode === "facebook"
-        ? { facebook_url: facebookUrl.trim(), title_mn: null, title_en: null, body_mn: null, body_en: null, cover_image_url: null, link_url: null, status: "draft" }
+        ? { facebook_url: facebookUrl.trim(), title_mn: null, title_en: null, body_mn: null, body_en: null, cover_image_url: null, link_url: null }
         : {
             facebook_url: null,
             title_mn: form.title_mn,
             title_en: form.title_en,
             body_mn: form.body_mn,
             body_en: form.body_en,
-            cover_image_url: coverImageUrl || null,
+            // A newly chosen file wins; otherwise keep the post's current
+            // photo (null for new posts, or if the admin removed it).
+            cover_image_url: coverImageUrl || existingCover || null,
             link_url: form.link_url.trim() || null,
-            status: "draft",
           };
-    const { error } = await supabase.from("news").insert(payload);
+    // New posts start as drafts; an edit leaves Published/Draft as it was.
+    const { error } = editingId
+      ? await supabase.from("news").update(content).eq("id", editingId)
+      : await supabase.from("news").insert({ ...content, status: "draft" });
     setBusy(false);
     if (error) {
       setError(error.message);
       return;
     }
-    setForm(EMPTY);
-    setCoverFile(null);
-    setFacebookUrl("");
-    setShowForm(false);
+    closeForm();
     refresh();
   }
 
@@ -132,7 +165,7 @@ export default function AdminNewsPage() {
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold text-slate-900">{t("Мэдээ удирдах", "Manage News", "ニュース管理", "新聞管理")}</h2>
         <button
-          onClick={() => setShowForm((v) => !v)}
+          onClick={() => (showForm ? closeForm() : setShowForm(true))}
           className="text-sm font-semibold bg-rotary-royal-blue text-white rounded-md px-4 py-2"
         >
           {showForm ? t("Хаах", "Cancel", "キャンセル", "取消") : t("+ Шинэ мэдээ", "+ New Post", "+ 新規投稿", "+ 新建")}
@@ -141,25 +174,40 @@ export default function AdminNewsPage() {
 
       {showForm && (
         <div className="rounded-xl border border-slate-200 p-6 mb-8">
-          <div className="mb-4 grid grid-cols-2 rounded-lg border border-slate-200 p-1 text-sm font-semibold w-fit">
-            <button
-              type="button"
-              onClick={() => setMode("facebook")}
-              className={`rounded-md px-4 py-1.5 transition-colors ${mode === "facebook" ? "bg-rotary-royal-blue text-white" : "text-slate-600"}`}
-            >
-              {t("Facebook холбоос", "Facebook Link", "Facebookリンク", "Facebook鏈接")}
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode("written")}
-              className={`rounded-md px-4 py-1.5 transition-colors ${mode === "written" ? "bg-rotary-royal-blue text-white" : "text-slate-600"}`}
-            >
-              {t("Бичих", "Write Post", "投稿を書く", "手動撰寫")}
-            </button>
-          </div>
+          {editingId ? (
+            <div className="mb-4">
+              <h3 className="font-bold text-slate-900">{t("Мэдээ засах", "Edit post", "投稿を編集", "編輯文章", "게시물 편집")}</h3>
+              <p className="text-xs text-slate-400">
+                {t(
+                  "Хадгалахад нийтэлсэн/ноорог төлөв нь хэвээрээ үлдэнэ.",
+                  "Saving keeps the post's Published / Draft status as it is.",
+                  "保存しても公開/下書きの状態は変わりません。",
+                  "儲存後，文章的已發佈/草稿狀態保持不變。",
+                  "저장해도 게시됨/초안 상태는 그대로 유지됩니다."
+                )}
+              </p>
+            </div>
+          ) : (
+            <div className="mb-4 grid grid-cols-2 rounded-lg border border-slate-200 p-1 text-sm font-semibold w-fit">
+              <button
+                type="button"
+                onClick={() => setMode("facebook")}
+                className={`rounded-md px-4 py-1.5 transition-colors ${mode === "facebook" ? "bg-rotary-royal-blue text-white" : "text-slate-600"}`}
+              >
+                {t("Facebook холбоос", "Facebook Link", "Facebookリンク", "Facebook鏈接")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode("written")}
+                className={`rounded-md px-4 py-1.5 transition-colors ${mode === "written" ? "bg-rotary-royal-blue text-white" : "text-slate-600"}`}
+              >
+                {t("Бичих", "Write Post", "投稿を書く", "手動撰寫")}
+              </button>
+            </div>
+          )}
 
           {mode === "facebook" ? (
-            <form onSubmit={createPost} className="grid gap-3">
+            <form onSubmit={savePost} className="grid gap-3">
               <p className="text-sm text-slate-500">
                 {t(
                   "Клубын Facebook пост-ын холбоосыг тавихад л зураг, видео, бичвэрийн хамт бүтнээр нь мэдээ хуудсанд харагдана.",
@@ -196,11 +244,15 @@ export default function AdminNewsPage() {
               )}
               {error && <p className="text-sm text-rotary-cardinal">{error}</p>}
               <button type="submit" disabled={busy} className="justify-self-start bg-rotary-royal-blue text-white font-semibold rounded-md px-5 py-2 text-sm disabled:opacity-60">
-                {busy ? t("Хадгалж байна…", "Saving…", "保存中…", "保存中…") : t("Ноорог хадгалах", "Save as Draft", "下書き保存", "保存為草稿")}
+                {busy
+                  ? t("Хадгалж байна…", "Saving…", "保存中…", "保存中…")
+                  : editingId
+                  ? t("Өөрчлөлтийг хадгалах", "Save changes", "変更を保存", "儲存變更", "변경 사항 저장")
+                  : t("Ноорог хадгалах", "Save as Draft", "下書き保存", "保存為草稿")}
               </button>
             </form>
           ) : (
-            <form onSubmit={createPost} className="grid gap-3">
+            <form onSubmit={savePost} className="grid gap-3">
               <div className="grid gap-3 sm:grid-cols-2">
                 <input required placeholder={t("Гарчиг (MN)", "Title (MN)", "タイトル(MN)", "標題(MN)")} value={form.title_mn} onChange={(e) => setForm({ ...form, title_mn: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
                 <input required placeholder={t("Гарчиг (EN)", "Title (EN)", "タイトル(EN)", "標題(EN)")} value={form.title_en} onChange={(e) => setForm({ ...form, title_en: e.target.value })} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
@@ -208,7 +260,24 @@ export default function AdminNewsPage() {
               <textarea required placeholder={t("Агуулга (MN)", "Body (MN)", "本文(MN)", "正文(MN)")} value={form.body_mn} onChange={(e) => setForm({ ...form, body_mn: e.target.value })} rows={4} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
               <textarea required placeholder={t("Агуулга (EN)", "Body (EN)", "本文(EN)", "正文(EN)")} value={form.body_en} onChange={(e) => setForm({ ...form, body_en: e.target.value })} rows={4} className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
               <div>
-                <p className="text-sm font-semibold text-slate-700 mb-1">{t("Зураг (заавал биш)", "Cover photo (optional)", "カバー写真(任意)", "封面照片(可選)")}</p>
+                <p className="text-sm font-semibold text-slate-700 mb-1">
+                  {existingCover
+                    ? t("Зураг солих (заавал биш)", "Replace cover photo (optional)", "カバー写真を変更(任意)", "更換封面照片(可選)", "커버 사진 교체(선택)")
+                    : t("Зураг (заавал биш)", "Cover photo (optional)", "カバー写真(任意)", "封面照片(可選)")}
+                </p>
+                {existingCover && !coverFile && (
+                  <div className="flex items-center gap-3 mb-2">
+                    {/* eslint-disable-next-line @next/next/no-img-element -- small admin-only preview of an external Storage URL */}
+                    <img src={existingCover} alt="" className="h-16 w-24 object-cover rounded-md border border-slate-200" />
+                    <button
+                      type="button"
+                      onClick={() => setExistingCover(null)}
+                      className="text-xs font-semibold px-2.5 py-1 rounded-md border border-rotary-cardinal text-rotary-cardinal hover:bg-rotary-cardinal hover:text-white"
+                    >
+                      {t("Зургийг хасах", "Remove photo", "写真を削除", "移除照片", "사진 삭제")}
+                    </button>
+                  </div>
+                )}
                 <input type="file" accept="image/*" onChange={(e) => setCoverFile(e.target.files?.[0] ?? null)} className="text-sm" />
                 {coverFile && <p className="text-xs text-slate-500 mt-1">{coverFile.name}</p>}
               </div>
@@ -232,7 +301,11 @@ export default function AdminNewsPage() {
               </div>
               {error && <p className="text-sm text-rotary-cardinal">{error}</p>}
               <button type="submit" disabled={busy} className="justify-self-start bg-rotary-royal-blue text-white font-semibold rounded-md px-5 py-2 text-sm disabled:opacity-60">
-                {busy ? t("Хадгалж байна…", "Saving…", "保存中…", "保存中…") : t("Ноорог хадгалах", "Save as Draft", "下書き保存", "保存為草稿")}
+                {busy
+                  ? t("Хадгалж байна…", "Saving…", "保存中…", "保存中…")
+                  : editingId
+                  ? t("Өөрчлөлтийг хадгалах", "Save changes", "変更を保存", "儲存變更", "변경 사항 저장")
+                  : t("Ноорог хадгалах", "Save as Draft", "下書き保存", "保存為草稿")}
               </button>
             </form>
           )}
@@ -267,6 +340,9 @@ export default function AdminNewsPage() {
               )}
             </div>
             <div className="flex flex-col gap-2 shrink-0">
+              <button onClick={() => startEdit(item)} className="text-xs font-semibold px-3 py-1.5 rounded-md border border-rotary-azure text-rotary-azure hover:bg-rotary-azure hover:text-white">
+                {t("Засах", "Edit", "編集", "編輯", "편집")}
+              </button>
               <button
                 onClick={() => toggleHome(item)}
                 className={`text-xs font-semibold px-3 py-1.5 rounded-md border ${item.featured_home ? "border-rotary-gold bg-rotary-gold text-slate-900" : "border-slate-300 text-slate-600 hover:bg-slate-50"}`}
