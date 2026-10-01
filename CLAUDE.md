@@ -146,6 +146,28 @@ happens there (not in code), give literal numbered instructions, not
   It swallows all errors on purpose so saving a post can never fail
   because of it. In PL/pgSQL, don't combine a table check and a column
   reference in one `and` (no guaranteed short-circuit) — nest the `if`.
+- **Home page layout** (`src/app/page.tsx`): one spinning Rotary gear
+  for the whole page (`src/components/HomeGear.tsx`, `position: fixed`)
+  that changes colour per section via `data-gear="gold|cranberry|…"` on
+  each section (and the footer). It paints above section backgrounds,
+  so every section's content wrapper must be `relative z-10` or the
+  gear draws over its text; the footer and ThemeStrip are layered the
+  same way. News / Projects / Photos are grids with no sideways
+  scrolling: columns and how many cards to show per breakpoint come
+  from `NEWS_GRID` etc. + `useBreakpoint()`/`fullRows()`
+  (`src/lib/use-breakpoint.ts`), which trims to whole rows. Gallery
+  tiles open a full-size viewer (the original photo, never resized).
+- **Search & sharing**: Google renders the pages in English (browser
+  language), so Mongolian only reaches search through metadata — page
+  titles are "Мэдээ · News" style and descriptions carry both
+  languages. `/sitemap.xml` is generated at build time
+  (`src/app/sitemap.ts`, includes every news/project page — there is no
+  `public/sitemap.xml`). Club details for Google are JSON-LD in
+  `src/app/layout.tsx`. Pages without their own photo share
+  `public/logos/rciu-share.png` (1200×630, made from the club's
+  artwork); news/project pages have Facebook / phone-share / copy-link
+  buttons (`src/components/ShareButtons.tsx`) that always share the
+  per-item `/news/<id>/` URL.
 - **Visitor statistics**: Cloudflare Web Analytics beacon in
   `src/app/layout.tsx`, token in `src/lib/analytics.ts` (empty = off).
   rciu.org is DNS-only (grey cloud) on Cloudflare, so automatic
@@ -175,4 +197,7 @@ fallback in `t()`, README rewrite, lighter icons, per-item link-preview
 pages + hourly rebuild, friendly errors, pull-request build check,
 automatic week-before + day-before event reminders (migration27), Cloudflare Web
 Analytics hook, rebuild-on-publish trigger (migration28), Admin → News edit button,
-lint at zero + in the PR check, Actions on Node 24 versions.
+lint at zero + in the PR check, Actions on Node 24 versions, Next.js
+16.3.8 (npm audit clean), compact home page redesign (one colour-changing
+gear, grids, hero buttons, next-event card, gallery viewer), bilingual
+search titles, generated sitemap, wide share image, share buttons.

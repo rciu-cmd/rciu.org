@@ -11,6 +11,7 @@ import { asset } from "@/lib/asset";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
 import ProjectPhotoCollage from "@/components/ProjectPhotoCollage";
+import ShareButtons from "@/components/ShareButtons";
 
 type ProjectType = "local_project" | "district_grant" | "global_grant";
 
@@ -146,6 +147,8 @@ export default function ProjectDetail({ id }: { id: string | null }) {
           )}
         </div>
       </div>
+
+      <ShareButtons path={`/projects/${p.id}/`} title={t(p.title_mn, p.title_en)} />
 
       {photos.length > 1 && (
         <div className="mt-8">

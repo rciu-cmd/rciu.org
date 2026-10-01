@@ -19,7 +19,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const item = (await getProjectShareItems()).find((p) => p.id === id);
-  return shareMetadata(item, `/projects/${id}/`, "Projects");
+  return shareMetadata(item, `/projects/${id}/`, "Төсөл · Project");
 }
 
 export default async function ProjectPage({ params }: Props) {

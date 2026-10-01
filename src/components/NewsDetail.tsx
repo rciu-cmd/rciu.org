@@ -11,6 +11,7 @@ import { asset } from "@/lib/asset";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
 import { friendlyError } from "@/lib/friendly-error";
+import ShareButtons from "@/components/ShareButtons";
 
 type NewsRow = {
   id: string;
@@ -149,6 +150,7 @@ export default function NewsDetail({ id }: { id: string | null }) {
           </div>
         </article>
       )}
+      <ShareButtons path={`/news/${item.id}/`} title={t(item.title_mn ?? "", item.title_en ?? "") || "Rotary Club of Ikh Urgoo"} />
       <div id="fb-root" />
     </div>
   );

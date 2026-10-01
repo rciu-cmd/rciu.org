@@ -135,9 +135,9 @@ export function shareMetadata(item: ShareItem | undefined, path: string, fallbac
   if (path.includes(`/${PLACEHOLDER_ID}/`)) return { title: { absolute: `${fallbackTitle} · Rotary Club of Ikh Urgoo` }, robots: { index: false, follow: false } };
   const title = item?.title ?? fallbackTitle;
   const description = item?.description ?? undefined;
-  const images = item?.image
-    ? [{ url: item.image }]
-    : [{ url: `${BASE_PATH}/logos/rciu-emblem.jpg`, width: 512, height: 512 }];
+  // No photo of its own: the club's wide share picture (same as the
+  // home page's), so the preview is still a full-width image.
+  const images = item?.image ? [{ url: item.image }] : [{ url: `${BASE_PATH}/logos/rciu-share.png`, width: 1200, height: 630 }];
   return {
     // Absolute: the root layout's "%s · Rotary Club of Ikh Urgoo" template
     // doesn't reach this far, because /news and /projects set plain titles.
@@ -154,7 +154,7 @@ export function shareMetadata(item: ShareItem | undefined, path: string, fallbac
       images,
     },
     twitter: {
-      card: item?.image ? "summary_large_image" : "summary",
+      card: "summary_large_image",
       title,
       description,
       images: images.map((i) => i.url),

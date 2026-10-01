@@ -4,8 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
-import { localYmd } from "@/lib/date";
-import { type CalendarEvent, googleCalendarUrl, icsDataUrl, icsFileName } from "@/lib/calendar";
+import { localYmd, MONTH_LABEL } from "@/lib/date";
+import AddToCalendar from "@/components/AddToCalendar";
 
 type Category = "installation_ceremony" | "district_events" | "projects" | "other" | "public_holiday";
 
@@ -30,15 +30,6 @@ const CATEGORY_LABELS: Record<Category, { mn: string; en: string }> = {
   other: { mn: "Бусад", en: "Other" },
   public_holiday: { mn: "Улсын баяр", en: "Public Holiday" },
 };
-
-const MONTH_LABEL: [string, string, string, string][] = [
-  ["1-р сар", "January", "1月", "1月"], ["2-р сар", "February", "2月", "2月"],
-  ["3-р сар", "March", "3月", "3月"], ["4-р сар", "April", "4月", "4月"],
-  ["5-р сар", "May", "5月", "5月"], ["6-р сар", "June", "6月", "6月"],
-  ["7-р сар", "July", "7月", "7月"], ["8-р сар", "August", "8月", "8月"],
-  ["9-р сар", "September", "9月", "9月"], ["10-р сар", "October", "10月", "10月"],
-  ["11-р сар", "November", "11月", "11月"], ["12-р сар", "December", "12月", "12月"],
-];
 
 const WEEKDAY_LABEL: [string, string, string, string][] = [
   ["Да", "Mo", "月", "一"], ["Мя", "Tu", "火", "二"], ["Лх", "We", "水", "三"],
@@ -234,28 +225,6 @@ export default function EventsPage() {
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-function AddToCalendar({ event }: { event: CalendarEvent }) {
-  const { t } = useLanguage();
-  return (
-    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-      <span className="font-semibold text-slate-500">
-        📅 {t("Хуанлид нэмэх:", "Add to calendar:", "カレンダーに追加:", "加入日曆:", "캘린더에 추가:")}
-      </span>
-      <a
-        href={googleCalendarUrl(event)}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="font-semibold text-rotary-royal-blue hover:underline"
-      >
-        Google
-      </a>
-      <a href={icsDataUrl(event)} download={icsFileName(event)} className="font-semibold text-rotary-royal-blue hover:underline">
-        Apple / Outlook
-      </a>
     </div>
   );
 }

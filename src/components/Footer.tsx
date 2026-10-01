@@ -27,8 +27,10 @@ export default function Footer() {
   }, []);
 
   return (
-    <footer className="bg-gradient-to-br from-rotary-royal-blue to-[#0d2c5c] text-white">
-      <div className="container-page py-10 grid gap-8 sm:grid-cols-3">
+    // data-gear and relative z-10: the home page's spinning gear
+    // (HomeGear) turns gold over the footer and stays behind its text.
+    <footer data-gear="gold" className="bg-gradient-to-br from-rotary-royal-blue to-[#0d2c5c] text-white">
+      <div className="container-page relative z-10 py-10 grid gap-8 sm:grid-cols-3">
         <div>
           <div className="flex items-center gap-2 mb-3">
             <Image src={asset("/logos/rciu-emblem.jpg")} alt="Rotary Club of Ikh Urgoo" width={36} height={36} className="rounded-full" />
