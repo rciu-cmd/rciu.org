@@ -33,11 +33,16 @@ export const metadata: Metadata = {
     // white, which shows as a white/dark square card behind the round
     // emblem on browser tabs, bookmarks, and home-screen icons) —
     // same emblem, just with its background removed.
+    // Sized copies of public/logos/rciu-emblem-transparent.png (the
+    // 512px, 307 KB master) so a browser tab loads ~10 KB, not 307 KB:
+    // favicon.ico holds 16/32/48px, plus 192px and a 180px Apple icon.
+    // Regenerate all three from the master if the emblem ever changes.
     icon: [
-      { url: `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/logos/rciu-emblem-transparent.png`, type: "image/png" },
+      { url: `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/favicon.ico`, sizes: "48x48" },
+      { url: `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/icons/icon-192.png`, type: "image/png", sizes: "192x192" },
     ],
     apple: [
-      { url: `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/logos/rciu-emblem-transparent.png`, type: "image/png" },
+      { url: `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/icons/apple-touch-icon.png`, type: "image/png", sizes: "180x180" },
     ],
   },
   openGraph: {
