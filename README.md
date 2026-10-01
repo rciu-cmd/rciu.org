@@ -15,8 +15,9 @@ gotchas already learned the hard way.
   buttons and live club stats, the next event (with "Add to
   calendar"), latest news (including Facebook post embeds), featured
   projects, an "Our impact" infographic (flight map with countries and
-  km from the travel map, icon rows for up to 3 numbers typed in
-  Admin → Settings, years of service since 2012), a photo
+  km from the travel map; people / schools / hospitals as icon rows and
+  a Mongolia map of the provinces where the club has run projects, both
+  set in Admin → Settings; years of service since 2012), a photo
   gallery that opens photos full size, partners. One
   Rotary wheel turns slowly in the corner and changes colour from
   section to section.
@@ -44,7 +45,8 @@ gotchas already learned the hard way.
 - *Super admin*: everything — Calendar, Travel Map, Awards, Board,
   Sponsored Clubs (Interact/Rotaract), Partners, Gallery, History,
   Join / Project Inquiries, Members (incl. appointing admins), Settings
-  (contact phone, "Our impact" numbers, theme banner).
+  (contact phone, "Our impact" numbers and project provinces, theme
+  banner).
 
 **Languages** — Mongolian, English, Japanese, Chinese, Korean. Mongolian
 and English are fully written; the others fall back to English where no

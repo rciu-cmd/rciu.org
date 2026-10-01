@@ -1,16 +1,36 @@
 // "Our impact" numbers on the home page. Three are counted by the site
 // itself (countries and km from the travel map, years since the
-// charter); up to IMPACT_MAX more are typed in Admin → Settings and
-// stored as JSON in site_settings (key "impact_stats", value_en) — no
-// table or migration needed.
+// charter); up to IMPACT_MAX more are typed in Admin → Settings, and
+// the provinces where the club has run projects are ticked there too.
+// Both are stored as JSON in site_settings (value_en of keys
+// "impact_stats" and "impact_provinces") — no table or migration needed.
 
-export const IMPACT_ICONS = ["person", "school", "clock", "tree", "heart"] as const;
+import { PROVINCES } from "./mongolia-provinces";
+
+export const IMPACT_ICONS = ["person", "school", "hospital", "clock", "tree", "heart"] as const;
 export type ImpactIcon = (typeof IMPACT_ICONS)[number];
 
 export type ImpactStat = { value: string; label_mn: string; label_en: string; icon: ImpactIcon };
 
 export const IMPACT_KEY = "impact_stats";
 export const IMPACT_MAX = 3;
+// Suggested icon for each empty row in Admin: people, schools, hospitals.
+export const IMPACT_DEFAULT_ICONS: ImpactIcon[] = ["person", "school", "hospital"];
+
+export const PROVINCES_KEY = "impact_provinces";
+export const ULAANBAATAR_ID = "ulaanbaatar";
+
+// Province ids ticked in Admin (see src/lib/mongolia-provinces.ts);
+// anything unknown is dropped.
+export function parseProvinces(json: string | null | undefined): string[] {
+  try {
+    const ids = JSON.parse(json ?? "[]");
+    if (!Array.isArray(ids)) return [];
+    return PROVINCES.map((p) => p.id).filter((id) => ids.includes(id));
+  } catch {
+    return [];
+  }
+}
 
 // Rows with no number are dropped, so an empty row in Admin hides it.
 export function parseImpact(json: string | null | undefined): ImpactStat[] {

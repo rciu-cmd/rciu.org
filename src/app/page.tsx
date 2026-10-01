@@ -12,7 +12,7 @@ import AddToCalendar from "@/components/AddToCalendar";
 import { localYmd, MONTH_LABEL } from "@/lib/date";
 import { useBreakpoint, fullRows, type PerBreakpoint } from "@/lib/use-breakpoint";
 import ImpactPanel from "@/components/ImpactPanel";
-import { IMPACT_KEY, parseImpact, type ImpactStat } from "@/lib/impact";
+import { IMPACT_KEY, PROVINCES_KEY, parseImpact, parseProvinces, type ImpactStat } from "@/lib/impact";
 import type { Trip } from "@/lib/travel";
 
 type LinkRow = { id: string; name: string; url: string | null; logo_url: string | null; category: string | null };
@@ -110,6 +110,7 @@ export default function Home() {
   const [nextEvent, setNextEvent] = useState<EventRow | null>(null);
   const [openPhoto, setOpenPhoto] = useState<number | null>(null);
   const [impact, setImpact] = useState<ImpactStat[]>([]);
+  const [provinces, setProvinces] = useState<string[]>([]);
   const [trips, setTrips] = useState<Trip[]>([]);
   const bp = useBreakpoint();
   const newsCols = NEWS_GRID.cols[bp];
@@ -230,14 +231,17 @@ export default function Home() {
     }
     loadNextEvent();
 
-    // "Our impact": the numbers typed in Admin → Settings, plus
-    // countries and km counted from the travel map (Admin → Travel Map).
+    // "Our impact": the numbers and provinces set in Admin → Settings,
+    // plus countries and km counted from the travel map (Admin → Travel Map).
     supabase
       .from("site_settings")
-      .select("value_en")
-      .eq("key", IMPACT_KEY)
-      .maybeSingle()
-      .then(({ data }) => setImpact(parseImpact(data?.value_en)));
+      .select("key,value_en")
+      .in("key", [IMPACT_KEY, PROVINCES_KEY])
+      .then(({ data }) => {
+        const value = (key: string) => (data as { key: string; value_en: string | null }[] | null)?.find((r) => r.key === key)?.value_en;
+        setImpact(parseImpact(value(IMPACT_KEY)));
+        setProvinces(parseProvinces(value(PROVINCES_KEY)));
+      });
     supabase
       .from("member_travels")
       .select("destination_country,latitude,longitude")
@@ -477,16 +481,17 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Our impact — travel map, typed numbers and years of service as
-          pictures (ImpactPanel). Shown once there's a trip on the travel
-          map or a number typed in Admin → Settings. */}
-      {(impact.length > 0 || trips.length > 0) && (
+      {/* Our impact — travel map, typed numbers, project provinces and
+          years of service as pictures (ImpactPanel). Shown once there's a
+          trip on the travel map, or a number or province set in
+          Admin → Settings. */}
+      {(impact.length > 0 || provinces.length > 0 || trips.length > 0) && (
         <section data-gear="gold" className="bg-gradient-to-br from-rotary-royal-blue via-[#123a75] to-rotary-azure text-white py-10">
           <div className="container-page relative z-10">
             <h2 className="text-2xl sm:text-3xl font-bold mb-5">
               {t("Бидний үр нөлөө", "Our impact", "私たちの歩み", "我們的足跡", "우리의 발자취")}
             </h2>
-            <ImpactPanel impact={impact} trips={trips} />
+            <ImpactPanel impact={impact} provinces={provinces} trips={trips} />
           </div>
         </section>
       )}

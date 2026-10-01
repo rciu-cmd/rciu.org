@@ -4,7 +4,8 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useLanguage } from "@/lib/language-context";
 import { useInView } from "@/lib/use-in-view";
-import { iconRow, yearsOfService, type ImpactIcon, type ImpactStat } from "@/lib/impact";
+import { ULAANBAATAR_ID, iconRow, yearsOfService, type ImpactIcon, type ImpactStat } from "@/lib/impact";
+import { MONGOLIA_VIEWBOX, PROVINCES } from "@/lib/mongolia-provinces";
 import { EARTH_KM, travelTotals, type Trip } from "@/lib/travel";
 
 const TravelArcs = dynamic(() => import("@/components/TravelArcs"), {
@@ -17,29 +18,32 @@ const TravelArcs = dynamic(() => import("@/components/TravelArcs"), {
 //   • Where we've traveled: flight lines from Ulaanbaatar to every place
 //     on the travel map, countries + km, and how far around the Earth
 //     that is.
-//   • Our service: the numbers typed in Admin → Settings, each with a
-//     row of icons (person, school, …) that light up one by one.
+//   • Our service: the numbers typed in Admin → Settings (people,
+//     schools, hospitals, …), each with a row of icons that light up one
+//     by one, and under them a map of Mongolia with the provinces ticked
+//     in Admin (where the club has run projects) turning gold.
 //   • Since 2012: years of service in a gold ring (not a Rotary wheel —
 //     the page keeps one wheel, HomeGear) and a 2009 → 2012 → today
 //     timeline.
 // No money amounts, on purpose (club's decision). Everything animates
 // once, when the panel scrolls into view (globals.css, .impact-*).
-export default function ImpactPanel({ impact, trips }: { impact: ImpactStat[]; trips: Trip[] }) {
+export default function ImpactPanel({ impact, provinces, trips }: { impact: ImpactStat[]; provinces: string[]; trips: Trip[] }) {
   const [ref, seen] = useInView<HTMLDivElement>();
   const hasTravel = trips.length > 0;
-  const hasService = impact.length > 0;
-  const layout =
-    hasTravel && hasService
-      ? "md:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr]"
-      : hasTravel || hasService
-        ? "md:grid-cols-[1.6fr_1fr]"
-        : "";
+  const hasService = impact.length > 0 || provinces.length > 0;
+  // All three: travel above a compact years card on the left, the
+  // (taller) Our service card on the right, so the columns end level.
+  // Otherwise the two cards sit side by side.
+  const all = hasTravel && hasService;
+  const layout = all ? "md:grid-cols-[1.15fr_1fr]" : hasTravel || hasService ? "md:grid-cols-[1.6fr_1fr]" : "";
 
   return (
     <div ref={ref} className={`grid gap-4 ${layout} ${seen ? "impact-seen" : ""}`}>
-      {hasTravel && <TravelCard trips={trips} wide={hasService} />}
-      {hasService && <ServiceCard impact={impact} />}
-      <YearsCard />
+      {hasTravel && <TravelCard trips={trips} className={all ? "md:col-start-1 md:row-start-1" : ""} />}
+      {hasService && (
+        <ServiceCard impact={impact} provinces={provinces} className={all ? "md:col-start-2 md:row-start-1 md:row-span-2" : ""} />
+      )}
+      <YearsCard compact={all} className={all ? "md:col-start-1 md:row-start-2" : ""} />
     </div>
   );
 }
@@ -47,7 +51,7 @@ export default function ImpactPanel({ impact, trips }: { impact: ImpactStat[]; t
 const card = "rounded-2xl bg-white/[0.06] border border-white/15 p-5";
 const cardTitle = "text-xs font-bold uppercase tracking-wider text-rotary-gold mb-3";
 
-function TravelCard({ trips, wide }: { trips: Trip[]; wide: boolean }) {
+function TravelCard({ trips, className }: { trips: Trip[]; className: string }) {
   const { t } = useLanguage();
   const { countries, km } = travelTotals(trips);
   const kmText = Math.round(km).toLocaleString("en-US");
@@ -55,7 +59,7 @@ function TravelCard({ trips, wide }: { trips: Trip[]; wide: boolean }) {
   const pct = Math.round(laps * 100);
   const lapsText = laps.toFixed(1);
   return (
-    <div className={`${card} ${wide ? "md:col-span-2 lg:col-span-1" : ""}`}>
+    <div className={`${card} ${className}`}>
       <p className={cardTitle}>
         ✈ {t("Бидний хүрсэн газрууд", "Where we've traveled", "私たちが訪れた場所", "我們足跡所至", "우리가 다녀온 곳")}
       </p>
@@ -104,10 +108,10 @@ function TravelCard({ trips, wide }: { trips: Trip[]; wide: boolean }) {
   );
 }
 
-function ServiceCard({ impact }: { impact: ImpactStat[] }) {
+function ServiceCard({ impact, provinces, className }: { impact: ImpactStat[]; provinces: string[]; className: string }) {
   const { t } = useLanguage();
   return (
-    <div className={card}>
+    <div className={`${card} flex flex-col ${className}`}>
       <p className={cardTitle}>♥ {t("Бидний үйлс", "Our service", "私たちの奉仕", "我們的服務", "우리의 봉사")}</p>
       <div className="grid gap-5">
         {impact.map((s, i) => {
@@ -144,11 +148,60 @@ function ServiceCard({ impact }: { impact: ImpactStat[] }) {
           );
         })}
       </div>
+      {provinces.length > 0 && <ProvinceMap provinces={provinces} spaced={impact.length > 0} />}
     </div>
   );
 }
 
-function YearsCard() {
+// Mongolia with the provinces where the club has run projects (ticked in
+// Admin → Settings) in gold, filling in one by one on scroll-in. The
+// number counts aimags; Ulaanbaatar, when ticked, is named alongside.
+function ProvinceMap({ provinces, spaced }: { provinces: string[]; spaced: boolean }) {
+  const { t } = useLanguage();
+  const aimags = provinces.filter((id) => id !== ULAANBAATAR_ID).length;
+  const withUb = provinces.includes(ULAANBAATAR_ID);
+  // Fill order: west to east, one after another.
+  const order = PROVINCES.filter((p) => provinces.includes(p.id))
+    .sort((a, b) => a.cx - b.cx)
+    .map((p) => p.id);
+  return (
+    <div className={spaced ? "mt-auto pt-5" : ""}>
+      <p className="mb-2">
+        {aimags > 0 && <span className="text-2xl font-extrabold text-rotary-gold">{aimags}</span>}{" "}
+        <span className="text-blue-100 text-sm">
+          {aimags > 0
+            ? withUb
+              ? t("аймаг, Улаанбаатарт төсөл хэрэгжүүлсэн", "provinces and Ulaanbaatar with our projects", "県とウランバートルでプロジェクト実施", "個省及烏蘭巴托實施項目", "개 아이막과 울란바토르에서 프로젝트")
+              : t("аймагт төсөл хэрэгжүүлсэн", "provinces with our projects", "県でプロジェクト実施", "個省實施項目", "개 아이막에서 프로젝트")
+            : t("Улаанбаатарт төсөл хэрэгжүүлсэн", "Projects in Ulaanbaatar", "ウランバートルでプロジェクト実施", "在烏蘭巴托實施項目", "울란바토르에서 프로젝트")}
+        </span>
+      </p>
+      <svg viewBox={MONGOLIA_VIEWBOX} className="w-full h-auto block" role="img" aria-label={t("Төсөл хэрэгжүүлсэн аймгууд", "Provinces with our projects", "プロジェクト実施県", "實施項目的省份", "프로젝트 아이막")}>
+        {PROVINCES.map((p) => {
+          const on = provinces.includes(p.id);
+          return (
+            <path
+              key={p.id}
+              d={p.d}
+              className={on ? "impact-province" : undefined}
+              fill={on ? undefined : "rgba(255,255,255,0.12)"}
+              stroke="#123a75"
+              strokeWidth={1.2}
+              strokeLinejoin="round"
+              style={on ? { transitionDelay: `${0.4 + order.indexOf(p.id) * 0.12}s` } : undefined}
+            >
+              <title>{t(p.mn, p.en)}</title>
+            </path>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
+// compact: ring beside the text (under the travel card); otherwise the
+// ring sits above it.
+function YearsCard({ compact, className }: { compact: boolean; className: string }) {
   const { t } = useLanguage();
   const years = yearsOfService(new Date());
   const steps = [
@@ -156,28 +209,39 @@ function YearsCard() {
     { year: "2012", label: t("Ротарид элссэн", "Chartered", "ロータリー加盟", "加入扶輪", "로타리 가입") },
     { year: String(new Date().getFullYear()), label: t("Өнөөдөр", "Today", "現在", "今天", "오늘") },
   ];
+  const ring = (
+    <div className={`shrink-0 rounded-full border-2 border-dashed border-rotary-gold/40 p-1.5 ${compact ? "md:p-1" : "mx-auto my-2"}`}>
+      <div
+        className={`rounded-full border-[6px] border-rotary-gold bg-[#123a75] flex flex-col items-center justify-center leading-none ${
+          compact ? "w-32 h-32 md:w-24 md:h-24 md:border-[5px]" : "w-32 h-32"
+        }`}
+      >
+        <span className={`font-extrabold text-white ${compact ? "text-5xl md:text-4xl" : "text-5xl"}`}>{years}</span>
+        <span className="text-[11px] font-bold uppercase tracking-wider text-rotary-gold mt-1">{t("жил", "years", "年", "年", "년")}</span>
+      </div>
+    </div>
+  );
   return (
-    <div className={`${card} flex flex-col`}>
+    <div className={`${card} flex flex-col ${className}`}>
       <p className={cardTitle}>⚙ {t("2012 оноос хойш", "Since 2012", "2012年から", "自2012年", "2012년부터")}</p>
-      <div className="mx-auto my-2 rounded-full border-2 border-dashed border-rotary-gold/40 p-1.5">
-        <div className="w-32 h-32 rounded-full border-[6px] border-rotary-gold bg-[#123a75] flex flex-col items-center justify-center leading-none">
-          <span className="text-5xl font-extrabold text-white">{years}</span>
-          <span className="text-[11px] font-bold uppercase tracking-wider text-rotary-gold mt-1">{t("жил", "years", "年", "年", "년")}</span>
+      <div className={compact ? "flex-1 flex flex-col items-center md:flex-row gap-5" : "flex-1 flex flex-col"}>
+        {ring}
+        <div className={compact ? "w-full md:flex-1" : "flex-1 flex flex-col"}>
+          <p className={`text-center text-blue-100 text-sm mb-4 ${compact ? "md:text-left" : ""}`}>
+            {t("олон нийтэд үйлчилж байна", "of service to our community", "地域社会への奉仕", "服務社區", "지역사회 봉사")}
+          </p>
+          <ol className="relative mt-auto grid grid-cols-3 text-center">
+            <span className="absolute left-[16.6%] right-[16.6%] top-[5px] h-px bg-white/30" aria-hidden="true" />
+            {steps.map((s, i) => (
+              <li key={s.year} className="impact-step relative" style={{ transitionDelay: `${0.4 + i * 0.4}s` }}>
+                <span className="block w-[11px] h-[11px] rounded-full bg-rotary-gold mx-auto ring-4 ring-[#123a75]" />
+                <span className="block text-sm font-bold text-white mt-1.5">{s.year}</span>
+                <span className="block text-[11px] text-blue-100 leading-tight">{s.label}</span>
+              </li>
+            ))}
+          </ol>
         </div>
       </div>
-      <p className="text-center text-blue-100 text-sm mb-4">
-        {t("олон нийтэд үйлчилж байна", "of service to our community", "地域社会への奉仕", "服務社區", "지역사회 봉사")}
-      </p>
-      <ol className="relative mt-auto grid grid-cols-3 text-center">
-        <span className="absolute left-[16.6%] right-[16.6%] top-[5px] h-px bg-white/30" aria-hidden="true" />
-        {steps.map((s, i) => (
-          <li key={s.year} className="impact-step relative" style={{ transitionDelay: `${0.4 + i * 0.4}s` }}>
-            <span className="block w-[11px] h-[11px] rounded-full bg-rotary-gold mx-auto ring-4 ring-[#123a75]" />
-            <span className="block text-sm font-bold text-white mt-1.5">{s.year}</span>
-            <span className="block text-[11px] text-blue-100 leading-tight">{s.label}</span>
-          </li>
-        ))}
-      </ol>
     </div>
   );
 }
@@ -196,6 +260,12 @@ function Icon({ name }: { name: ImpactIcon }) {
       <>
         <path d="M12 3 1.5 8.5 12 14l10.5-5.5L12 3z" />
         <path d="M5 11.5v4.8c0 1.9 3.1 3.7 7 3.7s7-1.8 7-3.7v-4.8L12 15.2l-7-3.7z" />
+      </>
+    ),
+    hospital: (
+      <>
+        <rect x="3" y="3" width="18" height="18" rx="3" />
+        <path d="M12 7v10M7 12h10" fill="none" stroke="#123a75" strokeWidth="3" strokeLinecap="round" />
       </>
     ),
     clock: (

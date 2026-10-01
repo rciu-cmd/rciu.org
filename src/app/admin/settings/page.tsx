@@ -5,11 +5,23 @@ import Image from "next/image";
 import { asset } from "@/lib/asset";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
-import { IMPACT_ICONS, IMPACT_KEY, IMPACT_MAX, parseImpact, type ImpactIcon, type ImpactStat } from "@/lib/impact";
+import {
+  IMPACT_DEFAULT_ICONS,
+  IMPACT_ICONS,
+  IMPACT_KEY,
+  IMPACT_MAX,
+  PROVINCES_KEY,
+  parseImpact,
+  parseProvinces,
+  type ImpactIcon,
+  type ImpactStat,
+} from "@/lib/impact";
+import { MONGOLIA_VIEWBOX, PROVINCES } from "@/lib/mongolia-provinces";
 
 const ICON_LABEL: Record<ImpactIcon, [string, string]> = {
   person: ["👤 Хүн", "👤 Person"],
   school: ["🎓 Сургууль", "🎓 School"],
+  hospital: ["🏥 Эмнэлэг", "🏥 Hospital"],
   clock: ["🕒 Цаг", "🕒 Clock"],
   tree: ["🌲 Мод", "🌲 Tree"],
   heart: ["♥ Зүрх", "♥ Heart"],
@@ -47,18 +59,22 @@ export default function AdminSettingsPage() {
   const [impactBusy, setImpactBusy] = useState(false);
   const [impactSaved, setImpactSaved] = useState(false);
   const [impactError, setImpactError] = useState<string | null>(null);
+  // Provinces where the club has run projects — gold on the home page's
+  // Mongolia map; ticked here by clicking the map or the names.
+  const [provinces, setProvinces] = useState<string[]>([]);
 
   useEffect(() => {
     supabase
       .from("site_settings")
       .select("key, value_en")
-      .in("key", ["rotary_theme_banner_url", "contact_phone", IMPACT_KEY])
+      .in("key", ["rotary_theme_banner_url", "contact_phone", IMPACT_KEY, PROVINCES_KEY])
       .then(({ data }) => {
         const row = (key: string) => data?.find((r) => r.key === key)?.value_en;
         setBannerUrl(row("rotary_theme_banner_url") ?? PRESET_BANNERS[2]);
         setPhone(row("contact_phone") ?? "");
         const saved = parseImpact(row(IMPACT_KEY));
-        setImpact(Array.from({ length: IMPACT_MAX }, (_, i) => saved[i] ?? { value: "", label_mn: "", label_en: "", icon: "person" }));
+        setImpact(Array.from({ length: IMPACT_MAX }, (_, i) => saved[i] ?? { value: "", label_mn: "", label_en: "", icon: IMPACT_DEFAULT_ICONS[i] }));
+        setProvinces(parseProvinces(row(PROVINCES_KEY)));
         setLoaded(true);
       });
   }, []);
@@ -68,13 +84,22 @@ export default function AdminSettingsPage() {
     setImpactSaved(false);
   }
 
+  function toggleProvince(id: string) {
+    setProvinces((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]));
+    setImpactSaved(false);
+  }
+
   async function saveImpact(e: React.FormEvent) {
     e.preventDefault();
     setImpactBusy(true);
     setImpactError(null);
     setImpactSaved(false);
-    const json = JSON.stringify(parseImpact(JSON.stringify(impact)));
-    const { error } = await supabase.from("site_settings").upsert({ key: IMPACT_KEY, value_en: json, value_mn: json });
+    const numbers = JSON.stringify(parseImpact(JSON.stringify(impact)));
+    const ticked = JSON.stringify(parseProvinces(JSON.stringify(provinces)));
+    const { error } = await supabase.from("site_settings").upsert([
+      { key: IMPACT_KEY, value_en: numbers, value_mn: numbers },
+      { key: PROVINCES_KEY, value_en: ticked, value_mn: ticked },
+    ]);
     setImpactBusy(false);
     if (error) {
       setImpactError(error.message);
@@ -187,8 +212,8 @@ export default function AdminSettingsPage() {
             <h3 className="font-bold text-slate-900 mb-1">{t("Бидний үр нөлөө (нүүр хуудас)", "Our Impact (home page)", "私たちの歩み(ホーム)", "我們的足跡(首頁)")}</h3>
             <p className="text-sm text-slate-500 mb-3">
               {t(
-                "Нүүр хуудасны \"Бидний үр нөлөө\" хэсэгт харагдах тоонууд. Зочилсон улс, туулсан км (\"Аяллын зураг\" хэсгээс) болон үйлчилгээний жилийг сайт өөрөө тоолно — энд 3 хүртэл нэмэлт тоо оруулж болно, жишээ нь \"1,200+ · хүнд тусалсан\". Тоо бүр сонгосон дүрсээрээ эгнээ болж харагдана (жишээ нь 1,200 → 100 тутамд нэг хүн, 12 дүрс). Хоосон мөр харагдахгүй.",
-                "Numbers shown in the home page's \"Our impact\" band. Countries visited and km traveled (from the Travel Map) and years of service are counted automatically — add up to 3 more here, e.g. \"1,200+ · people helped\". Each number is drawn as a row of the icon you pick (e.g. 1,200 → 12 people icons, one per 100). Empty rows are hidden.",
+                "Нүүр хуудасны \"Бидний үр нөлөө\" хэсэгт харагдах тоонууд. Зочилсон улс, туулсан км (\"Аяллын зураг\" хэсгээс) болон үйлчилгээний жилийг сайт өөрөө тоолно — энд 3 хүртэл нэмэлт тоо оруулна — жишээ нь хүн, сургууль, эмнэлэг. Тоо бүр сонгосон дүрсээрээ эгнээ болж харагдана (жишээ нь 1,200 → 100 тутамд нэг хүн, 12 дүрс); хоосон мөр харагдахгүй. Доор Монголын газрын зураг дээр төсөл хэрэгжүүлсэн аймгуудаа сонгоно.",
+                "Numbers shown in the home page's \"Our impact\" band. Countries visited and km traveled (from the Travel Map) and years of service are counted automatically — add up to 3 more here — e.g. people helped, schools, hospitals. Each number is drawn as a row of the icon you pick (e.g. 1,200 → 12 people icons, one per 100); empty rows are hidden. Below, tick the provinces where we've run projects for the Mongolia map.",
                 "ホームの「私たちの歩み」に表示される数字です。訪問国数・移動距離(旅行マップから)と奉仕年数は自動で数えます。ここでは最大3つまで追加できます。空の行は表示されません。",
                 "首頁「我們的足跡」中顯示的數字。造訪國家數、旅程公里數(來自旅行地圖)和服務年數會自動計算——此處可再新增最多3個。空白行不會顯示。"
               )}
@@ -205,7 +230,7 @@ export default function AdminSettingsPage() {
                   <input
                     value={row.value}
                     onChange={(e) => setImpactField(i, "value", e.target.value)}
-                    placeholder={["1,200+", "15", "3,000"][i]}
+                    placeholder={["1,200+", "15", "8"][i]}
                     className="rounded-md border border-slate-300 px-3 py-2 text-sm"
                   />
                   <select
@@ -223,18 +248,70 @@ export default function AdminSettingsPage() {
                   <input
                     value={row.label_mn}
                     onChange={(e) => setImpactField(i, "label_mn", e.target.value)}
-                    placeholder={["хүнд тусалсан", "сургууль, цэцэрлэгт дэмжлэг", "сайн дурын цаг"][i]}
+                    placeholder={["хүнд тусалсан", "сургууль, цэцэрлэг", "эмнэлэг"][i]}
                     className="rounded-md border border-slate-300 px-3 py-2 text-sm"
                   />
                   <input
                     value={row.label_en}
                     onChange={(e) => setImpactField(i, "label_en", e.target.value)}
-                    placeholder={["people helped", "schools & kindergartens supported", "volunteer hours"][i]}
+                    placeholder={["people helped", "schools & kindergartens", "hospitals"][i]}
                     className="rounded-md border border-slate-300 px-3 py-2 text-sm"
                   />
                 </div>
               ))}
-              <div>
+
+              <div className="mt-4">
+                <p className="text-sm font-semibold text-slate-700">
+                  {t("Төсөл хэрэгжүүлсэн аймгууд", "Provinces with our projects", "プロジェクト実施県", "實施項目的省份")}{" "}
+                  <span className="font-normal text-slate-500">
+                    ({provinces.length} {t("сонгосон", "selected", "選択", "已選")})
+                  </span>
+                </p>
+                <p className="text-xs text-slate-500 mb-2">
+                  {t(
+                    "Газрын зураг эсвэл нэрэн дээр дарж сонгоно. Нүүр хуудсанд эдгээр аймаг алтлаг өнгөөр харагдана.",
+                    "Click the map or the names to tick them. They show in gold on the home page.",
+                    "地図か名前をクリックして選択します。ホームで金色に表示されます。",
+                    "點擊地圖或名稱選擇,首頁會以金色顯示。"
+                  )}
+                </p>
+                <svg viewBox={MONGOLIA_VIEWBOX} className="w-full max-w-lg h-auto block mb-3" role="group" aria-label={t("Монголын газрын зураг", "Map of Mongolia", "モンゴルの地図", "蒙古地圖")}>
+                  {PROVINCES.map((p) => (
+                    <path
+                      key={p.id}
+                      d={p.d}
+                      onClick={() => toggleProvince(p.id)}
+                      fill={provinces.includes(p.id) ? "#f7a81b" : "#e2e8f0"}
+                      stroke="#ffffff"
+                      strokeWidth={1.2}
+                      className="cursor-pointer hover:opacity-80 transition"
+                    >
+                      <title>{t(p.mn, p.en)}</title>
+                    </path>
+                  ))}
+                </svg>
+                <div className="flex flex-wrap gap-1.5">
+                  {PROVINCES.map((p) => {
+                    const on = provinces.includes(p.id);
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => toggleProvince(p.id)}
+                        aria-pressed={on}
+                        className={`text-xs rounded-full border px-2.5 py-1 transition ${
+                          on ? "bg-rotary-gold border-rotary-gold text-slate-900 font-semibold" : "border-slate-300 text-slate-600 hover:bg-slate-50"
+                        }`}
+                      >
+                        {on ? "✓ " : ""}
+                        {t(p.mn, p.en)}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="mt-2">
                 <button
                   type="submit"
                   disabled={impactBusy}

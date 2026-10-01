@@ -163,7 +163,11 @@ happens there (not in code), give literal numbered instructions, not
   `member_travels` (`src/lib/travel.ts`, the same math as the About
   page's map; trips inside Mongolia add no country), icon rows for up
   to 3 numbers typed in Admin → Settings (JSON in `site_settings` key
-  `impact_stats`, with an icon per number — `src/lib/impact.ts`), and
+  `impact_stats`, with an icon per number — `src/lib/impact.ts`; meant
+  for people / schools / hospitals), a Mongolia map with the provinces
+  ticked in Admin → Settings in gold (`impact_provinces`; shapes in
+  `src/lib/mongolia-provinces.ts`, generated from Natural Earth — public
+  domain — regenerate rather than hand-edit), and
   years since the June 2012 charter in a gold ring (deliberately not a
   Rotary wheel — HomeGear stays the only one). Animations play once on
   scroll-in (`.impact-*` in globals.css) and are off for reduced motion.
@@ -211,4 +215,5 @@ lint at zero + in the PR check, Actions on Node 24 versions, Next.js
 16.3.8 (npm audit clean), compact home page redesign (one colour-changing
 gear, grids, hero buttons, next-event card, gallery viewer), bilingual
 search titles, generated sitemap, wide share image, share buttons,
-"Our impact" numbers band.
+"Our impact" infographic (travel map, people/school/hospital icon rows,
+province map, years ring).
