@@ -122,7 +122,7 @@ happens there (not in code), give literal numbered instructions, not
 
 Core site + admin dashboard (news, projects, events, members, gallery,
 awards, board, travel, join/project inquiries) are built out; README.md
-has the full feature list. Recent work (Oct 2026, PRs #1–#4):
+has the full feature list. Recent work (Oct 2026):
 private photo-bucket listing + inquiry-form spam guard (migration26),
 keep-alive that pings Supabase, browser-language first visit, sitemap /
 page titles / 404 page, "Add to calendar" on events, missing-translation
