@@ -53,10 +53,11 @@ Let me know which path you hit and I can walk through it step by step.
 ## Automatic reminders (migration27, October 2026)
 
 Since migration27 this function also runs by itself every day at 09:00
-Ulaanbaatar time and emails members about every event happening the
-next day (public holidays excluded; skipped if someone clicked
-**Send Reminder** for that event in the last 24 hours). Each event gets
-at most one automatic reminder. To switch it on:
+Ulaanbaatar time and emails members twice about each event: one week
+before and one day before (public holidays excluded; a reminder is
+skipped if someone clicked **Send Reminder** for that event in the last
+24 hours). Each event gets at most one of each. To change the timing,
+edit `AUTO_REMINDERS` near the top of `index.ts`. To switch it on:
 
 1. Run `supabase/migration27_automatic_event_reminders.sql` in
    Supabase → **SQL Editor** (adds the daily schedule).
@@ -68,7 +69,8 @@ at most one automatic reminder. To switch it on:
    Send Reminder button — the daily call has no login.
 
 To check it ran: the next day, Admin → Calendar → **Sent Reminders**
-shows a line marked "automatic" for each event that was reminded. In
+shows a line marked "automatic, 1 week before" or "automatic, 1 day
+before" for each reminder sent. In
 the SQL Editor, `select * from cron.job_run_details order by start_time desc limit 5;`
 shows each daily run.
 

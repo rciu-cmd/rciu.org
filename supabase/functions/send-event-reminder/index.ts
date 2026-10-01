@@ -7,17 +7,18 @@
 //      signed-in super admin (checked via their JWT).
 //
 //   2. AUTOMATIC — a daily pg_cron job inside Supabase (migration27)
-//      posts { mode: "auto" } at 09:00 Ulaanbaatar time. That sends the
-//      reminder for every event happening TOMORROW, except public
-//      holidays and events an admin already sent a manual reminder for
-//      in the last 24 hours.
+//      posts { mode: "auto" } at 09:00 Ulaanbaatar time. That sends two
+//      reminders per event (AUTO_REMINDERS below): one WEEK before and
+//      one DAY before — except for public holidays, and skipping a
+//      reminder if an admin already sent a manual one for that event in
+//      the last 24 hours.
 //
 //      This mode needs no login (a database cron job has none), so
 //      anyone could call it — that's safe because it can only ever do
 //      what the daily job does: before emailing, it records an
-//      event_reminders row with kind = 'auto', and a unique index allows
-//      just one such row per event. A second call (or two at once) for
-//      the same event finds the row and sends nothing.
+//      event_reminders row with kind = 'week_before' / 'day_before', and
+//      a unique index allows just one row per event and kind. A second
+//      call (or two at once) finds the row and sends nothing.
 //
 // What gets sent: one email per active member (each address stays
 // private), via Resend, plus an event_reminders row that the member
@@ -38,6 +39,16 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// The automatic reminders, in the order the daily run handles them.
+// To change the timing, edit this list (and the check constraint on
+// event_reminders.kind in migration27/schema.sql if adding a new kind).
+const AUTO_REMINDERS = [
+  { kind: "week_before", daysAhead: 7, subjectPrefix: "Next week", intro: "A reminder that this Rotary Club of Ikh Urgoo event is one week away:" },
+  { kind: "day_before", daysAhead: 1, subjectPrefix: "Tomorrow", intro: "A reminder that this Rotary Club of Ikh Urgoo event is tomorrow:" },
+] as const;
+
+type AutoReminder = (typeof AUTO_REMINDERS)[number];
 
 const EVENT_COLUMNS = "id, title_mn, title_en, description_mn, description_en, location, event_date, event_time, category";
 
@@ -114,7 +125,7 @@ Deno.serve(async (req) => {
     const { data: event, error: eventError } = await admin.from("events").select(EVENT_COLUMNS).eq("id", event_id).single();
     if (eventError || !event) return json({ error: "Event not found" }, 404);
 
-    const result = await emailActiveMembers(admin, event as EventRow, "manual", mail);
+    const result = await emailActiveMembers(admin, event as EventRow, null, mail);
     if ("error" in result) return json({ error: result.error }, 500);
     if (result.total === 0) return json({ sent: 0, note: "No active members with an email on file." });
 
@@ -147,45 +158,52 @@ function ulaanbaatarDate(offsetDays: number): string {
 }
 
 async function sendAutomaticReminders(admin: SupabaseClient, mail: Mail) {
-  const tomorrow = ulaanbaatarDate(1);
-  const { data: events, error } = await admin.from("events").select(EVENT_COLUMNS).eq("event_date", tomorrow);
-  if (error) return { date: tomorrow, error: error.message };
-
   const results: Record<string, unknown>[] = [];
-  for (const event of (events ?? []) as EventRow[]) {
-    const label = { event_id: event.id, title: event.title_en };
-    if (event.category === "public_holiday") continue;
-
-    // An admin clicked "Send Reminder" for this event in the last day —
-    // members were just emailed, don't email them again.
-    const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-    const { data: recentManual } = await admin
-      .from("event_reminders")
-      .select("id")
-      .eq("event_id", event.id)
-      .eq("kind", "manual")
-      .gte("sent_at", since)
-      .limit(1);
-    if (recentManual && recentManual.length > 0) {
-      results.push({ ...label, skipped: "a manual reminder was sent in the last 24 hours" });
+  for (const reminder of AUTO_REMINDERS) {
+    const date = ulaanbaatarDate(reminder.daysAhead);
+    const { data: events, error } = await admin.from("events").select(EVENT_COLUMNS).eq("event_date", date);
+    if (error) {
+      results.push({ reminder: reminder.kind, date, error: error.message });
       continue;
     }
-
-    // Claim the event BEFORE emailing: the unique index on
-    // (event_id) where kind = 'auto' lets only one call ever insert this
-    // row, so a repeated or simultaneous call can't email members twice.
-    const { error: claimError } = await admin.from("event_reminders").insert({ event_id: event.id, kind: "auto" });
-    if (claimError) {
-      results.push({ ...label, skipped: claimError.code === "23505" ? "automatic reminder already sent" : claimError.message });
-      continue;
+    for (const event of (events ?? []) as EventRow[]) {
+      if (event.category === "public_holiday") continue;
+      results.push({ reminder: reminder.kind, date, ...(await sendOneAutomatic(admin, event, reminder, mail)) });
     }
-
-    results.push({ ...label, ...(await emailActiveMembers(admin, event, "auto", mail)) });
   }
-  return { date: tomorrow, results };
+  return { results };
 }
 
-async function emailActiveMembers(admin: SupabaseClient, event: EventRow, kind: "manual" | "auto", mail: Mail) {
+async function sendOneAutomatic(admin: SupabaseClient, event: EventRow, reminder: AutoReminder, mail: Mail) {
+  const label = { event_id: event.id, title: event.title_en };
+
+  // An admin clicked "Send Reminder" for this event in the last day —
+  // members were just emailed, don't email them again.
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const { data: recentManual } = await admin
+    .from("event_reminders")
+    .select("id")
+    .eq("event_id", event.id)
+    .eq("kind", "manual")
+    .gte("sent_at", since)
+    .limit(1);
+  if (recentManual && recentManual.length > 0) {
+    return { ...label, skipped: "a manual reminder was sent in the last 24 hours" };
+  }
+
+  // Claim the event BEFORE emailing: the unique index on
+  // (event_id, kind) for automatic kinds lets only one call ever insert
+  // this row, so a repeated or simultaneous call can't email members twice.
+  const { error: claimError } = await admin.from("event_reminders").insert({ event_id: event.id, kind: reminder.kind });
+  if (claimError) {
+    return { ...label, skipped: claimError.code === "23505" ? "this reminder was already sent" : claimError.message };
+  }
+
+  return { ...label, ...(await emailActiveMembers(admin, event, reminder, mail)) };
+}
+
+// reminder = null for the manual "Send Reminder" button.
+async function emailActiveMembers(admin: SupabaseClient, event: EventRow, reminder: AutoReminder | null, mail: Mail) {
   const { data: members, error: membersError } = await admin
     .from("members")
     .select("email, first_name")
@@ -194,14 +212,8 @@ async function emailActiveMembers(admin: SupabaseClient, event: EventRow, kind: 
 
   const recipients = (members ?? []).filter((m: { email: string | null }) => m.email);
 
-  const subject =
-    kind === "auto"
-      ? `Tomorrow: ${event.title_en} — ${event.event_date}`
-      : `Reminder: ${event.title_en} — ${event.event_date}`;
-  const intro =
-    kind === "auto"
-      ? "A reminder that this Rotary Club of Ikh Urgoo event is tomorrow:"
-      : "This is a reminder about an upcoming Rotary Club of Ikh Urgoo event:";
+  const subject = `${reminder ? reminder.subjectPrefix : "Reminder"}: ${event.title_en} — ${event.event_date}`;
+  const intro = reminder ? reminder.intro : "This is a reminder about an upcoming Rotary Club of Ikh Urgoo event:";
   // Absolute URL — email clients can't load site-relative paths, so
   // this has to point at the live, publicly-served logo file.
   const LOGO_URL = "https://rciu.org/logos/rciu-logo-transparent.png";

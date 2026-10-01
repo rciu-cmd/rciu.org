@@ -131,9 +131,10 @@ happens there (not in code), give literal numbered instructions, not
 - **Automatic event reminders** (migration27): pg_cron calls the
   `send-event-reminder` Edge Function daily at 01:00 UTC (09:00 UB) with
   `{"mode":"auto"}` — no login, so that mode must stay harmless to call:
-  it only emails about *tomorrow's* events and claims each one first via
-  a unique index (`event_reminders` kind = 'auto', one per event), so
-  repeat/concurrent calls send nothing. Edge Function code changes must
+  it only emails about events exactly 7 days and 1 day away
+  (`AUTO_REMINDERS` in the function) and claims each one first via a
+  unique index (`event_reminders` (event_id, kind) for kinds
+  'week_before' / 'day_before'), so repeat/concurrent calls send nothing. Edge Function code changes must
   be deployed by the user (Dashboard → Edge Functions → Code → Deploy,
   or the CLI) — merging to `main` doesn't deploy them.
 - **Visitor statistics**: Cloudflare Web Analytics beacon in
@@ -155,5 +156,5 @@ keep-alive that pings Supabase, browser-language first visit, sitemap /
 page titles / 404 page, "Add to calendar" on events, missing-translation
 fallback in `t()`, README rewrite, lighter icons, per-item link-preview
 pages + hourly rebuild, friendly errors, pull-request build check,
-automatic day-before event reminders (migration27), Cloudflare Web
+automatic week-before + day-before event reminders (migration27), Cloudflare Web
 Analytics hook.

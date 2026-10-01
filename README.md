@@ -22,7 +22,7 @@ gotchas already learned the hard way.
   partnership form.
 - **Events** — monthly calendar with "Add to calendar" (Google /
   Apple / Outlook) on upcoming events. Members are emailed a reminder
-  automatically at 09:00 the day before each event.
+  automatically at 09:00 one week before and one day before each event.
 - **Board**, **Join** (membership interest form), **Contact**.
 - A friendly "page not found" page for broken links.
 
@@ -54,7 +54,8 @@ and remember the choice.
   ship.
 - **Email:** two Supabase Edge Functions using Resend —
   `notify-inquiry` (emails officers when a Join / Project form is
-  submitted) and `send-event-reminder` (the daily day-before reminders,
+  submitted) and `send-event-reminder` (the automatic week-before and
+  day-before reminders,
   plus the "Send Reminder" button in
   Admin → Calendar). Setup notes: the comment at the top of
   `supabase/functions/notify-inquiry/index.ts`, and

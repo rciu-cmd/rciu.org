@@ -740,9 +740,10 @@ create policy events_write_admin on public.events
 -- stray/duplicate "Send Reminder" click (each one adds a row, and the
 -- Dashboard lists every row it finds) can be cleaned up from
 -- Admin → Events instead of piling up in members' Reminders box forever.
--- kind (migration27): 'manual' = the button, 'auto' = the daily job
--- below; the unique index allows one automatic reminder per event, which
--- is what stops the job ever emailing members twice about the same event.
+-- kind (migration27): 'manual' = the button; 'week_before' /
+-- 'day_before' = the daily job below. The unique index allows one of
+-- each automatic kind per event, which is what stops the job ever
+-- emailing members twice about the same thing.
 create table if not exists public.event_reminders (
   id uuid primary key default gen_random_uuid(),
   event_id uuid not null references public.events(id) on delete cascade,
@@ -750,12 +751,17 @@ create table if not exists public.event_reminders (
 );
 
 alter table public.event_reminders
-  add column if not exists kind text not null default 'manual'
-  check (kind in ('manual', 'auto'));
+  add column if not exists kind text not null default 'manual';
 
-create unique index if not exists event_reminders_one_auto_per_event
-  on public.event_reminders (event_id)
-  where kind = 'auto';
+alter table public.event_reminders drop constraint if exists event_reminders_kind_check;
+update public.event_reminders set kind = 'day_before' where kind = 'auto';
+alter table public.event_reminders add constraint event_reminders_kind_check
+  check (kind in ('manual', 'week_before', 'day_before'));
+
+drop index if exists public.event_reminders_one_auto_per_event;
+create unique index if not exists event_reminders_one_per_auto_kind
+  on public.event_reminders (event_id, kind)
+  where kind <> 'manual';
 
 alter table public.event_reminders enable row level security;
 
@@ -1118,9 +1124,9 @@ create policy rciu_photos_update_admin on storage.objects
 -- Automatic event reminders (migration27): every day at 09:00
 -- Ulaanbaatar (01:00 UTC) pg_cron calls the send-event-reminder Edge
 -- Function in "auto" mode, which emails active members about every
--- event happening tomorrow (not public holidays; skipped if an admin
--- sent a manual reminder in the last 24 hours). Re-running replaces the
--- job, since cron.schedule upserts by name.
+-- event one week away and every event tomorrow (not public holidays;
+-- skipped if an admin sent a manual reminder in the last 24 hours).
+-- Re-running replaces the job, since cron.schedule upserts by name.
 -- ------------------------------------------------------------
 create extension if not exists pg_cron;
 create extension if not exists pg_net with schema extensions;

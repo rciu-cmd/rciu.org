@@ -30,9 +30,10 @@ type EventRow = {
 type ReminderLogRow = {
   id: string;
   sent_at: string;
-  // 'manual' = the button, 'auto' = the daily 09:00 job (migration27).
-  // Optional: older databases without migration27 have no column.
-  kind?: "manual" | "auto";
+  // 'manual' = the button; 'week_before' / 'day_before' = the daily
+  // 09:00 job (migration27). Optional: older databases without
+  // migration27 have no column.
+  kind?: "manual" | "week_before" | "day_before";
   event: { id: string; title_mn: string; title_en: string; event_date: string } | null;
 };
 
@@ -270,7 +271,8 @@ export default function AdminEventsPage() {
                   )}
                   <span className="text-slate-400 block text-xs">
                     {t("Илгээсэн:", "Sent:", "送信:", "發送時間：")} {new Date(r.sent_at).toLocaleString()}
-                    {r.kind === "auto" && ` · ${t("автоматаар", "automatic", "自動", "自動", "자동")}`}
+                    {r.kind === "week_before" && ` · ${t("автомат, 7 хоногийн өмнө", "automatic, 1 week before", "自動・1週間前", "自動・1週前", "자동 · 1주 전")}`}
+                    {r.kind === "day_before" && ` · ${t("автомат, 1 өдрийн өмнө", "automatic, 1 day before", "自動・前日", "自動・前一天", "자동 · 1일 전")}`}
                   </span>
                 </span>
                 <button
@@ -353,11 +355,11 @@ export default function AdminEventsPage() {
           <h3 className="font-semibold text-slate-700 mb-1">{t("Удахгүй болох", "Upcoming", "今後の予定", "即將舉行")}</h3>
           <p className="text-xs text-slate-400 mb-3">
             {t(
-              "Гишүүдэд арга хэмжээ болохын өмнөх өдрийн 09:00 цагт автоматаар сануулга и-мэйл илгээгдэнэ (улсын баярын өдрүүдээс бусад). \"Сануулга илгээх\" товчоор хүссэн үедээ гараар илгээж болно.",
-              "Members are emailed a reminder automatically at 09:00 the day before each event (except public holidays). Use \"Send Reminder\" to send one yourself at any other time.",
-              "各イベントの前日09:00に、メンバーへ自動でリマインダーメールが送信されます(祝日を除く)。それ以外のタイミングで送る場合は「リマインダー送信」を使ってください。",
-              "每個活動前一天09:00會自動向會員發送提醒郵件(國定假日除外)。如需在其他時間發送，請使用「發送提醒」。",
-              "각 행사 전날 09:00에 회원들에게 알림 이메일이 자동으로 발송됩니다(공휴일 제외). 다른 시간에 보내려면 \"알림 보내기\"를 사용하세요."
+              "Гишүүдэд арга хэмжээ болохоос 7 хоногийн өмнө болон өмнөх өдөр нь 09:00 цагт автоматаар сануулга и-мэйл илгээгдэнэ (улсын баярын өдрүүдээс бусад). \"Сануулга илгээх\" товчоор хүссэн үедээ гараар илгээж болно.",
+              "Members are emailed a reminder automatically at 09:00 one week before and one day before each event (except public holidays). Use \"Send Reminder\" to send one yourself at any other time.",
+              "各イベントの1週間前と前日の09:00に、メンバーへ自動でリマインダーメールが送信されます(祝日を除く)。それ以外のタイミングで送る場合は「リマインダー送信」を使ってください。",
+              "每個活動前一週和前一天的09:00會自動向會員發送提醒郵件(國定假日除外)。如需在其他時間發送，請使用「發送提醒」。",
+              "각 행사 1주 전과 전날 09:00에 회원들에게 알림 이메일이 자동으로 발송됩니다(공휴일 제외). 다른 시간에 보내려면 \"알림 보내기\"를 사용하세요."
             )}
           </p>
           <div className="grid gap-3 mb-10">
