@@ -278,11 +278,11 @@ export default function Home() {
             </h1>
             <p className="text-blue-100 sm:text-lg max-w-lg mb-6">
               {t(
-                "Бид Улаанбаатар хотод боловсрол, эх хүүхдийн эрүүл мэнд, өвчнөөс урьдчилан сэргийлэх чиглэлээр нийгэмдээ бодит өөрчлөлт авчирдаг.",
-                "In Ulaanbaatar, we bring real change to our community through education, maternal and child health, and disease prevention.",
-                "ウランバートルで、教育・母子保健・疾病予防を通じて地域社会に確かな変化をもたらしています。",
-                "我們在烏蘭巴托透過教育、母嬰健康與疾病預防，為社區帶來真正的改變。",
-                "울란바토르에서 교육, 모자 보건, 질병 예방을 통해 지역사회에 실질적인 변화를 만들어 갑니다."
+                "Бид Монголд боловсрол, эх хүүхдийн эрүүл мэнд, өвчнөөс урьдчилан сэргийлэх чиглэлээр нийгэмдээ бодит өөрчлөлт авчирдаг.",
+                "In Mongolia, we bring real change to our community through education, maternal and child health, and disease prevention.",
+                "モンゴルで、教育・母子保健・疾病予防を通じて地域社会に確かな変化をもたらしています。",
+                "我們在蒙古透過教育、母嬰健康與疾病預防，為社區帶來真正的改變。",
+                "몽골에서 교육, 모자 보건, 질병 예방을 통해 지역사회에 실질적인 변화를 만들어 갑니다."
               )}
             </p>
             <div className="flex flex-wrap gap-3 mb-7">
