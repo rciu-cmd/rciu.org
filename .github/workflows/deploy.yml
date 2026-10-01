@@ -3,11 +3,12 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
-  # Hourly rebuild of the same code, so news/projects published since the
-  # last deploy get their own /news/<id>/ link-preview page
-  # (src/lib/share-data.ts). After publishing something you want to share
-  # right away, run this workflow by hand: Actions → Deploy to GitHub
-  # Pages → Run workflow.
+  # Publishing/editing news or projects starts this workflow by itself
+  # (Supabase trigger → workflow_dispatch, migration28), so new posts get
+  # their /news/<id>/ link-preview page (src/lib/share-data.ts) within
+  # about a minute. The hourly schedule is only a fallback — GitHub often
+  # runs it hours late. You can also start it by hand: Actions → Deploy
+  # to GitHub Pages → Run workflow.
   schedule:
     - cron: '17 * * * *'
   workflow_dispatch:

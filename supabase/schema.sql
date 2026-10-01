@@ -1147,3 +1147,77 @@ select cron.schedule(
     );
   $job$
 );
+
+-- ------------------------------------------------------------
+-- Rebuild the website when content is published (migration28) — so
+-- new/changed news and projects get their link-preview page within a
+-- minute instead of waiting for GitHub's (unreliable) hourly schedule.
+-- Needs a GitHub token in Vault named 'github_rebuild_token' (stored
+-- separately — see README → Deploying); without it nothing is sent.
+-- ------------------------------------------------------------
+create extension if not exists pg_net with schema extensions;
+
+-- security definer: admins saving a post can't read Vault themselves.
+-- Errors are swallowed on purpose — a rebuild problem (expired token,
+-- GitHub down) must never stop an admin from saving a post. pg_net
+-- sends the request in the background, so saving isn't slowed either.
+create or replace function public.request_site_rebuild()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  token text;
+begin
+  -- News drafts aren't on the site, so editing one changes nothing.
+  -- (Nested, not "tg_table_name = 'news' and ...": Postgres doesn't
+  -- promise to skip the second half, and projects has no status column.)
+  if tg_table_name = 'news' then
+    if not (
+      (tg_op in ('INSERT', 'UPDATE') and new.status = 'published')
+      or (tg_op in ('UPDATE', 'DELETE') and old.status = 'published')
+    ) then
+      return null;
+    end if;
+  end if;
+
+  select decrypted_secret into token
+    from vault.decrypted_secrets
+   where name = 'github_rebuild_token';
+  if coalesce(token, '') = '' then
+    return null; -- not set up yet: the hourly rebuild still covers it
+  end if;
+
+  perform net.http_post(
+    url := 'https://api.github.com/repos/rciu-cmd/rciu.org/actions/workflows/deploy.yml/dispatches',
+    headers := jsonb_build_object(
+      'Authorization', 'Bearer ' || token,
+      'Accept', 'application/vnd.github+json',
+      'X-GitHub-Api-Version', '2022-11-28',
+      'User-Agent', 'rciu-supabase-rebuild',
+      'Content-Type', 'application/json'
+    ),
+    body := '{"ref": "main"}'::jsonb
+  );
+  return null;
+exception when others then
+  raise warning 'request_site_rebuild: %', sqlerrm;
+  return null;
+end;
+$$;
+
+drop trigger if exists news_request_rebuild on public.news;
+create trigger news_request_rebuild
+  after insert or update or delete on public.news
+  for each row execute function public.request_site_rebuild();
+
+drop trigger if exists projects_request_rebuild on public.projects;
+create trigger projects_request_rebuild
+  after insert or update or delete on public.projects
+  for each row execute function public.request_site_rebuild();
+
+drop trigger if exists project_media_request_rebuild on public.project_media;
+create trigger project_media_request_rebuild
+  after insert or update or delete on public.project_media
+  for each row execute function public.request_site_rebuild();
