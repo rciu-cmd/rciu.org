@@ -7,6 +7,10 @@ import { asset } from "@/lib/asset";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
 import ProjectPhotoCollage from "@/components/ProjectPhotoCollage";
+import HomeGear from "@/components/HomeGear";
+import AddToCalendar from "@/components/AddToCalendar";
+import { localYmd, MONTH_LABEL } from "@/lib/date";
+import { useBreakpoint, fullRows, type PerBreakpoint } from "@/lib/use-breakpoint";
 
 type LinkRow = { id: string; name: string; url: string | null; logo_url: string | null; category: string | null };
 type AffiliateRow = {
@@ -38,6 +42,16 @@ type NewsRow = {
   cover_image_url: string | null;
   facebook_url: string | null;
 };
+type EventRow = {
+  id: string;
+  title_mn: string;
+  title_en: string;
+  description_mn: string | null;
+  description_en: string | null;
+  location: string | null;
+  event_date: string; // "YYYY-MM-DD"
+  event_time: string | null;
+};
 type Stats = { phfPercent: number | null; affiliateCount: number | null; projectCount: number | null };
 type PhotoItem = { id: string; storage_path: string; caption: string | null; created_at: string };
 
@@ -61,6 +75,18 @@ const CAUSE_ICONS: Record<string, string> = {
   disease_prevention: "/causes/disease-prevention-treatment.png",
 };
 
+// Columns, and the most cards shown, at each breakpoint (phone, sm,
+// md, lg, xl) — fullRows() trims to whole rows so no row is left
+// half-empty. News needs ~350px per card for Facebook's embed, so
+// three across only from xl; projects drop to compact rows on phones.
+const NEWS_GRID: { cols: PerBreakpoint; max: PerBreakpoint } = { cols: [1, 1, 2, 2, 3], max: [2, 2, 2, 2, 3] };
+const PROJECT_GRID: { cols: PerBreakpoint; max: PerBreakpoint } = { cols: [1, 2, 3, 4, 4], max: [3, 4, 3, 4, 4] };
+const PHOTO_GRID: { cols: PerBreakpoint; max: PerBreakpoint } = { cols: [3, 4, 4, 6, 6], max: [9, 12, 12, 12, 12] };
+
+function gridColumns(cols: number) {
+  return { gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` };
+}
+
 const STATUS_LABEL: Record<ProjectRow["status"], { mn: string; en: string }> = {
   ongoing: { mn: "Хэрэгжиж буй", en: "Ongoing" },
   completed: { mn: "Хаагдсан", en: "Completed" },
@@ -78,6 +104,16 @@ export default function Home() {
   const [news, setNews] = useState<NewsRow[]>([]);
   const [stats, setStats] = useState<Stats>({ phfPercent: null, affiliateCount: null, projectCount: null });
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
+  const [nextEvent, setNextEvent] = useState<EventRow | null>(null);
+  const [openPhoto, setOpenPhoto] = useState<number | null>(null);
+  const bp = useBreakpoint();
+  const newsCols = NEWS_GRID.cols[bp];
+  const shownNews = news.slice(0, fullRows(news.length, newsCols, NEWS_GRID.max[bp]));
+  const shownFacebookPosts = shownNews.filter((n) => n.facebook_url).length;
+  const projectCols = PROJECT_GRID.cols[bp];
+  const shownProjects = projects.slice(0, fullRows(projects.length, projectCols, PROJECT_GRID.max[bp]));
+  const photoCols = PHOTO_GRID.cols[bp];
+  const shownPhotos = photos.slice(0, fullRows(photos.length, photoCols, PHOTO_GRID.max[bp]));
 
   useEffect(() => {
     supabase.from("links_partners").select("id,name,url,logo_url,category").order("sort_order").then(({ data }) => setLinks((data as LinkRow[]) ?? []));
@@ -174,6 +210,20 @@ export default function Home() {
       });
     }
     loadStats();
+
+    // The next club event (public holidays aside) for the card under
+    // the hero — hidden when nothing is scheduled.
+    async function loadNextEvent() {
+      const { data } = await supabase
+        .from("events")
+        .select("id,title_mn,title_en,description_mn,description_en,location,event_date,event_time")
+        .gte("event_date", localYmd(new Date()))
+        .or("category.is.null,category.neq.public_holiday")
+        .order("event_date", { ascending: true })
+        .limit(1);
+      setNextEvent((data as EventRow[] | null)?.[0] ?? null);
+    }
+    loadNextEvent();
   }, []);
 
   // Facebook-linked news cards render the real embedded post (photo,
@@ -181,8 +231,10 @@ export default function Home() {
   // page — a plain link-styled card here was showing a generic
   // "Facebook post" placeholder instead of the actual content, which
   // read as "the post doesn't show up" on the home page.
+  // Re-run when the window is resized enough to show more cards, so
+  // newly shown embeds get rendered too.
   useEffect(() => {
-    if (!news.some((n) => n.facebook_url)) return;
+    if (shownFacebookPosts === 0) return;
     if (window.FB) {
       window.FB.XFBML.parse();
       return;
@@ -195,33 +247,58 @@ export default function Home() {
     script.defer = true;
     script.crossOrigin = "anonymous";
     document.body.appendChild(script);
-  }, [news]);
+  }, [shownFacebookPosts]);
 
   return (
     <div className="min-h-full flex flex-col">
-      {/* Hero — bold gradient using the official Rotary palette, with a
-          large slow-spinning gear watermark for visual energy (purely
-          decorative, never behind readable text). The 3 quick-stat tiles
-          now live here too, under the heading — Donate was pulled out
-          for now (per the club's request, it'll get its own home on
-          another page later) so the stats take that spot instead. */}
-      <section className="last:flex-1 relative overflow-hidden bg-gradient-to-br from-rotary-royal-blue via-[#123a75] to-rotary-azure text-white">
-        <Image
-          src={asset("/logos/ri-gear-gold.png")}
-          alt=""
-          width={620}
-          height={620}
-          aria-hidden="true"
-          className="pointer-events-none select-none absolute -right-32 -top-32 opacity-10 animate-spin-slow"
-        />
-        <div className="container-page py-20 sm:py-28 relative grid gap-10 sm:grid-cols-2 items-center">
+      <HomeGear />
+
+      {/* Hero — the club name, one line on what the club does, the two
+          things a visitor most likely wants to do next, and the three
+          live stats. Each section below says which colour the one
+          spinning gear (HomeGear) takes over it with data-gear. */}
+      <section data-gear="gold" className="bg-gradient-to-br from-rotary-royal-blue via-[#123a75] to-rotary-azure text-white">
+        <div
+          className={`container-page relative z-10 grid gap-8 sm:grid-cols-[3fr_2fr] items-center pt-10 sm:pt-14 ${
+            nextEvent ? "pb-16 sm:pb-20" : "pb-10 sm:pb-14"
+          }`}
+        >
           <div>
-            {/* max-w-md caps both the heading and the stats row at the
-                same width, so the 3 tiles below line up with the text
-                above instead of stretching the full column. */}
-            <h1 className="text-3xl sm:text-5xl font-extrabold leading-tight mb-6 max-w-md">
-              {t("Их Өргөө Ротари Клуб", "Rotary Club of Ikh Urgoo", "イク・ウルグー・ロータリークラブ", "扶輪伊赫烏爾古俱樂部")}
+            <p className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-rotary-gold mb-2">
+              {t(
+                "Ротари 3450-р дүүрэг · Улаанбаатар",
+                "Rotary District 3450 · Ulaanbaatar, Mongolia",
+                "国際ロータリー第3450地区 · ウランバートル",
+                "國際扶輪3450地區 · 烏蘭巴托",
+                "국제로타리 3450지구 · 울란바토르"
+              )}
+            </p>
+            <h1 className="text-3xl sm:text-5xl font-extrabold leading-tight mb-3 max-w-lg">
+              {t("Их Өргөө Ротари Клуб", "Rotary Club of Ikh Urgoo", "イク・ウルグー・ロータリークラブ", "扶輪伊赫烏爾古俱樂部", "이흐 우르구 로타리클럽")}
             </h1>
+            <p className="text-blue-100 sm:text-lg max-w-lg mb-6">
+              {t(
+                "Бид Улаанбаатар хотод боловсрол, эх хүүхдийн эрүүл мэнд, өвчнөөс урьдчилан сэргийлэх чиглэлээр нийгэмдээ бодит өөрчлөлт авчирдаг.",
+                "In Ulaanbaatar, we bring real change to our community through education, maternal and child health, and disease prevention.",
+                "ウランバートルで、教育・母子保健・疾病予防を通じて地域社会に確かな変化をもたらしています。",
+                "我們在烏蘭巴托透過教育、母嬰健康與疾病預防，為社區帶來真正的改變。",
+                "울란바토르에서 교육, 모자 보건, 질병 예방을 통해 지역사회에 실질적인 변화를 만들어 갑니다."
+              )}
+            </p>
+            <div className="flex flex-wrap gap-3 mb-7">
+              <Link
+                href="/join"
+                className="rounded-full bg-rotary-gold text-[#3d2a05] font-bold px-6 py-2.5 shadow-md hover:brightness-105 transition"
+              >
+                {t("Бидэнтэй нэгдэх", "Join us", "入会する", "加入我們", "가입하기")}
+              </Link>
+              <Link
+                href="/projects"
+                className="rounded-full border border-white/60 text-white font-semibold px-6 py-2.5 hover:bg-white/10 transition"
+              >
+                {t("Манай төслүүд", "Our projects", "私たちのプロジェクト", "我們的項目", "우리의 프로젝트")}
+              </Link>
+            </div>
             <div className="grid grid-cols-3 gap-3 max-w-md">
               <HeroStat
                 value={stats.phfPercent === null ? "—" : `${stats.phfPercent}%`}
@@ -237,63 +314,41 @@ export default function Home() {
               />
             </div>
           </div>
-          <div className="flex justify-center relative">
+          <div className="hidden sm:flex justify-center">
             <Image
               src={asset("/logos/rotary-wordmark-white.png")}
               alt="Rotary Club of Ikh Urgoo"
-              width={420}
-              height={191}
-              className="drop-shadow-xl relative z-10"
+              width={380}
+              height={173}
+              className="drop-shadow-xl"
               priority
             />
           </div>
         </div>
       </section>
 
-      {/* Content zone — News, Projects, and the Photo Gallery now share
-          one continuous gradient background (light Rotary-blue at the
-          top, fading through white, into a soft gold tint at the
-          bottom) instead of each having its own flat white/gray block.
-          This is "zone 2" of the page's 3-gradient flow: zone 1 is the
-          Hero above, zone 3 is Sponsored/Links + Footer below. */}
-      <div className="last:flex-1 bg-gradient-to-b from-[#eaf1fb] via-white to-[#fdf3e2]">
-
-      {/* News — moved above Projects per the club's request, and given
-          a bigger, more prominent treatment (was a small 3-up preview
-          at the very bottom of the page). Cards now use the exact same
-          structure as the Project cards below (image on top, same
-          padding) so the two rows line up at the same height. */}
-      <section className="py-16">
-        <div className="container-page">
-          <div className="flex items-end justify-between mb-8">
-            <h2 className="text-3xl font-bold text-rotary-royal-blue">
-              {t("Мэдээ", "Latest News", "最新ニュース", "最新新聞")}
-            </h2>
-            <Link href="/news" className="text-rotary-royal-blue font-semibold hover:underline shrink-0">
-              {t("Бүх мэдээ →", "View All News →", "すべて見る →", "查看全部 →")}
-            </Link>
-          </div>
-
+      {/* News, with the next event's card overlapping the hero's lower
+          edge. flow-root keeps the card's negative margin from pulling
+          the whole section (and its background) up over the hero. */}
+      <section data-gear="cranberry" className={`flow-root bg-[#eef4fb] pb-10 ${nextEvent ? "" : "pt-10"}`}>
+        {nextEvent && <NextEventCard event={nextEvent} />}
+        <div className="container-page relative z-10">
+          <SectionHeader
+            title={t("Мэдээ", "Latest News", "最新ニュース", "最新新聞", "최신 소식")}
+            link={{ href: "/news", label: t("Бүх мэдээ →", "View All News →", "すべて見る →", "查看全部 →", "모두 보기 →") }}
+          />
           {news.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-16 text-center text-slate-400">
-              {t("Мэдээ удахгүй нэмэгдэнэ.", "News posts will appear here once published.", "ニュースは公開され次第表示されます。", "新聞發佈後將顯示在此處。")}
-            </div>
+            <EmptyState text={t("Мэдээ удахгүй нэмэгдэнэ.", "News posts will appear here once published.", "ニュースは公開され次第表示されます。", "新聞發佈後將顯示在此處。")} />
           ) : (
-            <ScrollRow>
-              {news.map((n) =>
+            <div className="grid gap-5" style={gridColumns(newsCols)}>
+              {shownNews.map((n) =>
                 n.facebook_url ? (
-                  // Real embedded post (photo/video/full text) via
-                  // Facebook's Post Plugin — not just a link to it.
-                  // Facebook renders this embed at its own natural height
-                  // (depends on photo count, caption length, etc.), which
-                  // we can't pin the way we can our own image+text cards.
-                  // So the card itself is still capped at the same 370px
-                  // every other card uses, the embed is clipped with a
-                  // fade at the bottom instead of being cut off abruptly,
-                  // and an explicit "view full post" link makes sure
-                  // nothing is actually lost — it's one click away.
-                  <article key={n.id} className="shrink-0 w-96 snap-start rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg transition bg-white flex flex-col overflow-hidden h-[370px]">
-                    <div className="relative flex-1 overflow-hidden flex justify-center p-3 pb-0">
+                  // Facebook's Post Plugin renders at its own natural
+                  // height, so the card is capped at the same height as
+                  // the written-post cards, faded at the bottom, with a
+                  // link to the full post (see CLAUDE.md).
+                  <article key={n.id} className="h-[380px] rounded-2xl border border-slate-200 bg-white shadow-sm hover:shadow-lg transition flex flex-col overflow-hidden">
+                    <div className="relative flex-1 overflow-hidden flex justify-center pt-3">
                       <div className="fb-post" data-href={fbHref(n.facebook_url)} data-width="340" data-show-text="true" />
                       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-white to-transparent" />
                     </div>
@@ -307,163 +362,152 @@ export default function Home() {
                     </a>
                   </article>
                 ) : (
-                  // Written posts open the full detail page (item: cards
-                  // weren't clickable before, and only showed a partial
-                  // preview here) — /news/<id>/ has the post's own
-                  // link preview (src/app/news/[id]/page.tsx).
-                  <Link key={n.id} href={`/news/${n.id}/`} className="shrink-0 w-96 snap-start">
-                    {/* Both the image (180px) and the text block
-                        (190px) below are pinned to a FIXED height —
-                        same values the Projects cards use — so every
-                        card in both rows renders at the exact same
-                        total height (180+190=370px) no matter how
-                        long or short its actual title/body text is.
-                        Relying on aspect-ratio or flex-grow alone let
-                        real content length quietly throw the two rows
-                        out of sync with each other. */}
-                    <article className="rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition overflow-hidden bg-white flex flex-col">
-                      <div className="relative w-full h-[180px] bg-slate-100">
-                        {n.cover_image_url ? (
-                          <Image src={n.cover_image_url} alt="" fill className="object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-blue-50">
-                            <Image src={asset("/logos/ri-gear-blue.png")} alt="" width={56} height={56} />
-                          </div>
-                        )}
-                      </div>
-                      <div className="p-6 h-[190px] flex flex-col">
-                        <h3 className="text-xl font-bold text-slate-900 mb-2 line-clamp-2">{t(n.title_mn ?? "", n.title_en ?? "")}</h3>
-                        <p className="text-slate-600 text-sm line-clamp-3">{t(n.body_mn ?? "", n.body_en ?? "")}</p>
-                      </div>
-                    </article>
+                  <Link
+                    key={n.id}
+                    href={`/news/${n.id}/`}
+                    className="group h-[380px] rounded-2xl border border-slate-200 bg-white shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition flex flex-col overflow-hidden"
+                  >
+                    <div className="relative h-[190px] shrink-0 bg-blue-50">
+                      {n.cover_image_url ? (
+                        <Image src={n.cover_image_url} alt="" fill className="object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Image src={asset("/logos/ri-gear-blue.png")} alt="" width={56} height={56} />
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-5 flex-1 min-h-0 overflow-hidden">
+                      <h3 className="text-lg font-bold text-slate-900 group-hover:text-rotary-royal-blue transition-colors mb-1.5 line-clamp-2">
+                        {t(n.title_mn ?? "", n.title_en ?? "")}
+                      </h3>
+                      <p className="text-slate-600 text-sm line-clamp-3">{t(n.body_mn ?? "", n.body_en ?? "")}</p>
+                    </div>
+                    <span className="px-5 pb-4 text-sm font-semibold text-rotary-royal-blue">
+                      {t("Дэлгэрэнгүй →", "Read more →", "続きを読む →", "閱讀更多 →", "더 보기 →")}
+                    </span>
                   </Link>
                 )
               )}
-            </ScrollRow>
+            </div>
           )}
         </div>
       </section>
 
-      {/* Projects — the club's main work, so this gets the biggest,
-          most prominent treatment on the page. */}
-      <section className="py-16">
-        <div className="container-page">
-        <div className="flex items-end justify-between mb-8">
-          <div>
-            <h2 className="text-3xl font-bold text-rotary-royal-blue mb-2">
-              {t("Манай төслүүд", "Our Projects", "私たちのプロジェクト", "我們的項目")}
-            </h2>
-            <p className="text-slate-500 max-w-xl">
-              {t(
-                "Боловсрол, эх хүүхдийн эрүүл мэнд, өвчнөөс сэргийлэх чиглэлээр хэрэгжүүлж буй бодит ажлууд.",
-                "Real work in progress — education, maternal and child health, and disease prevention.",
-                "教育、母子保健、疾病予防の分野での実際の活動。",
-                "在教育、母嬰健康和疾病預防領域開展的實際工作。"
-              )}
-            </p>
-          </div>
-          <Link href="/projects" className="hidden sm:inline-block text-rotary-royal-blue font-semibold hover:underline shrink-0">
-            {t("Бүх төсөл →", "View All Projects →", "すべて見る →", "查看全部 →")}
-          </Link>
-        </div>
-
-        {projects.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-300 p-12 text-center text-slate-400">
-            {t("Төслийн мэдээлэл удахгүй нэмэгдэнэ.", "Project details will appear here once added by an admin.", "プロジェクト情報は追加され次第表示されます。", "項目信息將在添加後顯示。")}
-          </div>
-        ) : (
-          <ScrollRow>
-            {projects.map((p) => {
-              const photos = projectPhotos[p.id] ?? (p.cover_image_url ? [p.cover_image_url] : []);
-              return (
-                <Link key={p.id} href={`/projects/${p.id}/`} className="shrink-0 w-80 snap-start">
-                  {/* Fixed 180px image + fixed 190px text block — same
-                      values as the News cards above, so both rows
-                      total the exact same 370px regardless of actual
-                      title/description length (see the News card
-                      comment for why aspect-ratio/flex-grow alone
-                      wasn't reliable here). */}
-                  <article className="rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition overflow-hidden bg-white flex flex-col">
-                    <div className="relative">
+      {/* Projects — a row of compact cards (photo collage, status,
+          title, two lines of description); on phones each one is a
+          slim row with a thumbnail so three fit on one screen. */}
+      <section data-gear="royal" className="bg-white py-10">
+        <div className="container-page relative z-10">
+          <SectionHeader
+            title={t("Манай төслүүд", "Our Projects", "私たちのプロジェクト", "我們的項目", "우리의 프로젝트")}
+            subtitle={t(
+              "Боловсрол, эх хүүхдийн эрүүл мэнд, өвчнөөс сэргийлэх чиглэлээр хэрэгжүүлж буй бодит ажлууд.",
+              "Real work in progress — education, maternal and child health, and disease prevention.",
+              "教育、母子保健、疾病予防の分野での実際の活動。",
+              "在教育、母嬰健康和疾病預防領域開展的實際工作。"
+            )}
+            link={{ href: "/projects", label: t("Бүх төсөл →", "View All Projects →", "すべて見る →", "查看全部 →", "모두 보기 →") }}
+          />
+          {projects.length === 0 ? (
+            <EmptyState text={t("Төслийн мэдээлэл удахгүй нэмэгдэнэ.", "Project details will appear here once added by an admin.", "プロジェクト情報は追加され次第表示されます。", "項目信息將在添加後顯示。")} />
+          ) : (
+            <div className="grid gap-3 sm:gap-5" style={gridColumns(projectCols)}>
+              {shownProjects.map((p) => {
+                const photos = projectPhotos[p.id] ?? (p.cover_image_url ? [p.cover_image_url] : []);
+                return (
+                  <Link
+                    key={p.id}
+                    href={`/projects/${p.id}/`}
+                    className="group flex sm:flex-col rounded-2xl border border-slate-200 bg-white shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition overflow-hidden"
+                  >
+                    <div className="relative w-28 h-28 sm:w-full sm:h-[150px] shrink-0 bg-blue-50">
                       {photos.length > 0 ? (
-                        <ProjectPhotoCollage photos={photos} className="!aspect-auto h-[180px]" />
+                        <>
+                          <div className="sm:hidden h-full">
+                            <ProjectPhotoCollage photos={photos.slice(0, 1)} className="!aspect-auto h-full" />
+                          </div>
+                          <div className="hidden sm:block h-full">
+                            <ProjectPhotoCollage photos={photos} className="!aspect-auto h-full" />
+                          </div>
+                        </>
                       ) : p.cause_icon && CAUSE_ICONS[p.cause_icon] ? (
-                        <div className="w-full h-[180px] flex items-center justify-center bg-blue-50">
-                          <Image src={asset(CAUSE_ICONS[p.cause_icon])} alt="" width={72} height={72} />
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Image src={asset(CAUSE_ICONS[p.cause_icon])} alt="" width={64} height={64} />
                         </div>
                       ) : (
-                        <div className="w-full h-[180px] flex items-center justify-center text-slate-300 text-sm bg-slate-100">{t("Зураг алга", "No photo yet", "写真なし", "暫無照片")}</div>
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Image src={asset("/logos/ri-gear-blue.png")} alt="" width={48} height={48} />
+                        </div>
                       )}
-                      <span className="absolute top-3 left-3 text-xs font-semibold uppercase tracking-wide bg-white/90 text-rotary-azure px-3 py-1 rounded-full">
+                    </div>
+                    <div className="p-3 sm:p-4 min-w-0 flex-1">
+                      <p className="text-[11px] font-bold uppercase tracking-wide text-rotary-azure mb-1">
                         {t(STATUS_LABEL[p.status].mn, STATUS_LABEL[p.status].en)}
-                      </span>
-                    </div>
-                    <div className="p-6 h-[190px] flex flex-col">
-                      <h3 className="text-xl font-bold text-slate-900 mb-2 line-clamp-2">{t(p.title_mn, p.title_en)}</h3>
+                      </p>
+                      <h3 className="font-bold text-slate-900 group-hover:text-rotary-royal-blue transition-colors leading-snug line-clamp-2 mb-1">
+                        {t(p.title_mn, p.title_en)}
+                      </h3>
                       {(p.description_mn || p.description_en) && (
-                        <p className="text-slate-600 text-sm line-clamp-3">{t(p.description_mn ?? "", p.description_en ?? "")}</p>
+                        <p className="text-slate-600 text-sm line-clamp-2">{t(p.description_mn ?? "", p.description_en ?? "")}</p>
                       )}
                     </div>
-                  </article>
-                </Link>
-              );
-            })}
-          </ScrollRow>
-        )}
-        <Link href="/projects" className="sm:hidden mt-6 inline-block text-rotary-royal-blue font-semibold hover:underline">
-          {t("Бүх төсөл →", "View All Projects →", "すべて見る →", "查看全部 →")}
-        </Link>
-        </div>
-      </section>
-
-      {/* Photo gallery — admin-curated (see /admin/gallery), not just
-          "whatever was uploaded most recently". Only shows once an
-          admin has switched at least one photo on. */}
-      {photos.length > 0 && (
-        <section className="py-16">
-          <div className="container-page">
-            <h2 className="text-2xl font-bold text-rotary-royal-blue mb-8">
-              {t("Зургийн цомог", "Photo Gallery", "フォトギャラリー", "照片集")}
-            </h2>
-            <div className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory">
-              {photos.map((p) => {
-                const url = supabase.storage.from("rciu-photos").getPublicUrl(p.storage_path).data.publicUrl;
-                return (
-                  <div key={p.id} className="relative shrink-0 w-64 h-44 rounded-xl overflow-hidden snap-start bg-slate-200">
-                    <Image src={url} alt={p.caption ?? ""} fill className="object-cover" />
-                    {p.caption && (
-                      <span className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs px-3 py-1.5 line-clamp-1">
-                        {p.caption}
-                      </span>
-                    )}
-                  </div>
+                  </Link>
                 );
               })}
             </div>
+          )}
+        </div>
+      </section>
+
+      {/* Photo gallery — admin-curated (see /admin/gallery). Whole rows
+          of tiles; tapping one opens it full size (the original file,
+          never a shrunk copy) with next/previous. Only shows once an
+          admin has switched at least one photo on. */}
+      {photos.length > 0 && (
+        <section data-gear="turquoise" className="bg-[#fdf6e9] py-10">
+          <div className="container-page relative z-10">
+            <SectionHeader title={t("Зургийн цомог", "Photo Gallery", "フォトギャラリー", "照片集", "사진 갤러리")} />
+            <div className="grid gap-2 sm:gap-3" style={gridColumns(photoCols)}>
+              {shownPhotos.map((p, i) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setOpenPhoto(i)}
+                  aria-label={p.caption || t("Зургийг томоор харах", "View photo", "写真を拡大", "查看照片", "사진 크게 보기")}
+                  className="group relative aspect-square sm:aspect-[4/3] rounded-lg overflow-hidden bg-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-rotary-azure"
+                >
+                  <Image src={photoUrl(p)} alt={p.caption ?? ""} fill className="object-cover transition duration-300 group-hover:scale-105" />
+                  {p.caption && (
+                    <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent text-white text-xs text-left px-2.5 pt-6 pb-1.5 line-clamp-1">
+                      {p.caption}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
+          {openPhoto !== null && photos[openPhoto] && (
+            <Lightbox photos={photos} index={openPhoto} onIndex={setOpenPhoto} onClose={() => setOpenPhoto(null)} />
+          )}
         </section>
       )}
 
-      </div>
-
-      {/* Sponsored clubs + Links & Partners — deliberately small and
-          at the very bottom of the page now (was a full-width section
-          higher up); this is reference info, not the main event.
-          "Zone 3" of the gradient flow: fades from the gold tint above
-          into a soft blue that leads into the Footer's own blue
-          gradient right below, instead of a flat gray box. */}
-      <section className="last:flex-1 bg-gradient-to-b from-[#fdf3e2] to-[#eaf1fb] py-10">
-          <div className="container-page">
+      {/* Sponsored clubs + Links & Partners — reference info, kept
+          small at the bottom. Logos wrap onto a second line rather
+          than scrolling sideways. */}
+      {(affiliates.length > 0 || links.length > 0) && (
+        <section data-gear="sky" className="bg-white border-t border-slate-200 py-8">
+          <div className="container-page relative z-10 flex flex-wrap gap-x-12 gap-y-6">
             {affiliates.length > 0 && (
-              <div className="mb-6">
-                <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3">
+              <div>
+                <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">
                   {t("Дэмждэг клубууд", "Sponsored Clubs", "スポンサークラブ", "贊助俱樂部")}
                 </h2>
-                <div className="flex flex-wrap items-center gap-8">
+                <div className="flex flex-wrap items-center gap-6">
                   {affiliates.map((a) => {
                     const logo = a.logo_url ?? KNOWN_LOGOS[a.name];
                     return logo ? (
-                      <Image key={a.id} src={logo.startsWith("http") ? logo : asset(logo)} alt={a.name} title={a.name} width={160} height={80} className="object-contain h-20 w-auto shrink-0" />
+                      <Image key={a.id} src={logo.startsWith("http") ? logo : asset(logo)} alt={a.name} title={a.name} width={140} height={64} className="object-contain h-16 w-auto shrink-0" />
                     ) : (
                       <span key={a.id} title={a.name} className="text-xs font-bold text-slate-400 uppercase">{a.club_type}</span>
                     );
@@ -472,43 +516,197 @@ export default function Home() {
               </div>
             )}
 
-            <div>
-              <h2 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3">
-                {t("Холбоос ба түншүүд", "Links & Partners", "リンクとパートナー", "鏈接與夥伴")}
-              </h2>
-              {/* Districts and clubs each get their own single-line row
-                  (was one big wrapping grid) — logos are shrunk to fit
-                  more per row, and each row scrolls horizontally on
-                  narrow screens / once a row grows past what fits
-                  rather than ever wrapping to a second line. */}
-              {districtLinks.length > 0 && (
-                <div className="mb-3">
-                  <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-1.5">
-                    {t("Дүүргүүд", "Districts", "地区", "地區")}
-                  </p>
-                  <div className="flex flex-nowrap items-center gap-4 overflow-x-auto pb-1">
-                    {districtLinks.map((l) => (
-                      <PartnerLogo key={l.id} link={l} />
-                    ))}
-                  </div>
+            {links.length > 0 && (
+              <div>
+                <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">
+                  {t("Холбоос ба түншүүд", "Links & Partners", "リンクとパートナー", "鏈接與夥伴")}
+                </h2>
+                <div className="flex flex-wrap gap-x-10 gap-y-4">
+                  {districtLinks.length > 0 && <PartnerRow title={t("Дүүргүүд", "Districts", "地区", "地區")} links={districtLinks} />}
+                  {clubLinks.length > 0 && <PartnerRow title={t("Клубууд", "Clubs", "クラブ", "俱樂部")} links={clubLinks} />}
                 </div>
-              )}
-              {clubLinks.length > 0 && (
-                <div>
-                  <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-1.5">
-                    {t("Клубууд", "Clubs", "クラブ", "俱樂部")}
-                  </p>
-                  <div className="flex flex-nowrap items-center gap-4 overflow-x-auto pb-1">
-                    {clubLinks.map((l) => (
-                      <PartnerLogo key={l.id} link={l} />
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </section>
+      )}
       <div id="fb-root" />
+    </div>
+  );
+}
+
+function photoUrl(p: PhotoItem): string {
+  return supabase.storage.from("rciu-photos").getPublicUrl(p.storage_path).data.publicUrl;
+}
+
+function SectionHeader({ title, subtitle, link }: { title: string; subtitle?: string; link?: { href: string; label: string } }) {
+  return (
+    <div className="flex items-end justify-between gap-4 mb-5">
+      <div className="min-w-0">
+        <h2 className="text-2xl sm:text-3xl font-bold text-rotary-royal-blue">{title}</h2>
+        {subtitle && <p className="text-slate-500 text-sm sm:text-base mt-1 max-w-xl">{subtitle}</p>}
+      </div>
+      {link && (
+        <Link href={link.href} className="text-sm sm:text-base text-rotary-royal-blue font-semibold hover:underline shrink-0">
+          {link.label}
+        </Link>
+      )}
+    </div>
+  );
+}
+
+function EmptyState({ text }: { text: string }) {
+  return <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-400">{text}</div>;
+}
+
+// The next club event, as a card overlapping the hero's lower edge:
+// date, title, time and place, "Add to calendar" and a link to the
+// full calendar.
+function NextEventCard({ event }: { event: EventRow }) {
+  const { t } = useLanguage();
+  const month = Number(event.event_date.slice(5, 7)) - 1;
+  const title = t(event.title_mn, event.title_en);
+  const details = [event.event_time, event.location].filter(Boolean).join(" · ");
+  return (
+    <div className="container-page relative z-10 -mt-8 sm:-mt-10 mb-8">
+      <div className="rounded-2xl bg-white shadow-lg border border-slate-200 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+        <div className="flex items-center gap-4 min-w-0 flex-1">
+          <div className="shrink-0 w-[4.5rem] h-[4.5rem] rounded-xl bg-rotary-royal-blue text-white flex flex-col items-center justify-center leading-none">
+            <span className="text-2xl font-extrabold">{Number(event.event_date.slice(8, 10))}</span>
+            <span className="text-[10px] font-semibold uppercase mt-1.5 text-rotary-gold">{t(...MONTH_LABEL[month])}</span>
+          </div>
+          <div className="min-w-0">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-rotary-azure">
+              {t("Дараагийн арга хэмжээ", "Next event", "次のイベント", "下一個活動", "다음 행사")}
+            </p>
+            <p className="font-bold text-slate-900 line-clamp-2 sm:line-clamp-1">{title}</p>
+            {details && <p className="text-sm text-slate-500 line-clamp-1">{details}</p>}
+          </div>
+        </div>
+        <div className="flex flex-col sm:items-end gap-1.5 shrink-0">
+          <AddToCalendar
+            className=""
+            event={{
+              id: event.id,
+              title,
+              description: t(event.description_mn ?? "", event.description_en ?? "") || null,
+              location: event.location,
+              date: event.event_date,
+              time: event.event_time,
+            }}
+          />
+          <Link href="/events" className="text-sm font-semibold text-rotary-royal-blue hover:underline">
+            {t("Бүх арга хэмжээ →", "All events →", "すべてのイベント →", "所有活動 →", "모든 행사 →")}
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Full-screen photo viewer for the gallery: the original photo, fitted
+// to the screen; ←/→ keys, on-screen arrows or a swipe move between
+// photos; Esc, × or a tap outside the photo closes it.
+function Lightbox({
+  photos,
+  index,
+  onIndex,
+  onClose,
+}: {
+  photos: PhotoItem[];
+  index: number;
+  onIndex: (i: number) => void;
+  onClose: () => void;
+}) {
+  const { t } = useLanguage();
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const touchX = useRef<number | null>(null);
+  const count = photos.length;
+  const photo = photos[index];
+  const go = (step: number) => onIndex((index + step + count) % count);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+      else if (e.key === "ArrowRight") onIndex((index + 1) % count);
+      else if (e.key === "ArrowLeft") onIndex((index - 1 + count) % count);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [index, count, onIndex, onClose]);
+
+  useEffect(() => {
+    closeRef.current?.focus();
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, []);
+
+  const arrow = "absolute top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-white/10 hover:bg-white/25 text-white text-3xl leading-none flex items-center justify-center transition";
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={photo.caption || t("Зураг", "Photo", "写真", "照片", "사진")}
+      className="fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center p-4 sm:p-10"
+      onClick={onClose}
+      onTouchStart={(e) => {
+        touchX.current = e.touches[0].clientX;
+      }}
+      onTouchEnd={(e) => {
+        if (touchX.current === null) return;
+        const dx = e.changedTouches[0].clientX - touchX.current;
+        touchX.current = null;
+        if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1);
+      }}
+    >
+      <button
+        ref={closeRef}
+        type="button"
+        onClick={onClose}
+        aria-label={t("Хаах", "Close", "閉じる", "關閉", "닫기")}
+        className="absolute top-3 right-3 w-11 h-11 rounded-full bg-white/10 hover:bg-white/25 text-white text-3xl leading-none flex items-center justify-center transition"
+      >
+        ×
+      </button>
+      <div className="relative w-full max-w-6xl h-[75vh]" onClick={(e) => e.stopPropagation()}>
+        <Image src={photoUrl(photo)} alt={photo.caption ?? ""} fill sizes="100vw" className="object-contain" />
+      </div>
+      <div className="mt-3 text-center" onClick={(e) => e.stopPropagation()}>
+        {photo.caption && <p className="text-white/90 text-sm max-w-2xl">{photo.caption}</p>}
+        <p className="text-white/50 text-xs mt-1">
+          {index + 1} / {count}
+        </p>
+      </div>
+      {count > 1 && (
+        <>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              go(-1);
+            }}
+            aria-label={t("Өмнөх", "Previous", "前へ", "上一張", "이전")}
+            className={`${arrow} left-2 sm:left-5`}
+          >
+            ‹
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              go(1);
+            }}
+            aria-label={t("Дараах", "Next", "次へ", "下一張", "다음")}
+            className={`${arrow} right-2 sm:right-5`}
+          >
+            ›
+          </button>
+        </>
+      )}
     </div>
   );
 }
@@ -522,9 +720,21 @@ const KNOWN_LOGOS: Record<string, string> = {
   "Makati Legazpi Rotary Club": "/logos/makati-legazpi.png",
 };
 
-// One logo (or text fallback) in the Districts/Clubs strips below —
-// sized smaller than the old h-20 grid so a full row fits on one line
-// instead of wrapping.
+// One labelled row of partner logos (Districts or Clubs).
+function PartnerRow({ title, links }: { title: string; links: LinkRow[] }) {
+  return (
+    <div>
+      <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide mb-1.5">{title}</p>
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+        {links.map((l) => (
+          <PartnerLogo key={l.id} link={l} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// One logo (or text fallback) in a partner row.
 function PartnerLogo({ link }: { link: LinkRow }) {
   const logo = link.logo_url ?? KNOWN_LOGOS[link.name];
   return logo ? (
@@ -541,44 +751,6 @@ function PartnerLogo({ link }: { link: LinkRow }) {
     <a href={link.url ?? undefined} target="_blank" rel="noopener noreferrer" title={link.name} className="shrink-0 text-xs font-bold text-slate-400 uppercase whitespace-nowrap">
       {link.name}
     </a>
-  );
-}
-
-// Horizontal-scrolling row used for News and Projects — shows about
-// 4-5 fixed-width cards at once (more on wide screens), with a left/
-// right arrow to reveal the rest, instead of a 2-up grid that hid
-// everything past the first couple of items.
-function ScrollRow({ children }: { children: React.ReactNode }) {
-  const ref = useRef<HTMLDivElement>(null);
-  function scroll(dir: 1 | -1) {
-    ref.current?.scrollBy({ left: dir * 340, behavior: "smooth" });
-  }
-  return (
-    <div className="relative">
-      <button
-        type="button"
-        onClick={() => scroll(-1)}
-        aria-label="Scroll left"
-        className="hidden sm:flex absolute -left-4 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white shadow-md border border-slate-200 items-center justify-center text-rotary-royal-blue hover:bg-slate-50 text-lg"
-      >
-        ‹
-      </button>
-      <div
-        ref={ref}
-        className="flex gap-5 overflow-x-auto pb-2 snap-x snap-mandatory scroll-smooth"
-        style={{ scrollbarWidth: "none" }}
-      >
-        {children}
-      </div>
-      <button
-        type="button"
-        onClick={() => scroll(1)}
-        aria-label="Scroll right"
-        className="hidden sm:flex absolute -right-4 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white shadow-md border border-slate-200 items-center justify-center text-rotary-royal-blue hover:bg-slate-50 text-lg"
-      >
-        ›
-      </button>
-    </div>
   );
 }
 

@@ -45,6 +45,11 @@ body {
 .animate-spin-slow {
   animation: spin-slow 40s linear infinite;
 }
+@media (prefers-reduced-motion: reduce) {
+  .animate-spin-slow {
+    animation: none;
+  }
+}
 
 .badge-hidden-admin {
   display: inline-block;
