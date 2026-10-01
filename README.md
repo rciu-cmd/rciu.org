@@ -1,53 +1,99 @@
 # Rotary Club of Ikh Urgoo — rciu.org
 
+The public website and member/admin area of the Rotary Club of Ikh
+Urgoo (RCIU), Ulaanbaatar, Mongolia — District 3450.
+
 Next.js (static export) + Supabase + GitHub Pages — same architecture as
-mhida.org.
+mhida.org. **Working on the code with Claude Code? Read
+[`CLAUDE.md`](CLAUDE.md) first** — it has the conventions and the
+gotchas already learned the hard way.
 
-## Status: Phase 1 skeleton
+## What's on the site
 
-**Built:**
-- Project scaffold (Next.js 16, Tailwind 4, TypeScript, static export)
-- Full Supabase schema (`supabase/schema.sql`) — members, news,
-  projects, board positions, project photo folders, links & partners,
-  affiliate clubs (Interact/Rotaract), hidden admin-only stock/inventory
-  with a full change history, site settings — all with Row Level
-  Security policies (public / member / admin tiers)
-- Real official assets: RCIU emblem, wordmark, Rotary International
-  gear logo, District 3450 logo (`public/logos/`), charter certificate
-  + certificate of organization (`public/certificates/`)
-- 4-language support (Mongolian + English written now; Japanese +
-  Mandarin scaffolded, falling back to English until you supply real
-  translations — see `src/lib/language-context.tsx`)
-- Pages: Home, About, News (reads from DB, empty until you publish),
-  Projects (same), Board (same), Members (real roster + public PHF
-  honor roll), Links & Partners, Contact (real meeting/contact info),
-  Member Login (magic link), Member Dashboard (visually themed by PHF
-  tier — sapphire gradient for PHF+1..+5, ruby for PHF+6..+8, gold for
-  base PHF, with a friendly nudge for non-PHF members)
-- GitHub Pages deploy workflow + custom domain (CNAME → rciu.org)
+**Public pages**
+- **Home** — featured projects and photos, latest news (including
+  Facebook post embeds), club stats, partners.
+- **About** — club history, honor roll (Paul Harris Fellows), "Where
+  We've Traveled" world map, charter certificates, links to Board and
+  Members.
+- **News** and **Projects** — lists plus detail pages
+  (`/news/view/?id=`, `/projects/view/?id=`); Projects also has a
+  "Join a Project" partnership form.
+- **Events** — monthly calendar with "Add to calendar" (Google /
+  Apple / Outlook) on upcoming events.
+- **Board**, **Join** (membership interest form), **Contact**.
+- A friendly "page not found" page for broken links.
 
-**Not yet built (next steps):**
-- Admin dashboard (news posting, project management, member approval,
-  board assignment, stock/inventory page)
-- Member profile self-editing + photo upload into project folders
-- Photo collage report generator (client-side PPTX/PDF export)
-- Real board officer titles (only the roster + PHF data was provided —
-  send me who holds which role)
-- Rotaract club details (Interact's info is in hand; Rotaract's is
-  still needed)
-- Japanese and Mandarin translations (you're providing these)
-- Photo storage wiring (Supabase Storage now; Cloudflare R2 path
-  discussed for when volume grows — not yet implemented)
+**Members (login required)**
+- **Login** — email + password, or a one-time email link.
+- **Dashboard** — own profile, photo uploads, event reminders; themed
+  by Paul Harris Fellow level.
+- **Members** directory and **Photo Library** (`/gallery`).
 
-## Setting up the database
+**Admins** (`/admin`) — two levels:
+- *Editor*: News and Projects only.
+- *Super admin*: everything — Calendar, Travel Map, Awards, Board,
+  Sponsored Clubs (Interact/Rotaract), Partners, Gallery, History,
+  Join / Project Inquiries, Members (incl. appointing admins), Settings.
 
-1. In Supabase → SQL Editor, paste and run `supabase/schema.sql` once.
-   This creates all tables, triggers, and RLS policies — no real data.
-2. Separately, paste and run the file that was sent to you directly in
-   chat (**not** in this repo — see `supabase/private/PRIVATE_DATA_README.md`)
-   to import the real 16-member roster and PHF/Major Donor data.
-3. Promote yourself to admin: in SQL Editor, run
-   `update public.members set is_admin = true where email = 'your@email.com';`
+**Languages** — Mongolian, English, Japanese, Chinese, Korean. Mongolian
+and English are fully written; the others fall back to English where no
+translation exists yet. First-time visitors get their browser's language
+(Mongolian if the site doesn't have it); the flags in the footer switch
+and remember the choice.
+
+## How it fits together
+
+- **Hosting:** GitHub Pages, custom domain `rciu.org` (DNS on
+  Cloudflare). The site is plain static files — no server.
+- **Data, login, photos:** Supabase. All access control is Row Level
+  Security in the database (public / member / editor / super admin), so
+  the public Supabase URL and key in `src/lib/supabase.ts` are safe to
+  ship.
+- **Email:** two Supabase Edge Functions using Resend —
+  `notify-inquiry` (emails officers when a Join / Project form is
+  submitted) and `send-event-reminder` (the "Send Reminder" button in
+  Admin → Calendar). Setup notes: the comment at the top of
+  `supabase/functions/notify-inquiry/index.ts`, and
+  `supabase/functions/send-event-reminder/DEPLOY_INSTRUCTIONS.md`.
+- **Spam protection** on the public forms: a database rate limit plus a
+  hidden bot-trap field (migration26).
+
+## Deploying
+
+**Pushing to `main` deploys to the live site within about a minute** —
+there is no staging site. Make changes on a branch, open a pull request,
+and merge when ready. `.github/workflows/deploy.yml` builds and
+publishes; `.github/workflows/keep-alive.yml` pings the site and the
+database every 3 days so a free-plan Supabase project doesn't pause.
+
+## Database changes
+
+Database changes are **not** deployed by merging — they are run by hand
+in Supabase → **SQL Editor**:
+
+- `supabase/migrationNN_*.sql` — the numbered history of changes
+  applied to the live database, in order.
+- `supabase/schema.sql` — the full current schema, kept in sync with
+  the migrations, for setting up a fresh database from scratch.
+
+### Setting up a fresh database
+
+1. In Supabase → SQL Editor, paste and run `supabase/schema.sql`. It
+   creates every table, trigger, RLS policy and the photo storage
+   bucket — no real data. Safe to re-run.
+2. Import the real member roster and PHF/Major Donor data with the
+   private script that is kept **outside** this public repo (the
+   `supabase/private/` folder is git-ignored).
+3. Create your login in Supabase → **Authentication → Users → Add
+   user** (the site has no public sign-up). That automatically adds a
+   `pending` row to `public.members`. Then make yourself an active
+   super admin:
+   ```sql
+   update public.members set admin_level = 'super', status = 'active' where email = 'your@email.com';
+   ```
+   Set `admin_level` (`none` / `editor` / `super`), never `is_admin` —
+   that one is kept in sync automatically.
 
 ## Local development
 
@@ -56,10 +102,12 @@ npm install
 npm run dev
 ```
 
-## Deploying
+No `.env` file is needed. Before calling a change done, run
+`npm run build` — the static export catches problems that `npm run dev`
+doesn't.
 
-Push to `main` and the GitHub Actions workflow builds and deploys to
-GitHub Pages automatically. Point rciu.org's DNS at GitHub Pages
-(instructions: https://docs.github.com/pages/configuring-a-custom-domain-for-your-github-pages-site)
-and GitHub Pages settings → confirm the custom domain once DNS
-propagates.
+## Still to do
+
+- Japanese, Chinese and Korean translations (club to supply).
+- Stock / inventory: the admin-only tables exist in the schema, but
+  there is no admin page for them yet.

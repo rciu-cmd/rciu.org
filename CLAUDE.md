@@ -20,7 +20,9 @@ a cloud-based Claude session, before this local Claude Code setup).
   (Korean was added later, so many older `t()` calls only pass 4 args).
   First visit shows the browser's primary language if supported, else
   Mongolian; a flag click (footer) is saved and wins after that.
-  `<html lang>` follows the current language.
+  `<html lang>` follows the current language. `t()` never returns blank
+  while any version has text (empty MN falls back to EN and vice versa),
+  so DB content filled in only one language still shows.
 
 ## ⚠️ Pushing to `main` deploys to the live site immediately
 
@@ -119,7 +121,9 @@ happens there (not in code), give literal numbered instructions, not
 ## Where things stand
 
 Core site + admin dashboard (news, projects, events, members, gallery,
-awards, board, travel, join/project inquiries) are built out. Most
-recent work: home page News/Projects card-height consistency (fixed
-370px cards) and giving admins a way to delete duplicate
-"Send Reminder" log entries from Admin → Events (migration25).
+awards, board, travel, join/project inquiries) are built out; README.md
+has the full feature list. Recent work (Oct 2026, PRs #1–#4):
+private photo-bucket listing + inquiry-form spam guard (migration26),
+keep-alive that pings Supabase, browser-language first visit, sitemap /
+page titles / 404 page, "Add to calendar" on events, missing-translation
+fallback in `t()`, README rewrite.

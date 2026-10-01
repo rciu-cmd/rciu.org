@@ -28,6 +28,12 @@ interface LanguageContextValue {
    * club supplies real Japanese/Mandarin/Korean copy for a given
    * string, those fall back to English rather than showing blank or
    * Mongolian text to a reader in that language.
+   *
+   * Never returns blank while any version has text: an empty Mongolian
+   * falls back to English and vice versa. That matters for database
+   * content (event/project descriptions, news bodies), where an admin
+   * may fill in only one language — better the other language than
+   * nothing.
    */
   t: (mn: string, en: string, ja?: string, zh?: string, ko?: string) => string;
 }
@@ -84,15 +90,15 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const t = (mn: string, en: string, ja?: string, zh?: string, ko?: string) => {
     switch (lang) {
       case "mn":
-        return mn;
+        return mn || en;
       case "ja":
-        return ja || en;
+        return ja || en || mn;
       case "zh":
-        return zh || en;
+        return zh || en || mn;
       case "ko":
-        return ko || en;
+        return ko || en || mn;
       default:
-        return en;
+        return en || mn;
     }
   };
 
