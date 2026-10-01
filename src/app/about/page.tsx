@@ -258,7 +258,8 @@ export default function AboutPage() {
       )}
 
       {travels.length > 0 && (
-        <div className="mb-14">
+        // id: the home page's "Our impact" travel numbers link here.
+        <div id="travel" className="mb-14 scroll-mt-24">
           <h2 className="text-2xl font-bold text-rotary-royal-blue mb-2">
             {t("Бидний хүрсэн газрууд", "Where We've Traveled", "私たちが訪れた場所", "我們足跡所至")}
           </h2>

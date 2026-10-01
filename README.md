@@ -14,7 +14,9 @@ gotchas already learned the hard way.
 - **Home** — what the club does with "Join us" / "Our projects"
   buttons and live club stats, the next event (with "Add to
   calendar"), latest news (including Facebook post embeds), featured
-  projects, a photo gallery that opens photos full size, partners. One
+  projects, "Our impact" numbers (countries and km from the travel map,
+  years of service, plus up to 3 typed in Admin → Settings), a photo
+  gallery that opens photos full size, partners. One
   Rotary wheel turns slowly in the corner and changes colour from
   section to section.
 - **About** — club history, honor roll (Paul Harris Fellows), "Where
@@ -40,7 +42,8 @@ gotchas already learned the hard way.
 - *Editor*: News and Projects only.
 - *Super admin*: everything — Calendar, Travel Map, Awards, Board,
   Sponsored Clubs (Interact/Rotaract), Partners, Gallery, History,
-  Join / Project Inquiries, Members (incl. appointing admins), Settings.
+  Join / Project Inquiries, Members (incl. appointing admins), Settings
+  (contact phone, "Our impact" numbers, theme banner).
 
 **Languages** — Mongolian, English, Japanese, Chinese, Korean. Mongolian
 and English are fully written; the others fall back to English where no
