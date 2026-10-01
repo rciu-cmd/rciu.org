@@ -1,0 +1,34 @@
+name: Build check
+
+# Runs the same install + build as the deploy on every pull request, so a
+# change that breaks the build (including TypeScript errors) shows a red ✗
+# on the pull request before it's merged — merging to main deploys
+# straight to rciu.org, with no staging site in between.
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-check-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
