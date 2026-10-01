@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
+import { boardRoleTitle } from "@/lib/board-roles";
 
 type BoardRow = {
   id: string;
@@ -104,7 +105,7 @@ export default function BoardPage() {
                     {r.members?.first_name} {r.members?.last_name}
                   </p>
                   <p className="text-rotary-royal-blue text-sm font-semibold">
-                    {t(r.role_mn, r.role_en, r.role_ja ?? undefined, r.role_zh ?? undefined)}
+                    {boardRoleTitle(t, r)}
                   </p>
                 </div>
               </div>
@@ -121,7 +122,7 @@ export default function BoardPage() {
                 {r.members?.first_name} {r.members?.last_name}
               </span>
               <span className="text-slate-500 text-sm text-right">
-                {t(r.role_mn, r.role_en, r.role_ja ?? undefined, r.role_zh ?? undefined)}
+                {boardRoleTitle(t, r)}
               </span>
             </div>
           ))}

@@ -30,7 +30,13 @@ a cloud-based Claude session, before this local Claude Code setup).
   授證) with full-width punctuation; JA uses 国際ロータリー, 例会, 幹事;
   KO uses 국제로타리, 3450지구, 주회, 초아의 봉사. The motto stays
   "Service Above Self" in MN and EN. The meeting address is translated
-  only into Mongolian (Latin script elsewhere, as on maps).
+  only into Mongolian (Latin script elsewhere, as on maps). Board titles
+  are typed in Admin in MN/EN only; `boardRoleTitle()`
+  (`src/lib/board-roles.ts`) adds JA/ZH/KO for the standard Rotary titles,
+  matched on the English title, incl. a "(through 1 Jul 2026)" /
+  "(from …)" date note — unknown titles stay English. Province names
+  in JA/ZH/KO: `provinceName()` (`src/lib/province-names.ts`, kept out of
+  the generated `mongolia-provinces.ts`).
   First visit shows the browser's primary language if supported (zh-HK,
   zh-MO and yue → 🇭🇰), else Mongolian; a flag click (footer) is saved
   and wins after that.

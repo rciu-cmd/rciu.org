@@ -17,6 +17,7 @@ import {
   type ImpactStat,
 } from "@/lib/impact";
 import { MONGOLIA_VIEWBOX, PROVINCES } from "@/lib/mongolia-provinces";
+import { provinceName } from "@/lib/province-names";
 
 const ICON_LABEL: Record<ImpactIcon, [string, string]> = {
   person: ["👤 Хүн", "👤 Person"],
@@ -286,7 +287,7 @@ export default function AdminSettingsPage() {
                       strokeWidth={1.2}
                       className="cursor-pointer hover:opacity-80 transition"
                     >
-                      <title>{t(p.mn, p.en)}</title>
+                      <title>{provinceName(t, p)}</title>
                     </path>
                   ))}
                 </svg>
@@ -304,7 +305,7 @@ export default function AdminSettingsPage() {
                         }`}
                       >
                         {on ? "✓ " : ""}
-                        {t(p.mn, p.en)}
+                        {provinceName(t, p)}
                       </button>
                     );
                   })}

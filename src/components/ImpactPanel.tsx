@@ -6,6 +6,7 @@ import { useLanguage } from "@/lib/language-context";
 import { useInView } from "@/lib/use-in-view";
 import { ULAANBAATAR_ID, iconRow, yearsOfService, type ImpactIcon, type ImpactStat } from "@/lib/impact";
 import { MONGOLIA_VIEWBOX, PROVINCES } from "@/lib/mongolia-provinces";
+import { provinceName } from "@/lib/province-names";
 import { EARTH_KM, travelTotals, type Trip } from "@/lib/travel";
 
 const TravelArcs = dynamic(() => import("@/components/TravelArcs"), {
@@ -182,7 +183,7 @@ function ProvinceMap({ provinces, spaced }: { provinces: string[]; spaced: boole
               strokeLinejoin="round"
               style={on ? { transitionDelay: `${0.4 + order.indexOf(p.id) * 0.12}s` } : undefined}
             >
-              <title>{t(p.mn, p.en)}</title>
+              <title>{provinceName(t, p)}</title>
             </path>
           );
         })}
