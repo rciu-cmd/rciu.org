@@ -5,6 +5,9 @@ on:
     - cron: '0 3 */3 * *'   # every 3 days at 3:00 AM UTC
   workflow_dispatch:          # allow manual trigger anytime
 
+# Only pings public addresses — needs no access to the repository.
+permissions: {}
+
 jobs:
   ping:
     runs-on: ubuntu-latest
@@ -31,3 +34,22 @@ jobs:
             -H "apikey: $SUPABASE_PUBLISHABLE_KEY" \
             "$SUPABASE_URL/rest/v1/site_settings?select=key&limit=1"
           echo " — database is awake"
+
+      # Only club admins create logins (Supabase → Authentication → Users →
+      # Add user). If "Allow new users to sign up" is ever switched back on,
+      # anyone could make an account with the site's public key — this
+      # step fails then. If Supabase can't be reached it only warns.
+      - name: Check Supabase sign-ups are off
+        env:
+          SUPABASE_URL: https://mdfexlubrbvkdtyqvvtc.supabase.co
+          SUPABASE_PUBLISHABLE_KEY: sb_publishable_NZzjfPA3P5vKeIAtXOxekg_EgzYLCId
+        run: |
+          if ! settings=$(curl -fsS -m 20 -H "apikey: $SUPABASE_PUBLISHABLE_KEY" "$SUPABASE_URL/auth/v1/settings"); then
+            echo "::warning::Couldn't reach Supabase to check the sign-up setting"
+            exit 0
+          fi
+          if [ "$(echo "$settings" | jq -r '.disable_signup')" != "true" ]; then
+            echo "::error::Supabase sign-ups are ON — turn off Authentication → Sign In / Providers → Allow new users to sign up"
+            exit 1
+          fi
+          echo "Sign-ups are off."

@@ -13,12 +13,14 @@
 //      reminder if an admin already sent a manual one for that event in
 //      the last 24 hours.
 //
-//      This mode needs no login (a database cron job has none), so
-//      anyone could call it — that's safe because it can only ever do
-//      what the daily job does: before emailing, it records an
-//      event_reminders row with kind = 'week_before' / 'day_before', and
-//      a unique index allows just one row per event and kind. A second
-//      call (or two at once) finds the row and sends nothing.
+//      A database cron job has no login, so instead the job sends a
+//      random secret from Supabase Vault in the x-cron-secret header
+//      (migration29), and this checks it via reminder_cron_secret_ok()
+//      before doing anything — so no one else can make the day's
+//      reminders go out early. Each reminder is also sent at most once:
+//      before emailing, it records an event_reminders row with kind =
+//      'week_before' / 'day_before', and a unique index allows just one
+//      row per event and kind, so a second call sends nothing.
 //
 // What gets sent: one email per active member (each address stays
 // private), via Resend, plus an event_reminders row that the member
@@ -96,6 +98,10 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
 
     if (body?.mode === "auto") {
+      const { data: secretOk, error: secretError } = await admin.rpc("reminder_cron_secret_ok", {
+        candidate: req.headers.get("x-cron-secret") ?? "",
+      });
+      if (secretError || secretOk !== true) return json({ error: "Unauthorized" }, 401);
       return json(await sendAutomaticReminders(admin, mail));
     }
 

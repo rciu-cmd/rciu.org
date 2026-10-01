@@ -214,7 +214,8 @@ returns trigger language plpgsql as $$
 declare
   protected_cols text[] := array[
     'admin_level', 'status', 'phf_level', 'phf_date', 'major_donor',
-    'major_donor_level', 'honor_roll_priority', 'member_no', 'rotary_id'
+    'major_donor_level', 'honor_roll_priority', 'member_no', 'rotary_id',
+    'highest_position' -- shown on the public honor roll (migration29)
   ];
   col text;
   old_json jsonb := to_jsonb(old);
@@ -268,7 +269,13 @@ select
   case when honor_roll_visible then major_donor else false end as major_donor,
   honor_roll_priority
 from public.members
-where status = 'active';
+where status = 'active'
+  -- Readers must be active members themselves (migration29) — not a
+  -- pending account, a former member, or a self-made account.
+  and exists (
+    select 1 from public.members me
+    where me.id = auth.uid() and me.status = 'active'
+  );
 
 revoke all on public.members_directory from anon, public;
 grant select on public.members_directory to authenticated;
@@ -1082,9 +1089,16 @@ create policy club_awards_update_admin on public.club_awards
 -- that lets anyone with the public key list every file, including
 -- member-only Photo Library uploads (fixed in migration26).
 -- ------------------------------------------------------------
-insert into storage.buckets (id, name, public)
-values ('rciu-photos', 'rciu-photos', true)
-on conflict (id) do nothing;
+-- Images and PDFs only, 50 MB per file (migration29) — no web pages or
+-- scripts. Files are stored exactly as uploaded (full quality).
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'rciu-photos', 'rciu-photos', true, 52428800,
+  array['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic', 'image/heif', 'image/avif', 'application/pdf']
+)
+on conflict (id) do update
+  set file_size_limit = excluded.file_size_limit,
+      allowed_mime_types = excluded.allowed_mime_types;
 
 drop policy if exists rciu_photos_select_public on storage.objects;
 drop policy if exists rciu_photos_select_own_or_admin on storage.objects;
@@ -1127,9 +1141,39 @@ create policy rciu_photos_update_admin on storage.objects
 -- event one week away and every event tomorrow (not public holidays;
 -- skipped if an admin sent a manual reminder in the last 24 hours).
 -- Re-running replaces the job, since cron.schedule upserts by name.
+-- The job sends a random secret kept in Vault (migration29); the
+-- function turns away "auto" calls without it.
 -- ------------------------------------------------------------
 create extension if not exists pg_cron;
 create extension if not exists pg_net with schema extensions;
+
+do $$
+begin
+  if not exists (select 1 from vault.secrets where name = 'reminder_cron_secret') then
+    perform vault.create_secret(
+      replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', ''),
+      'reminder_cron_secret',
+      'Sent by the daily reminder job so send-event-reminder knows the call is real'
+    );
+  end if;
+end $$;
+
+-- Asked by the Edge Function (service-role key only).
+create or replace function public.reminder_cron_secret_ok(candidate text)
+returns boolean
+language sql
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from vault.decrypted_secrets
+     where name = 'reminder_cron_secret'
+       and decrypted_secret = candidate
+  );
+$$;
+
+revoke all on function public.reminder_cron_secret_ok(text) from public, anon, authenticated;
+grant execute on function public.reminder_cron_secret_ok(text) to service_role;
 
 select cron.schedule(
   'rciu-event-reminders',
@@ -1141,7 +1185,8 @@ select cron.schedule(
         'Content-Type', 'application/json',
         -- The site's public (publishable) key — not a secret; it's in
         -- every page of rciu.org.
-        'apikey', 'sb_publishable_NZzjfPA3P5vKeIAtXOxekg_EgzYLCId'
+        'apikey', 'sb_publishable_NZzjfPA3P5vKeIAtXOxekg_EgzYLCId',
+        'x-cron-secret', (select decrypted_secret from vault.decrypted_secrets where name = 'reminder_cron_secret')
       ),
       body := '{"mode": "auto"}'::jsonb
     );

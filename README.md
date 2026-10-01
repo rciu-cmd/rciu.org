@@ -72,6 +72,10 @@ and remember the choice.
   `supabase/functions/send-event-reminder/DEPLOY_INSTRUCTIONS.md`.
 - **Spam protection** on the public forms: a database rate limit plus a
   hidden bot-trap field (migration26).
+- **Logins** are created only by admins (Supabase sign-ups are off —
+  the pull-request check and the keep-alive job warn if that changes).
+  The members directory is visible to active members only; uploads
+  accept images and PDFs only (migration29).
 - **Visitor statistics:** Cloudflare Web Analytics (no cookies). Turned
   on by the token in `src/lib/analytics.ts`; the numbers are in the
   Cloudflare dashboard → Analytics & Logs → Web Analytics.
