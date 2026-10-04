@@ -203,6 +203,16 @@ happens there (not in code), give literal numbered instructions, not
   years since the June 2012 charter in a gold ring (deliberately not a
   Rotary wheel — HomeGear stays the only one). Animations play once on
   scroll-in (`.impact-*` in globals.css) and are off for reduced motion.
+  Small "alive" touches (globals.css, next to the gear's spin): hero
+  lines rise in on load (`.hero-rise` + `rise(step)` in page.tsx),
+  sparks drift up behind the hero text (`src/components/HeroSparks.tsx`
+  — full-width, so the hero section has `overflow-x-clip`; don't make
+  the section itself `relative`, or its background paints over the
+  gear), hero stats count up (`CountUp`), a shine sweeps "Join us",
+  a pulsing dot marks "Next event", and headings/cards with `.reveal`
+  fade up on scroll via CSS scroll-driven animations (no JS; browsers
+  without support just show them). Rise-ins fill `backwards` only, so
+  no transform lingers on a card afterwards.
 - **Search & sharing**: Google renders the pages in English (browser
   language), so Mongolian only reaches search through metadata — page
   titles are "Мэдээ · News" style and descriptions carry both
@@ -251,4 +261,5 @@ search titles, generated sitemap, wide share image, share buttons,
 province map, years ring), public pages complete in every language +
 Hong Kong 🇭🇰 version, security check + fixes (migration29: directory
 active-only, protected title, upload types, reminder-job secret; sign-up
-check in CI).
+check in CI), small home page animations (hero sparks, rise-in, count-up
+stats, button shine, scroll fade-ins).

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { asset } from "@/lib/asset";
@@ -8,6 +8,7 @@ import { supabase } from "@/lib/supabase";
 import { useLanguage, type Label } from "@/lib/language-context";
 import ProjectPhotoCollage from "@/components/ProjectPhotoCollage";
 import HomeGear from "@/components/HomeGear";
+import HeroSparks from "@/components/HeroSparks";
 import AddToCalendar from "@/components/AddToCalendar";
 import { localYmd, MONTH_LABEL } from "@/lib/date";
 import { useBreakpoint, fullRows, type PerBreakpoint } from "@/lib/use-breakpoint";
@@ -278,15 +279,18 @@ export default function Home() {
       {/* Hero — the club name, one line on what the club does, the two
           things a visitor most likely wants to do next, and the three
           live stats. Each section below says which colour the one
-          spinning gear (HomeGear) takes over it with data-gear. */}
-      <section data-gear="gold" className="bg-gradient-to-br from-rotary-royal-blue via-[#123a75] to-rotary-azure text-white">
+          spinning gear (HomeGear) takes over it with data-gear. Its
+          lines rise in one after another (rise()), with drifting sparks
+          of light behind them (HeroSparks) and stats that count up. */}
+      <section data-gear="gold" className="overflow-x-clip bg-gradient-to-br from-rotary-royal-blue via-[#123a75] to-rotary-azure text-white">
         <div
           className={`container-page relative z-10 grid gap-8 sm:grid-cols-[3fr_2fr] items-center pt-10 sm:pt-14 ${
             nextEvent ? "pb-16 sm:pb-20" : "pb-10 sm:pb-14"
           }`}
         >
+          <HeroSparks />
           <div>
-            <p className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-rotary-gold mb-2">
+            <p className="hero-rise text-xs sm:text-sm font-semibold uppercase tracking-wider text-rotary-gold mb-2" style={rise(0)}>
               {t(
                 "Ротари 3450-р дүүрэг · Улаанбаатар",
                 "Rotary District 3450 · Ulaanbaatar, Mongolia",
@@ -295,10 +299,10 @@ export default function Home() {
                 "국제로타리 3450지구 · 울란바토르"
               )}
             </p>
-            <h1 className="text-3xl sm:text-5xl font-extrabold leading-tight mb-3 max-w-lg">
+            <h1 className="hero-rise text-3xl sm:text-5xl font-extrabold leading-tight mb-3 max-w-lg" style={rise(1)}>
               {t("Их Өргөө Ротари Клуб", "Rotary Club of Ikh Urgoo", "イク・ウルグー・ロータリークラブ", "伊赫烏爾古扶輪社", "이흐 우르구 로타리클럽")}
             </h1>
-            <p className="text-blue-100 sm:text-lg max-w-lg mb-6">
+            <p className="hero-rise text-blue-100 sm:text-lg max-w-lg mb-6" style={rise(2)}>
               {t(
                 "Бид Монголд боловсрол, эх хүүхдийн эрүүл мэнд, өвчнөөс урьдчилан сэргийлэх чиглэлээр нийгэмдээ бодит өөрчлөлт авчирдаг.",
                 "In Mongolia, we bring real change to our community through education, maternal and child health, and disease prevention.",
@@ -307,10 +311,10 @@ export default function Home() {
                 "몽골에서 교육, 모자 보건, 질병 예방을 통해 지역사회에 실질적인 변화를 만들어 갑니다."
               )}
             </p>
-            <div className="flex flex-wrap gap-3 mb-7">
+            <div className="hero-rise flex flex-wrap gap-3 mb-7" style={rise(3)}>
               <Link
                 href="/join"
-                className="rounded-full bg-rotary-gold text-[#3d2a05] font-bold px-6 py-2.5 shadow-md hover:brightness-105 transition"
+                className="btn-shine rounded-full bg-rotary-gold text-[#3d2a05] font-bold px-6 py-2.5 shadow-md hover:brightness-105 transition"
               >
                 {t("Бидэнтэй нэгдэх", "Join us", "入会する", "加入我們", "가입하기")}
               </Link>
@@ -321,22 +325,22 @@ export default function Home() {
                 {t("Манай төслүүд", "Our projects", "私たちのプロジェクト", "我們的服務計畫", "우리의 프로젝트")}
               </Link>
             </div>
-            <div className="grid grid-cols-3 gap-3 max-w-md">
+            <div className="hero-rise grid grid-cols-3 gap-3 max-w-md" style={rise(4)}>
               <HeroStat
-                value={stats.phfPercent === null ? "—" : `${stats.phfPercent}%`}
+                value={<CountUp value={stats.phfPercent} suffix="%" />}
                 label={t("Paul Harris Fellow", "Paul Harris Fellows", "ポール・ハリス・フェロー", "保羅·哈里斯之友", "폴 해리스 펠로우")}
               />
               <HeroStat
-                value={stats.affiliateCount === null ? "—" : String(stats.affiliateCount)}
+                value={<CountUp value={stats.affiliateCount} />}
                 label={t("Дэмждэг клуб", "Sponsored Clubs", "支援クラブ", "輔導社團", "후원 클럽")}
               />
               <HeroStat
-                value={stats.projectCount === null ? "—" : String(stats.projectCount)}
+                value={<CountUp value={stats.projectCount} />}
                 label={t("Хэрэгжүүлсэн төсөл", "Community Projects", "地域奉仕プロジェクト", "社區服務計畫", "지역사회 프로젝트")}
               />
             </div>
           </div>
-          <div className="hidden sm:flex justify-center">
+          <div className="hero-rise hidden sm:flex justify-center" style={rise(2)}>
             <Image
               src={asset("/logos/rotary-wordmark-white.png")}
               alt="Rotary Club of Ikh Urgoo"
@@ -369,7 +373,7 @@ export default function Home() {
                   // height, so the card is capped at the same height as
                   // the written-post cards, faded at the bottom, with a
                   // link to the full post (see CLAUDE.md).
-                  <article key={n.id} className="h-[380px] rounded-2xl border border-slate-200 bg-white shadow-sm hover:shadow-lg transition flex flex-col overflow-hidden">
+                  <article key={n.id} className="reveal h-[380px] rounded-2xl border border-slate-200 bg-white shadow-sm hover:shadow-lg transition flex flex-col overflow-hidden">
                     <div className="relative flex-1 overflow-hidden flex justify-center pt-3">
                       <div className="fb-post" data-href={fbHref(n.facebook_url)} data-width="340" data-show-text="true" />
                       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-white to-transparent" />
@@ -387,7 +391,7 @@ export default function Home() {
                   <Link
                     key={n.id}
                     href={`/news/${n.id}/`}
-                    className="group h-[380px] rounded-2xl border border-slate-200 bg-white shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition flex flex-col overflow-hidden"
+                    className="reveal group h-[380px] rounded-2xl border border-slate-200 bg-white shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition flex flex-col overflow-hidden"
                   >
                     <div className="relative h-[190px] shrink-0 bg-blue-50">
                       {n.cover_image_url ? (
@@ -441,7 +445,7 @@ export default function Home() {
                   <Link
                     key={p.id}
                     href={`/projects/${p.id}/`}
-                    className="group flex sm:flex-col rounded-2xl border border-slate-200 bg-white shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition overflow-hidden"
+                    className="reveal group flex sm:flex-col rounded-2xl border border-slate-200 bg-white shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition overflow-hidden"
                   >
                     <div className="relative w-28 h-28 sm:w-full sm:h-[150px] shrink-0 bg-blue-50">
                       {photos.length > 0 ? (
@@ -489,7 +493,7 @@ export default function Home() {
       {(impact.length > 0 || provinces.length > 0 || trips.length > 0) && (
         <section data-gear="gold" className="bg-gradient-to-br from-rotary-royal-blue via-[#123a75] to-rotary-azure text-white py-10">
           <div className="container-page relative z-10">
-            <h2 className="text-2xl sm:text-3xl font-bold mb-5">
+            <h2 className="reveal text-2xl sm:text-3xl font-bold mb-5">
               {t("Бидний үр нөлөө", "Our impact", "私たちの歩み", "我們的足跡", "우리의 발자취")}
             </h2>
             <ImpactPanel impact={impact} provinces={provinces} trips={trips} />
@@ -512,7 +516,7 @@ export default function Home() {
                   type="button"
                   onClick={() => setOpenPhoto(i)}
                   aria-label={p.caption || t("Зургийг томоор харах", "View photo", "写真を拡大", "查看照片", "사진 크게 보기")}
-                  className="group relative aspect-square sm:aspect-[4/3] rounded-lg overflow-hidden bg-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-rotary-azure"
+                  className="reveal group relative aspect-square sm:aspect-[4/3] rounded-lg overflow-hidden bg-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-rotary-azure"
                 >
                   <Image src={photoUrl(p)} alt={p.caption ?? ""} fill className="object-cover transition duration-300 group-hover:scale-105" />
                   {p.caption && (
@@ -579,7 +583,7 @@ function photoUrl(p: PhotoItem): string {
 
 function SectionHeader({ title, subtitle, link }: { title: string; subtitle?: string; link?: { href: string; label: string } }) {
   return (
-    <div className="flex items-end justify-between gap-4 mb-5">
+    <div className="reveal flex items-end justify-between gap-4 mb-5">
       <div className="min-w-0">
         <h2 className="text-2xl sm:text-3xl font-bold text-rotary-royal-blue">{title}</h2>
         {subtitle && <p className="text-slate-500 text-sm sm:text-base mt-1 max-w-xl">{subtitle}</p>}
@@ -594,19 +598,20 @@ function SectionHeader({ title, subtitle, link }: { title: string; subtitle?: st
 }
 
 function EmptyState({ text }: { text: string }) {
-  return <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-400">{text}</div>;
+  return <div className="reveal rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-400">{text}</div>;
 }
 
 // The next club event, as a card overlapping the hero's lower edge:
 // date, title, time and place, "Add to calendar" and a link to the
-// full calendar.
+// full calendar. It rises in just after the hero, with a softly
+// pulsing dot by "Next event".
 function NextEventCard({ event }: { event: EventRow }) {
   const { t } = useLanguage();
   const month = Number(event.event_date.slice(5, 7)) - 1;
   const title = t(event.title_mn, event.title_en);
   const details = [event.event_time, event.location].filter(Boolean).join(" · ");
   return (
-    <div className="container-page relative z-10 -mt-8 sm:-mt-10 mb-8">
+    <div className="hero-rise container-page relative z-10 -mt-8 sm:-mt-10 mb-8" style={rise(5)}>
       <div className="rounded-2xl bg-white shadow-lg border border-slate-200 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4">
         <div className="flex items-center gap-4 min-w-0 flex-1">
           <div className="shrink-0 w-[4.5rem] h-[4.5rem] rounded-xl bg-rotary-royal-blue text-white flex flex-col items-center justify-center leading-none">
@@ -614,7 +619,11 @@ function NextEventCard({ event }: { event: EventRow }) {
             <span className="text-[10px] font-semibold uppercase mt-1.5 text-rotary-gold">{t(...MONTH_LABEL[month])}</span>
           </div>
           <div className="min-w-0">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-rotary-azure">
+            <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-rotary-azure">
+              <span aria-hidden="true" className="relative flex w-2 h-2 shrink-0">
+                <span className="absolute inset-0 rounded-full bg-rotary-azure opacity-60 motion-safe:animate-ping" />
+                <span className="relative w-2 h-2 rounded-full bg-rotary-azure" />
+              </span>
               {t("Дараагийн арга хэмжээ", "Next event", "次のイベント", "下一個活動", "다음 행사")}
             </p>
             <p className="font-bold text-slate-900 line-clamp-2 sm:line-clamp-1">{title}</p>
@@ -795,11 +804,35 @@ function PartnerLogo({ link }: { link: LinkRow }) {
 // Compact stat tile for the Hero (dark background) — a smaller, glassy
 // variant of the old full-size white StatCard, sized to sit 3-up under
 // the heading rather than as its own full-width section.
-function HeroStat({ value, label }: { value: string; label: string }) {
+function HeroStat({ value, label }: { value: ReactNode; label: string }) {
   return (
     <div className="rounded-xl bg-white/10 border border-white/20 backdrop-blur-sm p-3 text-center">
       <div className="text-xl sm:text-2xl font-extrabold text-rotary-gold">{value}</div>
       <div className="text-white/70 text-[10px] sm:text-[11px] leading-tight mt-1">{label}</div>
     </div>
   );
+}
+
+// A hero stat's number counting up from 0 once it has loaded ("—" until
+// then); shown straight away for visitors who ask for reduced motion.
+function CountUp({ value, suffix = "" }: { value: number | null; suffix?: string }) {
+  const [shown, setShown] = useState(0);
+  useEffect(() => {
+    if (value === null) return;
+    const duration = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 1200;
+    const start = performance.now();
+    let frame = requestAnimationFrame(function step(now) {
+      const progress = duration ? Math.min(1, (now - start) / duration) : 1;
+      setShown(Math.round(value * (1 - (1 - progress) ** 3)));
+      if (progress < 1) frame = requestAnimationFrame(step);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [value]);
+  return value === null ? "—" : `${shown}${suffix}`;
+}
+
+// The step number for a .hero-rise line (globals.css) — each step
+// starts a moment after the one before.
+function rise(step: number): CSSProperties {
+  return { "--i": step } as CSSProperties;
 }

@@ -51,6 +51,86 @@ body {
   }
 }
 
+/* Small home page touches so the page feels alive (src/app/page.tsx):
+   the hero's lines rise in one after another on load (.hero-rise, step
+   number in --i), sparks of light drift up behind the hero text
+   (src/components/HeroSparks.tsx), the "Join us" button gets a soft
+   shine now and then, and section headings and cards fade up as they
+   scroll into view (.reveal — pure CSS, in browsers that support
+   scroll-driven animations; elsewhere they simply show). All of it is
+   off for visitors who ask for reduced motion. The rise-ins fill
+   "backwards" only, so once done they leave no transform behind (a
+   lasting transform would trap position:fixed children). */
+@keyframes hero-rise {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: none; }
+}
+.hero-rise {
+  animation: hero-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  animation-delay: calc(var(--i, 0) * 90ms);
+}
+
+@keyframes spark-rise {
+  0% { transform: translateY(100%); opacity: 0; }
+  15% { opacity: var(--spark-opacity, 0.7); }
+  80% { opacity: var(--spark-opacity, 0.7); }
+  100% { transform: translateY(-8%); opacity: 0; }
+}
+@keyframes spark-sway {
+  from { transform: translateX(-10px); }
+  to { transform: translateX(10px); }
+}
+.spark-track {
+  animation: spark-rise linear infinite;
+}
+.spark {
+  animation: spark-sway ease-in-out infinite alternate;
+}
+
+@keyframes shine {
+  0%, 72% { transform: translateX(-120%) skewX(-20deg); }
+  100% { transform: translateX(260%) skewX(-20deg); }
+}
+.btn-shine {
+  position: relative;
+  overflow: hidden;
+}
+.btn-shine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  transform: translateX(-120%) skewX(-20deg);
+  animation: shine 6s ease-in-out 1.5s infinite;
+  pointer-events: none;
+}
+
+@keyframes reveal-up {
+  from { opacity: 0; transform: translateY(28px); }
+  to { opacity: 1; transform: none; }
+}
+@supports (animation-timeline: view()) {
+  .reveal {
+    animation: reveal-up linear backwards;
+    animation-timeline: view();
+    animation-range: entry 0% entry 70%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-rise,
+  .reveal,
+  .btn-shine::after {
+    animation: none;
+  }
+  .spark-track,
+  .spark {
+    animation: none;
+    display: none;
+  }
+}
+
 .badge-hidden-admin {
   display: inline-block;
   font-size: 0.65rem;

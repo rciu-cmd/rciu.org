@@ -20,7 +20,10 @@ gotchas already learned the hard way.
   set in Admin → Settings; years of service since 2012), a photo
   gallery that opens photos full size, partners. One
   Rotary wheel turns slowly in the corner and changes colour from
-  section to section.
+  section to section; gold sparks drift up behind the hero text, the
+  hero lines rise in and the stats count up, and headings and cards
+  fade in as you scroll (all still for visitors who prefer reduced
+  motion).
 - **About** — club history, honor roll (Paul Harris Fellows), "Where
   We've Traveled" world map, charter certificates, links to Board and
   Members.
