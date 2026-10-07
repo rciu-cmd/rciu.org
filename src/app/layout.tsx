@@ -58,6 +58,12 @@ export const metadata: Metadata = {
     template: "%s · Rotary Club of Ikh Urgoo",
   },
   description: SITE_DESCRIPTION,
+  // Every page names its own https://rciu.org/<path>/ address as the
+  // official one ("./" resolves against each page's path, with the
+  // trailing slash), so Google files http://, www. and /index.html
+  // copies under it. Pages that shouldn't have one turn it off
+  // (not-found.tsx, the /news/view/ and /projects/view/ fallbacks).
+  alternates: { canonical: "./" },
   icons: {
     // Transparent PNG (the corners of the original .jpg are opaque
     // white, which shows as a white/dark square card behind the round

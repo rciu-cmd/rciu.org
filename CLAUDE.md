@@ -208,7 +208,15 @@ happens there (not in code), give literal numbered instructions, not
   titles are "Мэдээ · News" style and descriptions carry both
   languages. `/sitemap.xml` is generated at build time
   (`src/app/sitemap.ts`, includes every news/project page — there is no
-  `public/sitemap.xml`). Club details for Google are JSON-LD in
+  `public/sitemap.xml`). Every page gets a canonical tag naming its own
+  `https://rciu.org/<path>/` address from `alternates: { canonical: "./" }`
+  in the root layout (Next resolves `./` per page, trailing slash
+  included) — a new page that isn't its own address (one page for many
+  `?id=` values, like `/news/view/`) must set `canonical: null` and
+  `noindex` in its own layout, as `news/view/layout.tsx` does.
+  Search Console's "Page with redirect" list (http://, www., no trailing
+  slash) is expected and not something to "fix" — GitHub Pages does
+  those redirects. Club details for Google are JSON-LD in
   `src/app/layout.tsx`. Pages without their own photo share
   `public/logos/rciu-share.png` (1200×630, made from the club's
   artwork); news/project pages have Facebook / phone-share / copy-link

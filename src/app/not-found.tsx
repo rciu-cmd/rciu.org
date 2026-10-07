@@ -3,6 +3,8 @@ import NotFoundContent from "@/components/NotFoundContent";
 
 export const metadata: Metadata = {
   title: "Page not found",
+  // Served for every missing URL, so it has no address of its own.
+  alternates: { canonical: null },
 };
 
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
