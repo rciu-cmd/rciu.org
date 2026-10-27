@@ -159,7 +159,7 @@ export default function ProjectDetail({ id }: { id: string | null }) {
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {photos.map((url, i) => (
               <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="relative block aspect-square rounded-lg overflow-hidden bg-slate-100 hover:opacity-90 transition">
-                <Image src={url} alt="" fill sizes="(min-width: 640px) 300px, 50vw" className="object-cover" />
+                <Image src={url} alt="" fill sizes="(min-width: 640px) 300px, 50vw" className="photo-cover" />
               </a>
             ))}
           </div>

@@ -397,7 +397,7 @@ export default function HomePage({ initialStats }: { initialStats: HomeStats }) 
                   >
                     <div className="relative h-[190px] shrink-0 bg-blue-50">
                       {n.cover_image_url ? (
-                        <Image src={n.cover_image_url} alt="" fill sizes="(min-width: 1280px) 384px, (min-width: 768px) 50vw, 100vw" className="object-cover" />
+                        <Image src={n.cover_image_url} alt="" fill sizes="(min-width: 1280px) 384px, (min-width: 768px) 50vw, 100vw" className="photo-cover" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
                           <Image src={asset("/logos/ri-gear-blue.png")} alt="" width={56} height={56} />
@@ -520,7 +520,7 @@ export default function HomePage({ initialStats }: { initialStats: HomeStats }) 
                   aria-label={p.caption || t("Зургийг томоор харах", "View photo", "写真を拡大", "查看照片", "사진 크게 보기")}
                   className="reveal group relative aspect-square sm:aspect-[4/3] rounded-lg overflow-hidden bg-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-rotary-azure"
                 >
-                  <Image src={photoUrl(p)} alt={p.caption ?? ""} fill sizes="(min-width: 1024px) 192px, (min-width: 640px) 25vw, 33vw" className="object-cover transition duration-300 group-hover:scale-105" />
+                  <Image src={photoUrl(p)} alt={p.caption ?? ""} fill sizes="(min-width: 1024px) 192px, (min-width: 640px) 25vw, 33vw" className="photo-cover transition duration-300 group-hover:scale-105" />
                   {p.caption && (
                     <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent text-white text-xs text-left px-2.5 pt-6 pb-1.5 line-clamp-1">
                       {p.caption}

@@ -185,7 +185,7 @@ export default function EventsPage() {
                       // cropped than the old 16:9 box, closer to how
                       // most club photos are actually shot.
                       <div className="relative w-full aspect-[4/3] bg-slate-100 rounded-lg overflow-hidden mb-2">
-                        <Image src={ev.cover_image_url} alt="" fill sizes="(min-width: 1024px) 440px, 100vw" className="object-cover" />
+                        <Image src={ev.cover_image_url} alt="" fill sizes="(min-width: 1024px) 440px, 100vw" className="photo-cover" />
                       </div>
                     )}
                     <p className="text-xs font-semibold text-rotary-azure">

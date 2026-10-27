@@ -153,6 +153,15 @@ body {
   }
 }
 
+/* Photo tiles (news / project / event / board / gallery photos). Like
+   object-cover, but cropped near the top instead of the middle: tall
+   phone photos of people put into a wide tile otherwise show chests
+   and legs, while faces are almost always in the upper part. */
+.photo-cover {
+  object-fit: cover;
+  object-position: 50% 10%;
+}
+
 .badge-hidden-admin {
   display: inline-block;
   font-size: 0.65rem;

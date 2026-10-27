@@ -98,7 +98,7 @@ export default function NewsPage() {
                 <article className="h-full rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition overflow-hidden bg-white flex flex-col">
                   <div className="relative aspect-video bg-slate-100">
                     {n.cover_image_url ? (
-                      <Image src={n.cover_image_url} alt="" fill sizes="(min-width: 1152px) 576px, (min-width: 640px) 50vw, 100vw" className="object-cover" />
+                      <Image src={n.cover_image_url} alt="" fill sizes="(min-width: 1152px) 576px, (min-width: 640px) 50vw, 100vw" className="photo-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-blue-50">
                         <Image src={asset("/logos/ri-gear-blue.png")} alt="" width={48} height={48} />
