@@ -174,7 +174,7 @@ export default function AdminBoardPage() {
               {t("Хоосон орхивол гишүүний өөрийн профайл зургийг ашиглана.", "Leave blank to fall back to the member's own profile photo.", "空欄の場合は会員自身のプロフィール写真が使用されます。", "留空則使用會員本人的頭像。")}
             </p>
             {form.photo_url && !file && (
-              <Image src={form.photo_url} alt="" width={48} height={48} className="rounded-full object-cover mb-2" />
+              <Image unoptimized src={form.photo_url} alt="" width={48} height={48} className="rounded-full object-cover mb-2" />
             )}
             <input type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] ?? null)} className="text-sm" />
           </div>
@@ -196,7 +196,7 @@ export default function AdminBoardPage() {
             <div key={r.id} className="rounded-lg border border-slate-200 p-3 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <span className="w-10 h-10 rounded-full bg-slate-100 overflow-hidden flex items-center justify-center shrink-0">
-                  {photo ? <Image src={photo} alt="" width={40} height={40} className="object-cover" /> : <span className="text-xs text-slate-400">{r.members?.first_name?.[0]}</span>}
+                  {photo ? <Image unoptimized src={photo} alt="" width={40} height={40} className="object-cover" /> : <span className="text-xs text-slate-400">{r.members?.first_name?.[0]}</span>}
                 </span>
                 <div>
                   <span className="font-semibold text-slate-900">{r.members?.first_name} {r.members?.last_name}</span>

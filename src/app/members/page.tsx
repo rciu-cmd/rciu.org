@@ -118,7 +118,7 @@ export default function MembersPage() {
                   style={{ background: m.photo_url ? undefined : theme.accent }}
                 >
                   {m.photo_url ? (
-                    <Image src={m.photo_url} alt="" width={56} height={56} className="rounded-full object-cover" />
+                    <Image unoptimized src={m.photo_url} alt="" width={56} height={56} className="rounded-full object-cover" />
                   ) : (
                     `${m.first_name?.[0] ?? ""}${m.last_name?.[0] ?? ""}`
                   )}

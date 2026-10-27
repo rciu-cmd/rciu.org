@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
+import Image from "@/components/Photo";
 import Link from "next/link";
 import { asset } from "@/lib/asset";
 import { supabase } from "@/lib/supabase";
@@ -113,7 +113,7 @@ export default function ProjectsPage() {
             return (
               <Link key={p.id} href={`/projects/${p.id}/`} className="block">
                 <article className="h-full rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition">
-                  {photos.length > 0 && <ProjectPhotoCollage photos={photos} />}
+                  {photos.length > 0 && <ProjectPhotoCollage photos={photos} sizes="(min-width: 1152px) 384px, (min-width: 640px) 50vw, 100vw" />}
                   <div className="p-6">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="inline-block text-xs font-semibold uppercase tracking-wide text-rotary-azure">

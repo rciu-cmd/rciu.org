@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
+import Image from "@/components/Photo";
 import Link from "next/link";
 import { asset } from "@/lib/asset";
 import { supabase } from "@/lib/supabase";
@@ -194,7 +194,7 @@ export default function AboutPage() {
                 >
                   <div className="w-32 h-32 rounded-lg overflow-hidden bg-slate-100 border border-slate-200 relative flex items-center justify-center group-hover:shadow-md transition">
                     {a.file_type === "image" && a.file_url ? (
-                      <Image src={a.file_url} alt={a.title} fill className="object-cover" />
+                      <Image src={a.file_url} alt={a.title} fill sizes="128px" className="object-cover" />
                     ) : a.file_type === "pdf" ? (
                       <span className="text-xs font-bold text-rotary-royal-blue">PDF</span>
                     ) : (

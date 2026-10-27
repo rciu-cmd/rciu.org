@@ -349,7 +349,7 @@ export default function AdminSettingsPage() {
                   onClick={() => save(b)}
                   className={`rounded-lg border-2 p-2 ${bannerUrl === b ? "border-rotary-royal-blue" : "border-slate-200"}`}
                 >
-                  <Image src={asset(b)} alt="" width={200} height={80} className="w-full h-auto rounded" />
+                  <Image unoptimized src={asset(b)} alt="" width={200} height={80} className="w-full h-auto rounded" />
                 </button>
               ))}
             </div>

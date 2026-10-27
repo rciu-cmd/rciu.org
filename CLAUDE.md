@@ -123,6 +123,20 @@ happens there (not in code), give literal numbered instructions, not
   `protect_member_self_service_columns` list. Bucket `rciu-photos`
   accepts images + PDF only (no SVG/HTML), 50 MB per file; files are
   stored as uploaded, never resized.
+- **Photo sizes on screen** (Oct 2026): originals are often 5-10 MB, so
+  next/image uses a custom loader (`src/lib/image-loader.ts`, set in
+  `next.config.ts`) that fetches photos from the `rciu-photos` bucket
+  through wsrv.nl (free image service, no account) at the width each
+  card needs, as WebP, quality 85, never enlarged — the home page went
+  from ~31 MB of photos to ~1 MB. Every `fill` image needs a real
+  `sizes` (how wide it shows per breakpoint), or the browser fetches
+  the 3840px copy. Public pages import `Image` from
+  `src/components/Photo.tsx`, which falls back to the original file if
+  the service fails. Member-only and admin pages (`/gallery`,
+  `/members`, `/dashboard`, `/admin/*`) pass `unoptimized` so private
+  photos never go through an outside service. The originals stay
+  untouched and are what the full-size viewer and "Full size" / "All
+  photos" links open (the club wants full-quality photos available).
 - **Public inquiry forms** (`/join`, "Join a Project" on `/projects`)
   have a DB rate-limit trigger (migration26) plus a hidden honeypot
   field (`src/lib/spam-guard.tsx`). Any new public, no-login form
@@ -135,7 +149,7 @@ happens there (not in code), give literal numbered instructions, not
   conflicting utility class regardless of source order — confirmed by
   inspecting the compiled CSS in `out/_next/static/chunks/*.css` if
   ever in doubt again.
-- **Facebook Post Plugin embeds** (`src/app/page.tsx` News cards,
+- **Facebook Post Plugin embeds** (`src/components/HomePage.tsx` News cards,
   `.fb-post` divs) render at their own natural height based on post
   content — you cannot pin that height with your own CSS like you can
   an `<img>`+text card. Current approach: cap the card at the same
@@ -178,7 +192,11 @@ happens there (not in code), give literal numbered instructions, not
   It swallows all errors on purpose so saving a post can never fail
   because of it. In PL/pgSQL, don't combine a table check and a column
   reference in one `and` (no guaranteed short-circuit) — nest the `if`.
-- **Home page layout** (`src/app/page.tsx`): one spinning Rotary gear
+- **Home page layout** (`src/components/HomePage.tsx`, a client
+  component; `src/app/page.tsx` is only a server wrapper that passes it
+  the hero numbers read at build time by `src/lib/home-stats.ts`, so
+  they're in the HTML instead of "—" while loading — the page still
+  re-reads them live): one spinning Rotary gear
   for the whole page (`src/components/HomeGear.tsx`, `position: fixed`)
   that changes colour per section via `data-gear="gold|cranberry|…"` on
   each section (and the footer). It paints above section backgrounds,
@@ -188,7 +206,9 @@ happens there (not in code), give literal numbered instructions, not
   scrolling: columns and how many cards to show per breakpoint come
   from `NEWS_GRID` etc. + `useBreakpoint()`/`fullRows()`
   (`src/lib/use-breakpoint.ts`), which trims to whole rows. Gallery
-  tiles open a full-size viewer (the original photo, never resized).
+  tiles open a full-size viewer (`ViewerPhoto`): a resized copy shows
+  at once, then the original photo (never resized) fades in over it,
+  with a "Full size" link to the original file.
   The "Our impact" band (`src/components/ImpactPanel.tsx`) is pictures,
   not bare numbers, and never shows money amounts (club's decision):
   a mini flight map + countries/km + "around the Earth" bar from
@@ -203,6 +223,17 @@ happens there (not in code), give literal numbered instructions, not
   years since the June 2012 charter in a gold ring (deliberately not a
   Rotary wheel — HomeGear stays the only one). Animations play once on
   scroll-in (`.impact-*` in globals.css) and are off for reduced motion.
+  Small "alive" touches (globals.css, next to the gear's spin): hero
+  lines rise in on load (`.hero-rise` + `rise(step)` in HomePage.tsx),
+  sparks drift up behind the hero text (`src/components/HeroSparks.tsx`
+  — full-width, so the hero section has `overflow-x-clip`; don't make
+  the section itself `relative`, or its background paints over the
+  gear), hero stats count up (`CountUp` — pure CSS, `.count-up` with a
+  registered `--count`, so it plays from the static HTML), a shine sweeps "Join us",
+  a pulsing dot marks "Next event", and headings/cards with `.reveal`
+  fade up on scroll via CSS scroll-driven animations (no JS; browsers
+  without support just show them). Rise-ins fill `backwards` only, so
+  no transform lingers on a card afterwards.
 - **Search & sharing**: Google renders the pages in English (browser
   language), so Mongolian only reaches search through metadata — page
   titles are "Мэдээ · News" style and descriptions carry both
@@ -238,6 +269,13 @@ happens there (not in code), give literal numbered instructions, not
   v6, upload-pages-artifact v5, deploy-pages v5 (all Node 24). Before
   bumping, check the action's `action.yml` at the new tag for the inputs
   we pass — a bad version in `deploy.yml` only shows up after merging.
+- **Local builds on Windows** write Next's link-prefetch files into
+  subfolders (`out/login/__next.login/__PAGE__.txt` — Next builds the
+  name from `path.relative`, which uses `\` on Windows) instead of the
+  flat `out/login/__next.login.__PAGE__.txt` the browser asks for, so a
+  static preview of a Windows build logs 404s for `__next.*.__PAGE__.txt`
+  (links still work, as full page loads). The real site is built on
+  Linux by GitHub Actions and is fine — not a Next.js version problem.
 
 ## Where things stand
 
@@ -252,11 +290,14 @@ pages + hourly rebuild, friendly errors, pull-request build check,
 automatic week-before + day-before event reminders (migration27), Cloudflare Web
 Analytics hook, rebuild-on-publish trigger (migration28), Admin → News edit button,
 lint at zero + in the PR check, Actions on Node 24 versions, Next.js
-16.3.8 (npm audit clean), compact home page redesign (one colour-changing
+16.4.3 + React 19.3.1 (npm audit clean), compact home page redesign (one colour-changing
 gear, grids, hero buttons, next-event card, gallery viewer), bilingual
 search titles, generated sitemap, wide share image, share buttons,
 "Our impact" infographic (travel map, people/school/hospital icon rows,
 province map, years ring), public pages complete in every language +
 Hong Kong 🇭🇰 version, security check + fixes (migration29: directory
 active-only, protected title, upload types, reminder-job secret; sign-up
-check in CI).
+check in CI), small home page animations (hero sparks, rise-in, count-up
+stats, button shine, scroll fade-ins), photos resized on screen through
+wsrv.nl with originals kept for the viewer, hero numbers baked in at
+build time.

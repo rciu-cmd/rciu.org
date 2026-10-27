@@ -180,7 +180,7 @@ export default function AdminAwardsPage() {
             <div key={a.id} className="rounded-xl border border-slate-200 p-5 flex items-start gap-4">
               <div className="w-20 h-20 rounded-lg overflow-hidden bg-slate-100 shrink-0 flex items-center justify-center">
                 {a.file_type === "image" && a.file_url ? (
-                  <Image src={a.file_url} alt="" width={80} height={80} className="object-cover w-20 h-20" />
+                  <Image unoptimized src={a.file_url} alt="" width={80} height={80} className="object-cover w-20 h-20" />
                 ) : a.file_type === "pdf" && a.file_url ? (
                   <a href={a.file_url} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-rotary-royal-blue underline">
                     PDF

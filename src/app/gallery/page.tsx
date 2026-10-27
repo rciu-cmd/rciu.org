@@ -216,7 +216,7 @@ export default function GalleryPage() {
                 <div key={p.id} className="rounded-xl border border-slate-200 overflow-hidden bg-white hover:shadow-lg transition">
                   <a href={url} target="_blank" rel="noopener noreferrer" className="block">
                     <div className="relative w-full aspect-video bg-slate-100">
-                      <Image src={url} alt={p.caption ?? ""} fill className="object-cover" />
+                      <Image unoptimized src={url} alt={p.caption ?? ""} fill className="object-cover" />
                     </div>
                   </a>
                   <div className="flex items-center justify-between gap-2 p-2">
@@ -254,7 +254,7 @@ export default function GalleryPage() {
                   className="rounded-xl border border-slate-200 overflow-hidden bg-white text-left hover:shadow-lg hover:-translate-y-0.5 transition"
                 >
                   <div className="relative w-full aspect-video bg-slate-100">
-                    {coverUrl && <Image src={coverUrl} alt="" fill className="object-cover" />}
+                    {coverUrl && <Image unoptimized src={coverUrl} alt="" fill className="object-cover" />}
                   </div>
                   <div className="p-3">
                     <p className="font-semibold text-slate-900 text-sm line-clamp-2">{f.label}</p>
