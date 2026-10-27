@@ -190,7 +190,7 @@ export default function DashboardPage() {
       <div className="container-page pt-12">
         <div className="rounded-xl border border-slate-200 p-6">
           <h2 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
-            <Image src={asset("/logos/rciu-emblem.jpg")} alt="" width={24} height={24} className="rounded-full shrink-0" />
+            <Image unoptimized src={asset("/logos/rciu-emblem.jpg")} alt="" width={24} height={24} className="rounded-full shrink-0" />
             {t("Удахгүй болох арга хэмжээ", "Upcoming Events", "今後の予定", "即將舉行的活動")}
           </h2>
           {events === null && <p className="text-sm text-slate-400">{t("Ачааллаж байна…", "Loading…", "読み込み中…", "加載中…")}</p>}
@@ -731,7 +731,7 @@ function AwardSubmissionCard({ t, memberId }: { t: (mn: string, en: string, ja?:
             <div key={a.id} className="rounded-lg border border-slate-200 p-3 flex items-center gap-3">
               <div className="w-14 h-14 rounded-md overflow-hidden bg-slate-100 shrink-0 flex items-center justify-center">
                 {a.file_type === "image" && a.file_url ? (
-                  <Image src={a.file_url} alt="" width={56} height={56} className="object-cover w-14 h-14" />
+                  <Image unoptimized src={a.file_url} alt="" width={56} height={56} className="object-cover w-14 h-14" />
                 ) : a.file_type === "pdf" ? (
                   <span className="text-[10px] font-bold text-rotary-royal-blue">PDF</span>
                 ) : (

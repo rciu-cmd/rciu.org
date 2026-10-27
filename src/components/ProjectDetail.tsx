@@ -5,7 +5,7 @@
 // so link previews show its own title and photo — see src/lib/share-data.ts).
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
+import Image from "@/components/Photo";
 import Link from "next/link";
 import { asset } from "@/lib/asset";
 import { supabase } from "@/lib/supabase";
@@ -105,7 +105,7 @@ export default function ProjectDetail({ id }: { id: string | null }) {
 
       <div className="rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
         {photos.length > 0 ? (
-          <ProjectPhotoCollage photos={photos.slice(0, 3)} />
+          <ProjectPhotoCollage photos={photos.slice(0, 3)} sizes="(min-width: 896px) 896px, 100vw" />
         ) : p.cause_icon && CAUSE_ICONS[p.cause_icon] ? (
           <div className="w-full aspect-video flex items-center justify-center bg-blue-50">
             <Image src={asset(CAUSE_ICONS[p.cause_icon])} alt="" width={96} height={96} />
@@ -159,7 +159,7 @@ export default function ProjectDetail({ id }: { id: string | null }) {
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {photos.map((url, i) => (
               <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="relative block aspect-square rounded-lg overflow-hidden bg-slate-100 hover:opacity-90 transition">
-                <Image src={url} alt="" fill className="object-cover" />
+                <Image src={url} alt="" fill sizes="(min-width: 640px) 300px, 50vw" className="object-cover" />
               </a>
             ))}
           </div>

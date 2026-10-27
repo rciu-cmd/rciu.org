@@ -336,7 +336,7 @@ export default function AdminEventsPage() {
             </p>
             {editingId && existingCoverUrl && !file && (
               <div className="mb-2 flex items-center gap-3">
-                <Image src={existingCoverUrl} alt="" width={96} height={72} className="rounded-md object-cover w-24 h-[4.5rem]" />
+                <Image unoptimized src={existingCoverUrl} alt="" width={96} height={72} className="rounded-md object-cover w-24 h-[4.5rem]" />
                 <span className="text-xs text-slate-400">{t("Одоогийн зураг — сольхын тулд доор шинэ файл сонгоно уу", "Current photo — pick a new file below to replace it", "現在の写真 — 変更する場合は下でファイルを選択", "目前的照片 — 如需更換請在下方選擇新檔案")}</span>
               </div>
             )}
@@ -369,7 +369,7 @@ export default function AdminEventsPage() {
               <div key={ev.id} className="rounded-xl border border-slate-200 p-5 flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3">
                   {ev.cover_image_url && (
-                    <Image src={ev.cover_image_url} alt="" width={80} height={60} className="rounded-md object-cover w-20 h-[3.75rem] shrink-0" />
+                    <Image unoptimized src={ev.cover_image_url} alt="" width={80} height={60} className="rounded-md object-cover w-20 h-[3.75rem] shrink-0" />
                   )}
                   <div>
                     <p className="text-xs font-semibold text-rotary-azure">

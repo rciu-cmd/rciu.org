@@ -9,7 +9,7 @@ import { useLanguage } from "@/lib/language-context";
 // choice, not just "whatever was uploaded most recently" — this page
 // lists every photo from both photo tables (general club library +
 // project photos) and lets an admin flip a switch per photo. The home
-// page (src/app/page.tsx) only queries rows where featured_home = true.
+// page (src/components/HomePage.tsx) only queries rows where featured_home = true.
 //
 // A second "Folders" view sits alongside the photo grid — a flat list
 // of every distinct folder in use (derived from storage_path, since
@@ -229,7 +229,7 @@ export default function AdminGalleryPage() {
                 return (
                   <div key={p.id} className={`rounded-xl border overflow-hidden bg-white ${p.featured_home ? "border-rotary-gold ring-2 ring-rotary-gold/40" : "border-slate-200"}`}>
                     <div className="relative w-full aspect-video bg-slate-100">
-                      <Image src={url} alt={p.caption ?? ""} fill className="object-cover" />
+                      <Image unoptimized src={url} alt={p.caption ?? ""} fill className="object-cover" />
                       <span className="absolute top-2 left-2 text-[10px] font-semibold uppercase tracking-wide bg-white/90 px-2 py-0.5 rounded-full text-slate-600">
                         {p.source === "club" ? t("Ерөнхий", "Club photo", "一般", "俱樂部照片") : t("Төслийн", "Project photo", "プロジェクト", "項目照片")}
                       </span>

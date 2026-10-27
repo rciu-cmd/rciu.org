@@ -14,8 +14,10 @@ const nextConfig: NextConfig = {
   trailingSlash: true,
   basePath,
   images: {
-    // GitHub Pages has no image-optimization server.
-    unoptimized: true,
+    // GitHub Pages has no image-optimization server, so club photos are
+    // resized by an outside service instead (see src/lib/image-loader.ts).
+    loader: "custom",
+    loaderFile: "./src/lib/image-loader.ts",
   },
 };
 

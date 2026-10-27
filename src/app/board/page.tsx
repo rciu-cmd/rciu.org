@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
+import Image from "@/components/Photo";
 import { supabase } from "@/lib/supabase";
 import { useLanguage } from "@/lib/language-context";
 import { boardRoleTitle } from "@/lib/board-roles";
@@ -91,7 +91,7 @@ export default function BoardPage() {
               <div key={r.id} className="rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition overflow-hidden bg-white flex flex-col">
                 <div className="relative w-full aspect-[3/4] bg-blue-50 shrink-0">
                   {photo ? (
-                    <Image src={photo} alt="" fill className="object-cover" />
+                    <Image src={photo} alt="" fill sizes="(min-width: 1152px) 384px, (min-width: 640px) 33vw, 100vw" className="object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <span className="text-5xl font-bold text-rotary-royal-blue">

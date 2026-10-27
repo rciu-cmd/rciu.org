@@ -326,7 +326,7 @@ export default function AdminProjectsPage() {
                 <div className="flex flex-wrap gap-2">
                   {existingPhotos.map((photo, i) => (
                     <div key={photo.id} className="relative">
-                      <Image src={photo.url} alt="" width={100} height={75} className="rounded-md object-cover w-24 h-[4.5rem] border border-slate-200" />
+                      <Image unoptimized src={photo.url} alt="" width={100} height={75} className="rounded-md object-cover w-24 h-[4.5rem] border border-slate-200" />
                       {i === 0 && (
                         <span className="absolute bottom-0.5 left-0.5 text-[9px] font-bold bg-white/90 text-rotary-azure rounded px-1">
                           {t("Нүүр", "Cover", "カバー", "封面")}
@@ -373,7 +373,7 @@ export default function AdminProjectsPage() {
                   className={`rounded-lg border-2 p-3 flex flex-col items-center gap-2 text-center ${form.cause_icon === c.value ? "border-rotary-azure bg-blue-50" : "border-slate-200"}`}
                 >
                   {c.icon ? (
-                    <Image src={asset(c.icon)} alt="" width={40} height={40} />
+                    <Image unoptimized src={asset(c.icon)} alt="" width={40} height={40} />
                   ) : (
                     <div className="w-10 h-10 rounded-full bg-slate-200" />
                   )}
@@ -446,7 +446,7 @@ export default function AdminProjectsPage() {
           return (
             <div key={item.id} className="rounded-xl border border-slate-200 p-5 flex items-start justify-between gap-4">
               <div className="flex gap-3">
-                {cause?.icon && <Image src={asset(cause.icon)} alt="" width={32} height={32} className="shrink-0" />}
+                {cause?.icon && <Image unoptimized src={asset(cause.icon)} alt="" width={32} height={32} className="shrink-0" />}
                 <div>
                   <p className="font-bold text-slate-900">
                     {item.title_en}

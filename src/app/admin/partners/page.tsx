@@ -168,7 +168,7 @@ export default function AdminPartnersPage() {
           <div>
             <p className="text-sm font-semibold text-slate-700 mb-1">{t("Лого (заавал биш)", "Logo (optional)", "ロゴ(任意)", "徽標(可選)")}</p>
             {form.logo_url && !logoFile && (
-              <Image src={form.logo_url} alt="" width={56} height={56} className="object-contain mb-2 rounded border border-slate-200 bg-white p-1" />
+              <Image unoptimized src={form.logo_url} alt="" width={56} height={56} className="object-contain mb-2 rounded border border-slate-200 bg-white p-1" />
             )}
             <input type="file" accept="image/*" onChange={(e) => setLogoFile(e.target.files?.[0] ?? null)} className="text-sm" />
           </div>

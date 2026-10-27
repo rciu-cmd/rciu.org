@@ -5,7 +5,7 @@
 // link previews show its own title and photo — see src/lib/share-data.ts).
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
+import Image from "@/components/Photo";
 import Link from "next/link";
 import { asset } from "@/lib/asset";
 import { supabase } from "@/lib/supabase";
@@ -121,7 +121,7 @@ export default function NewsDetail({ id }: { id: string | null }) {
         <article className="rounded-2xl border border-slate-200 overflow-hidden shadow-sm bg-white">
           <div className="relative aspect-video bg-slate-100">
             {item.cover_image_url ? (
-              <Image src={item.cover_image_url} alt="" fill className="object-cover" />
+              <Image src={item.cover_image_url} alt="" fill sizes="(min-width: 768px) 768px, 100vw" className="object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-blue-50">
                 <Image src={asset("/logos/ri-gear-blue.png")} alt="" width={72} height={72} />
