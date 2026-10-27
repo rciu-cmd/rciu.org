@@ -15,7 +15,7 @@ export default function ProjectPhotoCollage({ photos, sizes = "100vw", className
   if (photos.length === 1) {
     return (
       <div className={`relative w-full aspect-video bg-slate-100 ${className}`}>
-        <Image src={photos[0]} alt="" fill sizes={sizes} className="object-cover" />
+        <Image src={photos[0]} alt="" fill sizes={sizes} className="photo-cover" />
       </div>
     );
   }
@@ -24,7 +24,7 @@ export default function ProjectPhotoCollage({ photos, sizes = "100vw", className
       <div className={`grid grid-cols-2 gap-0.5 w-full aspect-video bg-slate-100 ${className}`}>
         {photos.map((url, i) => (
           <div key={i} className="relative">
-            <Image src={url} alt="" fill sizes={sizes} className="object-cover" />
+            <Image src={url} alt="" fill sizes={sizes} className="photo-cover" />
           </div>
         ))}
       </div>
@@ -33,13 +33,13 @@ export default function ProjectPhotoCollage({ photos, sizes = "100vw", className
   return (
     <div className={`grid grid-cols-2 grid-rows-2 gap-0.5 w-full aspect-video bg-slate-100 ${className}`}>
       <div className="relative row-span-2">
-        <Image src={photos[0]} alt="" fill sizes={sizes} className="object-cover" />
+        <Image src={photos[0]} alt="" fill sizes={sizes} className="photo-cover" />
       </div>
       <div className="relative">
-        <Image src={photos[1]} alt="" fill sizes={sizes} className="object-cover" />
+        <Image src={photos[1]} alt="" fill sizes={sizes} className="photo-cover" />
       </div>
       <div className="relative">
-        <Image src={photos[2]} alt="" fill sizes={sizes} className="object-cover" />
+        <Image src={photos[2]} alt="" fill sizes={sizes} className="photo-cover" />
       </div>
     </div>
   );
