@@ -225,7 +225,12 @@ happens there (not in code), give literal numbered instructions, not
   scroll-in (`.impact-*` in globals.css) and are off for reduced motion.
   Small "alive" touches (globals.css, next to the gear's spin): hero
   lines rise in on load (`.hero-rise` + `rise(step)` in HomePage.tsx),
-  sparks drift up behind the hero text (`src/components/HeroSparks.tsx`
+  the season's weather falls behind the hero text — snow Dec–Feb,
+  petals Mar–May, rain Jun–Aug, leaves Sep–Nov, by the visitor's clock
+  in Ulaanbaatar time, so no rebuild is needed when the season turns
+  (`src/components/HeroSeason.tsx`, drawn on a canvas with depth, wind
+  and 3D tumbling by `src/lib/weather.ts`, from the photos in
+  `public/seasons/` — the season's only, loaded after the page
   — full-width, so the hero section has `overflow-x-clip`; don't make
   the section itself `relative`, or its background paints over the
   gear), hero stats count up (`CountUp` — pure CSS, `.count-up` with a
@@ -297,7 +302,7 @@ search titles, generated sitemap, wide share image, share buttons,
 province map, years ring), public pages complete in every language +
 Hong Kong 🇭🇰 version, security check + fixes (migration29: directory
 active-only, protected title, upload types, reminder-job secret; sign-up
-check in CI), small home page animations (hero sparks, rise-in, count-up
+check in CI), small home page animations (seasonal hero weather, rise-in, count-up
 stats, button shine, scroll fade-ins), photos resized on screen through
 wsrv.nl with originals kept for the viewer, hero numbers baked in at
 build time.

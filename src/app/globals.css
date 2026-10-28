@@ -53,8 +53,9 @@ body {
 
 /* Small home page touches so the page feels alive (src/components/HomePage.tsx):
    the hero's lines rise in one after another on load (.hero-rise, step
-   number in --i), sparks of light drift up behind the hero text
-   (src/components/HeroSparks.tsx), the "Join us" button gets a soft
+   number in --i), the season's weather falls behind the hero text
+   (src/components/HeroSeason.tsx, drawn on a canvas by
+   src/lib/weather.ts), the "Join us" button gets a soft
    shine now and then, and section headings and cards fade up as they
    scroll into view (.reveal — pure CSS, in browsers that support
    scroll-driven animations; elsewhere they simply show). All of it is
@@ -68,23 +69,6 @@ body {
 .hero-rise {
   animation: hero-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) backwards;
   animation-delay: calc(var(--i, 0) * 90ms);
-}
-
-@keyframes spark-rise {
-  0% { transform: translateY(100%); opacity: 0; }
-  15% { opacity: var(--spark-opacity, 0.7); }
-  80% { opacity: var(--spark-opacity, 0.7); }
-  100% { transform: translateY(-8%); opacity: 0; }
-}
-@keyframes spark-sway {
-  from { transform: translateX(-10px); }
-  to { transform: translateX(10px); }
-}
-.spark-track {
-  animation: spark-rise linear infinite;
-}
-.spark {
-  animation: spark-sway ease-in-out infinite alternate;
 }
 
 @keyframes shine {
@@ -146,9 +130,7 @@ body {
   .btn-shine::after {
     animation: none;
   }
-  .spark-track,
-  .spark {
-    animation: none;
+  .season-canvas {
     display: none;
   }
 }
