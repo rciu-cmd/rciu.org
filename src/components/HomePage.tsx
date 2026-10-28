@@ -8,7 +8,7 @@ import { supabase } from "@/lib/supabase";
 import { useLanguage, type Label } from "@/lib/language-context";
 import ProjectPhotoCollage from "@/components/ProjectPhotoCollage";
 import HomeGear from "@/components/HomeGear";
-import HeroSparks from "@/components/HeroSparks";
+import HeroSeason from "@/components/HeroSeason";
 import AddToCalendar from "@/components/AddToCalendar";
 import { localYmd, MONTH_LABEL } from "@/lib/date";
 import { useBreakpoint, fullRows, type PerBreakpoint } from "@/lib/use-breakpoint";
@@ -282,15 +282,16 @@ export default function HomePage({ initialStats }: { initialStats: HomeStats }) 
           things a visitor most likely wants to do next, and the three
           live stats. Each section below says which colour the one
           spinning gear (HomeGear) takes over it with data-gear. Its
-          lines rise in one after another (rise()), with drifting sparks
-          of light behind them (HeroSparks) and stats that count up. */}
+          lines rise in one after another (rise()), with the season's
+          snow, petals, rain or leaves behind them (HeroSeason) and stats
+          that count up. */}
       <section data-gear="gold" className="overflow-x-clip bg-gradient-to-br from-rotary-royal-blue via-[#123a75] to-rotary-azure text-white">
         <div
           className={`container-page relative z-10 grid gap-8 sm:grid-cols-[3fr_2fr] items-center pt-10 sm:pt-14 ${
             nextEvent ? "pb-16 sm:pb-20" : "pb-10 sm:pb-14"
           }`}
         >
-          <HeroSparks />
+          <HeroSeason />
           <div>
             <p className="hero-rise text-xs sm:text-sm font-semibold uppercase tracking-wider text-rotary-gold mb-2" style={rise(0)}>
               {t(
